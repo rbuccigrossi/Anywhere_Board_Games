@@ -1,0 +1,50 @@
+﻿<Window x:Class="BoardGameArena.PieceImageLibrarySelect"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:src="clr-namespace:BoardGameArena"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Image Library" Height="400" Width="600"
+        Loaded="Window_Loaded">
+    <Grid>
+        <ListBox Name="ImageList" Height="126" VerticalAlignment="Top">
+            <ListBox.Template>
+                <ControlTemplate TargetType="ListBox">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Orientation="Horizontal"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       IsItemsHost="True"/>
+                    </ScrollViewer>
+                </ControlTemplate>
+            </ListBox.Template>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Vertical" Height="100" Width="100">
+                        <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" />
+                        <Image Source="{Binding Buffer}" Height="80" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <EventSetter Event="MouseDoubleClick" Handler="OKClicked" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+        <Grid Margin="0,132,293,0" Name="AddImageGrid" Background="#FFF8F8F8">
+            <Rectangle Name="rectangle1" Stroke="Black" />
+            <Label Height="28" Margin="6,6,6,0" Name="label1" VerticalAlignment="Top" HorizontalContentAlignment="Center">Add a New Image</Label>
+            <Button Height="23" Margin="91,0,89,6" Name="button1" VerticalAlignment="Bottom" Click="AddToLibraryButtonClick">Add to Library</Button>
+            <Rectangle Margin="106,59,6,35" Name="rectangle2" Stroke="Black" />
+            <Image Margin="106,59,6,35" Name="ImagePreview" Stretch="Uniform" Source="{Binding Path=Buffer}" />
+            <TextBox Height="23" Margin="106,33,6,0" Name="ImageName" VerticalAlignment="Top" Text="{Binding Name}"/>
+            <Label Height="23" Margin="6,33,0,0" Name="label2" VerticalAlignment="Top" HorizontalAlignment="Left" Width="94" HorizontalContentAlignment="Right">Name:</Label>
+            <Label Height="23" HorizontalAlignment="Left" HorizontalContentAlignment="Right" Margin="6,70,0,0" Name="label3" VerticalAlignment="Top" Width="94">Image:</Label>
+            <Button Margin="17,108,0,0" Name="button2" HorizontalAlignment="Left" Width="83" Height="23" VerticalAlignment="Top" Click="UpdateImageClick">Pick File...</Button>
+        </Grid>
+        <Grid Margin="0,132,0,0" HorizontalAlignment="Right" Width="287">
+            <Button Margin="87,33.138,96,0" Name="button4" Click="DeleteCurrentSelection" Height="23" VerticalAlignment="Top">Delete Selected</Button>
+            <Button Height="23" HorizontalAlignment="Left" Margin="23,0,0,6" Name="button5" VerticalAlignment="Bottom" Width="104" IsCancel="True" Click="CancelClicked">Cancel</Button>
+            <Button Margin="0,0,21,6" Name="button3" Click="OKClicked" Height="23" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="104" IsDefault="True">OK</Button>
+        </Grid>
+    </Grid>
+</Window>

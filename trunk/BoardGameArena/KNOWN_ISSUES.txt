@@ -1,0 +1,30 @@
+﻿Significant Issues
+ - There is no check keeping PieceImages that are still associated
+ with pieces from being deleted.
+ - There is no check keeping Pieces that are still associated with
+ OnBoardPieces from being deleted.
+ - We have to make sure that when a GamePieceControl is deleted that the
+ entry is removed from OnBoardPeices and vice-versa
+ - If a mouse is removed, or switching between multi-mouse states, pieces
+   that are currently grabbed could get stuck that way
+ - Instead of using keys, we're using gobs of references (i.e. GamePieceControl has
+ a Piece, Pieces have arrays of PieceImages, etc.)
+ - We should use notifications to get the board in sync with the World.on_board_pieces
+
+Major Assumptions
+ - Items in the Image Library are not modified, but instead are
+ replaced through a delete and an add (which currently breaks
+ PieceImage associations)
+ - Items in the Piece Library are not modified, but instead are
+ replaced through a delete and an add (which currently breaks
+ OnBoardPieces associations).
+
+Enhancements
+ - Piece edit
+ 
+TODO
+ - Allow LoadWorld to append to the existing world instead of replacing
+ - Search in image select and piece select 
+   http://joshsmithonwpf.wordpress.com/2007/06/12/searching-for-items-in-a-listbox/
+ - Grab cards:
+   http://commons.wikimedia.org/wiki/Category:OpenClipart_playing_cards

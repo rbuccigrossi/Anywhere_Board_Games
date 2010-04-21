@@ -1,0 +1,165 @@
+﻿<Window x:Class="BoardGameArena.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:custom="clr-namespace:BoardGameArena"
+    Title="Board Game Arena" Height="600" Width="800"
+        Loaded="Window_Loaded" Name="BoardGameWindow" Icon="graphics\die.ico">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static custom:MainWindow.ToggleFullScreenCommand}"
+                        CanExecute="ControlCanExecute"
+                        Executed="ToggleFullScreenCommandExecuted" />
+        <CommandBinding Command="{x:Static custom:MainWindow.ToggleMultiMouseCommand}"
+                        CanExecute="ControlCanExecute"
+                        Executed="ToggleMultiMouseCommandExecuted" />
+        <CommandBinding Command="{x:Static custom:MainWindow.ZoomInCommand}"
+                        CanExecute="ControlCanExecute"
+                        Executed="ZoomInCommandExecuted" />
+        <CommandBinding Command="{x:Static custom:MainWindow.ZoomOutCommand}"
+                        CanExecute="ControlCanExecute"
+                        Executed="ZoomOutCommandExecuted" />
+        <CommandBinding Command="{x:Static custom:MainWindow.Zoom100Command}"
+                        CanExecute="ControlCanExecute"
+                        Executed="Zoom100CommandExecuted" />
+        <CommandBinding Command="ApplicationCommands.Close" 
+                        CanExecute="ControlCanExecute" 
+                        Executed="CloseExecuted" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Gesture="F11" Command="{x:Static custom:MainWindow.ToggleFullScreenCommand}"/>
+        <KeyBinding Gesture="CTRL+Plus" Command="{x:Static custom:MainWindow.ZoomInCommand}"/>
+        <KeyBinding Gesture="CTRL+Minus" Command="{x:Static custom:MainWindow.ZoomOutCommand}"/>
+        <KeyBinding Gesture="CTRL+0" Command="{x:Static custom:MainWindow.Zoom100Command}"/>
+        <KeyBinding Gesture="CTRL+M" Command="{x:Static custom:MainWindow.ToggleMultiMouseCommand}"/>
+    </Window.InputBindings>
+    <Grid Name="MainGrid" Background="#200000">
+        <Menu Name="MainMenu" Height="22" VerticalAlignment="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Load Board..." Click="LoadBoardCommand"/>
+                <MenuItem Header="_Save Board..." Click="SaveBoardCommand"/>
+                <Separator />
+                <MenuItem Header="_Add Piece..." Click="AddPieceCommand"/>
+                <MenuItem Header="_Piece Library..." Click="OpenPieceLibrary"/>
+                <MenuItem Header="_Image Library..." Click="OpenImageLibrary"/>
+                <Separator />
+                <MenuItem Header="Use _Multiple Mouse"
+                          IsCheckable="True" 
+                          IsChecked="{Binding ElementName=BoardGameWindow, Path=use_multi_mouse, UpdateSourceTrigger=PropertyChanged}" InputGestureText="CTRL-M" />
+                <Separator />
+                <MenuItem Header="_Quit" Command="ApplicationCommands.Close" InputGestureText="ALT-F4" />
+            </MenuItem>
+            <MenuItem Header="_View" Name="FullScreenMenuItem">
+                <MenuItem Header="_Full Screen" Command="{x:Static custom:MainWindow.ToggleFullScreenCommand}" InputGestureText="F11" />
+                <Separator />
+                <MenuItem Header="Zoom _In" Command="{x:Static custom:MainWindow.ZoomInCommand}" InputGestureText="CTRL-Plus" />
+                <MenuItem Header="Zoom _Out" Command="{x:Static custom:MainWindow.ZoomOutCommand}" InputGestureText="CTRL-Minus" />
+                <MenuItem Header="Zoom _100%" Command="{x:Static custom:MainWindow.Zoom100Command}" InputGestureText="CTRL-0" />
+            </MenuItem>
+            <MenuItem Header="_Help" InputGestureText="F1" Click="HelpMenuClick"/>
+        </Menu>
+        <Canvas x:Name="MousePanel" Margin="0,22,0,0" Background="Transparent">
+            <Canvas x:Name="MenuPanel">
+                <custom:GamePanel x:Name="BoardPanel" Background="#001000">
+                    <!--
+                <TextBox Name="Info" Height="19" Canvas.Left="28" Canvas.Top="4" Width="224"></TextBox>
+                -->
+                </custom:GamePanel>
+            </Canvas>
+            <Image x:Name="MousePointer01" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow01.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer02" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow02.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer03" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow03.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer04" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow04.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer05" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow05.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer06" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow06.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer07" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow07.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer08" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow08.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer09" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow09.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer10" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow10.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer11" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow11.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer12" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow12.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer13" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow13.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer14" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow14.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer15" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow15.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+            <Image x:Name="MousePointer16" Margin="30,30,0,0" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top"
+               Source="graphics\arrows\arrow16.png" Visibility="Hidden">
+                <Image.BitmapEffect>
+                    <DropShadowBitmapEffect ShadowDepth="2" Softness="0" Opacity="0.2" Direction="0" />
+                </Image.BitmapEffect>
+            </Image>
+        </Canvas>
+    </Grid>
+</Window>
