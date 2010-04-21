@@ -36,7 +36,7 @@ namespace BoardGameArena
             pad.DataContext = p;
             pad.SideList.ItemsSource = p.Sides;
             bool? response = pad.ShowDialog();
-            if ((response.HasValue) && (response.Value) && (pl != null))
+            if ((response.HasValue) && (response.Value) && (pl != null) && (p.Sides.Count > 0))
             {
                 pl.Add(p);
                 PieceList.SelectedIndex = pl.Count - 1;

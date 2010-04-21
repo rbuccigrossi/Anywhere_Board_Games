@@ -21,6 +21,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_7F39C68A66E042C9945EC87D3F9815C9"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_CD65892775DE4ABA8185DA37B3028A92"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_1C60F72D640B4296961763A4E6FDE623"
         "MsmSig" = "8:_UNDEFINED"
@@ -43,6 +55,27 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Net.Framework.3.5.SP1"
+                    {
+                    "Name" = "8:.NET Framework 3.5 SP1"
+                    "ProductCode" = "8:Microsoft.Net.Framework.3.5.SP1"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -59,6 +92,27 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Net.Framework.3.5.SP1"
+                    {
+                    "Name" = "8:.NET Framework 3.5 SP1"
+                    "ProductCode" = "8:Microsoft.Net.Framework.3.5.SP1"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -88,9 +142,72 @@
         }
         "File"
         {
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7F39C68A66E042C9945EC87D3F9815C9"
+            {
+            "SourcePath" = "8:..\\Games\\deck.bga"
+            "TargetName" = "8:deck.bga"
+            "Tag" = "8:"
+            "Folder" = "8:_B3F79C2EB13B49ABBAB3532380A8492E"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_CD65892775DE4ABA8185DA37B3028A92"
+            {
+            "SourcePath" = "8:C:\\WINDOWS\\system32\\msiexec.exe"
+            "TargetName" = "8:msiexec.exe"
+            "Tag" = "8:"
+            "Folder" = "8:_B125708445674103A9CBBC01F3829F3D"
+            "Condition" = "8:Not Installed"
+            "Transitive" = "11:TRUE"
+            "Vital" = "11:FALSE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:TRUE"
+            "Permanent" = "11:TRUE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
         }
         "FileType"
         {
+            "{5EB83D71-FA18-4901-BE56-DE22E13CC478}:_1E4D9669AFE0434EB41D47248192F533"
+            {
+            "Name" = "8:Board Game Arena"
+            "Description" = "8:Board or Card Game"
+            "Extensions" = "8:bga"
+            "MIME" = "8:application/x-bga"
+            "Icon" = "8:_1C60F72D640B4296961763A4E6FDE623"
+            "IconIndex" = "3:32512"
+                "Command"
+                {
+                "Command" = "8:_1C60F72D640B4296961763A4E6FDE623"
+                }
+                "Verbs"
+                {
+                    "{95C0C507-CBF0-42B8-B119-07219E384A4A}:_17330C9C2DE94EC9B85C710A12C7106D"
+                    {
+                    "Command" = "8:&Open"
+                    "Verb" = "8:open"
+                    "Arguments" = "8:\"%1\""
+                    "Order" = "3:0"
+                    }
+                }
+            }
         }
         "Folder"
         {
@@ -103,6 +220,17 @@
             "Property" = "8:ProgramMenuFolder"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_7E81BB81459340A081E73321E334D7D2"
+                    {
+                    "Name" = "8:Board Game Arena"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_11399AF007F44D0BB8BBB09B17DAF07B"
+                        "Folders"
+                        {
+                        }
+                    }
                 }
             }
             "{1525181F-901A-416C-8A58-119130FE478E}:_9845EEAD0E514B9D80BC6B5DF8013614"
@@ -112,6 +240,17 @@
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Property" = "8:DesktopFolder"
+                "Folders"
+                {
+                }
+            }
+            "{1525181F-901A-416C-8A58-119130FE478E}:_B125708445674103A9CBBC01F3829F3D"
+            {
+            "Name" = "8:#1914"
+            "AlwaysCreate" = "11:FALSE"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Property" = "8:SystemFolder"
                 "Folders"
                 {
                 }
@@ -143,26 +282,26 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:BGASetup"
-        "ProductCode" = "8:{F57529B7-3AA5-4EEE-A08F-13A1A222CDF9}"
-        "PackageCode" = "8:{4D09AFF3-3549-4A80-80D1-376AB92839E0}"
+        "ProductName" = "8:Board Game Arena"
+        "ProductCode" = "8:{A00B5285-2B59-4D61-90EF-9741CE4FBD4F}"
+        "PackageCode" = "8:{9A84D7CC-6CE6-4980-A980-DF3821A5B63D}"
         "UpgradeCode" = "8:{8E283097-8734-401D-A22E-8C1F3F7793D6}"
         "RestartWWWService" = "11:FALSE"
-        "RemovePreviousVersions" = "11:FALSE"
+        "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
-        "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.0.0"
-        "Manufacturer" = "8:TCG"
+        "InstallAllUsers" = "11:TRUE"
+        "ProductVersion" = "8:0.9.0"
+        "Manufacturer" = "8:BGA"
         "ARPHELPTELEPHONE" = "8:"
-        "ARPHELPLINK" = "8:"
-        "Title" = "8:BGASetup"
+        "ARPHELPLINK" = "8:http://boardgamearena.sourceforge.net/help/"
+        "Title" = "8:The Board Game Arena Installer"
         "Subject" = "8:"
-        "ARPCONTACT" = "8:TCG"
+        "ARPCONTACT" = "8:Robert Buccigrossi"
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:"
-        "ARPURLINFOABOUT" = "8:"
-        "ARPPRODUCTICON" = "8:"
-        "ARPIconIndex" = "3:0"
+        "ARPCOMMENTS" = "8:the Board Game Arena"
+        "ARPURLINFOABOUT" = "8:http://boardgamearena.sourceforge.net/"
+        "ARPPRODUCTICON" = "8:_1C60F72D640B4296961763A4E6FDE623"
+        "ARPIconIndex" = "3:32512"
         "SearchPath" = "8:"
         "UseSystemSearchPath" = "11:TRUE"
         "TargetPlatform" = "3:0"
@@ -266,16 +405,58 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_208F23CC4793403F8ED10BEB6CCAE825"
             {
-            "Name" = "8:BoardGameArena"
+            "Name" = "8:Board Game Arena"
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
+            "IconIndex" = "3:32512"
             "Transitive" = "11:FALSE"
             "Target" = "8:_1C60F72D640B4296961763A4E6FDE623"
             "Folder" = "8:_9845EEAD0E514B9D80BC6B5DF8013614"
             "WorkingFolder" = "8:_B3F79C2EB13B49ABBAB3532380A8492E"
-            "Icon" = "8:"
+            "Icon" = "8:_1C60F72D640B4296961763A4E6FDE623"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_38B71C1AD01441EBB7E53605360ECEEB"
+            {
+            "Name" = "8:Sample Deck.bga"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:32512"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_7F39C68A66E042C9945EC87D3F9815C9"
+            "Folder" = "8:_7E81BB81459340A081E73321E334D7D2"
+            "WorkingFolder" = "8:_B3F79C2EB13B49ABBAB3532380A8492E"
+            "Icon" = "8:_1C60F72D640B4296961763A4E6FDE623"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_87C26C8378EE48B08CF4A984400C252B"
+            {
+            "Name" = "8:Uninstall"
+            "Arguments" = "8:/x [ProductCode]"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:1"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_CD65892775DE4ABA8185DA37B3028A92"
+            "Folder" = "8:_7E81BB81459340A081E73321E334D7D2"
+            "WorkingFolder" = "8:_B125708445674103A9CBBC01F3829F3D"
+            "Icon" = "8:_CD65892775DE4ABA8185DA37B3028A92"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_DFB5CAC7677E4FDDBBA0AEEAFC382617"
+            {
+            "Name" = "8:Board Game Arena"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:32512"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_1C60F72D640B4296961763A4E6FDE623"
+            "Folder" = "8:_7E81BB81459340A081E73321E334D7D2"
+            "WorkingFolder" = "8:_B3F79C2EB13B49ABBAB3532380A8492E"
+            "Icon" = "8:_1C60F72D640B4296961763A4E6FDE623"
             "Feature" = "8:"
             }
         }

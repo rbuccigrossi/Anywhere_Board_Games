@@ -98,49 +98,66 @@ namespace BoardGameArena
 
         void DropEventOccurred(object sender, DragEventArgs e)
         {
-            if (!e.Data.GetDataPresent(DataFormats.FileDrop)){
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
                 return;
             }
-            string [] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-            try
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            // First see if it is a board:
+            if ((files.Length == 1) && (files[0].EndsWith(".bga")))
             {
-                Piece p = new Piece();
-                foreach (string filename in files)
+                try
                 {
-                    string f = System.IO.Path.GetFileName(filename);
-                    // Attempt to load the file into a bitmap (to verify it is valid)
-                    BitmapImage myBitmapImage = new BitmapImage();
-
-                    myBitmapImage.BeginInit();
-                    myBitmapImage.StreamSource = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                    myBitmapImage.EndInit();
-
-                    FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
-                    byte[] image_data = new byte[fs.Length];
-                    fs.Read(image_data, 0, (int)fs.Length);
-                    PieceImage pi = new PieceImage(f, image_data);
-                    if (World.image_library.ItemFromKey(pi.Key) != null)
-                    {
-                        pi = World.image_library.ItemFromKey(pi.Key);
-                    }
-                    else
-                    {
-                        World.image_library.Add(pi);
-                    }
-                    p.Sides.Add(pi);
-                    if (p.Name == null)
-                    {
-                        p.Name = f;
-                    }
+                    ReadBoardFromFile(files[0]);
                 }
-                World.piece_library.Add(p);
-                OnBoardPiece obp = new OnBoardPiece(p);
-                World.on_board_pieces.Add(obp);
-                GamePieceControl gpc = AddControlForPiece(obp);
-                gpc.Location = e.GetPosition(BoardPanel);
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error reading board: " + ex.Message);
+                }
             }
-            catch (Exception ex){
-                MessageBox.Show("Error creating piece: " + ex.Message);
+            else
+            {
+                try
+                {
+                    Piece p = new Piece();
+                    foreach (string filename in files)
+                    {
+                        string f = System.IO.Path.GetFileName(filename);
+                        // Attempt to load the file into a bitmap (to verify it is valid)
+                        BitmapImage myBitmapImage = new BitmapImage();
+
+                        myBitmapImage.BeginInit();
+                        myBitmapImage.StreamSource = new FileStream(filename, FileMode.Open, FileAccess.Read);
+                        myBitmapImage.EndInit();
+
+                        FileStream fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
+                        byte[] image_data = new byte[fs.Length];
+                        fs.Read(image_data, 0, (int)fs.Length);
+                        PieceImage pi = new PieceImage(f, image_data);
+                        if (World.image_library.ItemFromKey(pi.Key) != null)
+                        {
+                            pi = World.image_library.ItemFromKey(pi.Key);
+                        }
+                        else
+                        {
+                            World.image_library.Add(pi);
+                        }
+                        p.Sides.Add(pi);
+                        if (p.Name == null)
+                        {
+                            p.Name = f;
+                        }
+                    }
+                    World.piece_library.Add(p);
+                    OnBoardPiece obp = new OnBoardPiece(p);
+                    World.on_board_pieces.Add(obp);
+                    GamePieceControl gpc = AddControlForPiece(obp);
+                    gpc.Location = e.GetPosition(BoardPanel);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error creating piece: " + ex.Message);
+                }
             }
         }
 
@@ -209,6 +226,20 @@ namespace BoardGameArena
             mouse_pointers.Add(MousePointer14);
             mouse_pointers.Add(MousePointer15);
             mouse_pointers.Add(MousePointer16);
+
+            // See if we were called with a board on the command-line
+            if (Application.Current.Properties["PrimaryArgument"] != null)
+            {
+                string fname = Application.Current.Properties["PrimaryArgument"].ToString();
+                try
+                {
+                    ReadBoardFromFile(fname);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error reading board: " + ex.Message);
+                }
+            }
         }
 
         /// <summary>
@@ -1217,22 +1248,28 @@ namespace BoardGameArena
             // Process open file dialog box results
             if (result == true)
             {
-                ClearWorld();
-                try
-                {
-                    World.LoadWorld(dlg.FileName);
-                    foreach (OnBoardPiece obp in World.on_board_pieces)
-                    {
-                        AddControlForPiece(obp);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error reading board file: " + ex.Message);
-                }
+                string filename = dlg.FileName;
+                ReadBoardFromFile(filename);
             }
             // Restore multi mouse
             use_multi_mouse = multi_mouse_state;
+        }
+
+        private void ReadBoardFromFile(string filename)
+        {
+            ClearWorld();
+            try
+            {
+                World.LoadWorld(filename);
+                foreach (OnBoardPiece obp in World.on_board_pieces)
+                {
+                    AddControlForPiece(obp);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error reading board file: " + ex.Message);
+            }
         }
 
         private void SaveBoardCommand(object sender, RoutedEventArgs e)
