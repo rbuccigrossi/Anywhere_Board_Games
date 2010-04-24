@@ -153,6 +153,8 @@ namespace BoardGameArena
             set
             {
                 _piece.Location = value;
+                if (value.X < 0) value.X = 0;
+                if (value.Y < 0) value.Y = 0;
                 Margin = new Thickness(value.X, value.Y, 0, 0);
             }
         }
