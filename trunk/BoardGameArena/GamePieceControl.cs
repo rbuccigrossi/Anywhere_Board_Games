@@ -141,7 +141,7 @@ namespace BoardGameArena
         }
 
         /// <summary>
-        /// Gets/sets the location of the piece in screen coordinates
+        /// Gets/sets the location of the piece in Board coordinates
         /// </summary>
         public Point Location 
         { 

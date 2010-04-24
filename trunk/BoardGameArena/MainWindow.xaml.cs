@@ -91,9 +91,16 @@ namespace BoardGameArena
             raw_mouse_input.RawMouseButtonDown += new RawMouseButtonDownEventHandler(RawMouseButtonDown);
             raw_mouse_input.RawMouseButtonUp += new RawMouseButtonUpEventHandler(RawMouseButtonUp);
 
+            MousePanel.SizeChanged += new SizeChangedEventHandler(MousePanel_SizeChanged);
+
             this.AllowDrop = true;
             this.Drop += new DragEventHandler(DropEventOccurred);
 
+        }
+
+        void MousePanel_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ZoomToVisiblePieces();
         }
 
         void DropEventOccurred(object sender, DragEventArgs e)
@@ -1287,6 +1294,18 @@ namespace BoardGameArena
 
         void ZoomToVisiblePieces()
         {
+            Point bounds = CalculatePiecesBounds();
+            double zoom_x = 1.0, zoom_y = 1.0, zoom = 1.0;
+            if (bounds.X > 0) zoom_x = MousePanel.ActualWidth / bounds.X;
+            if (bounds.Y > 0) zoom_y = MousePanel.ActualHeight / bounds.Y;
+            zoom = zoom_y;
+            if (zoom_x < zoom) zoom = zoom_x;
+            if (zoom > 1) zoom = 1;
+            BoardPanel.Zoom = zoom;
+        }
+
+        private Point CalculatePiecesBounds()
+        {
             Point bounds = new Point(0, 0);
             double x, y;
             GamePieceControl piece;
@@ -1295,20 +1314,13 @@ namespace BoardGameArena
                 piece = uie as GamePieceControl;
                 if (piece != null)
                 {
-                    // TODO: we should use the actual hight, but it isn't rendered yet
-                    x = piece.Source.Width / 2 + piece.Location.X;
-                    y = piece.Source.Height / 2 + piece.Location.Y;
+                    x = ((piece.ActualWidth > 0) ? (piece.ActualWidth / 2) : (piece.Source.Width / 2)) + piece.Location.X;
+                    y = ((piece.ActualHeight > 0) ? (piece.ActualHeight / 2) : (piece.Source.Height / 2)) + piece.Location.Y;
                     if (bounds.X < x) bounds.X = x;
                     if (bounds.Y < y) bounds.Y = y;
                 }
             }
-            double zoom_x = 1.0, zoom_y = 1.0, zoom = 1.0;
-            if (bounds.X > 0) zoom_x = MousePanel.ActualWidth / bounds.X;
-            if (bounds.Y > 0) zoom_y = MousePanel.ActualHeight / bounds.Y;
-            zoom = zoom_y;
-            if (zoom_x < zoom) zoom = zoom_x;
-            if (zoom > 1) zoom = 1;
-            BoardPanel.Zoom = zoom;
+            return bounds;
         }
 
         private void SaveBoardCommand(object sender, RoutedEventArgs e)
