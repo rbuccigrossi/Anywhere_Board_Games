@@ -13,15 +13,7 @@ $action = isset($_REQUEST["action"]) ? $_REQUEST["action"] : "read";
 
 if ($action == "read") {
 	$last_modify = isset($_REQUEST["last_modify"]) ? $_REQUEST["last_modify"] : "-1";
-	$file = @fopen($filename, "r");
-	if ($file) {
-		flock($file, LOCK_SH);
-	}
-	$world = read_world_file($filename);
-	if ($file) {
-		flock($file, LOCK_UN);
-		fclose($file);
-	}
+	$world = &read_world($filename);
 	$update = &get_world_update($world, $last_modify);
 	echo "\n\n";
 	echo json_encode(array("update" => $update,
@@ -35,10 +27,43 @@ if ($action == "read") {
 	if (json_last_error() != JSON_ERROR_NONE) {
 		exit_json_error("Error parsing update value");
 	}
+	if (!update_world($filename,$update)){
+		exit_json_error("Unable to open $filename");
+	}
+	// TODO: Remove debug
+	echo "\n\n Update = ";
+	print_r($update);
+	echo "<P>\n\n World = ";
+	$world = &read_world($filename);
+	print_r($world);
+	exit();
+} else if (($action == "create") || ($action == "delete")) {
+	// Read and update create a world if not there so just delete it
+	@unlink($filename);
+	exit();
+} else {
+	exit_json_error("Unknown action");
+	exit();
+}
+
+function &read_world($filename) {
+	$file = @fopen($filename, "r");
+	if ($file) {
+		flock($file, LOCK_SH);
+	}
+	$world = read_world_file($filename);
+	if ($file) {
+		flock($file, LOCK_UN);
+		fclose($file);
+	}
+	return ($world);
+}
+
+function update_world($filename, &$update){
 	// Lock and load the world :)
 	$file = @fopen($filename, "c+");
 	if (!$file) {
-		exit_json_error("Unable to open $filename");
+		return (0);
 	}
 	flock($file, LOCK_EX);
 	$world = read_world_file($filename);
@@ -46,13 +71,8 @@ if ($action == "read") {
 	ftruncate($file, 0);
 	fwrite($file, json_encode($world));
 	flock($file, LOCK_UN);
-	echo "\n\n Update = ";
-	print_r($update);
-	echo "<P>\n\n";
-	print_r($world);
-	exit();
-} else {
-	exit_json_error("Unknown action");
+	fclose($file);
+	return (1);
 }
 
 function exit_json_error($error_text) {
