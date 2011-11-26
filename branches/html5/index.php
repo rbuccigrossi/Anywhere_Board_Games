@@ -1,5 +1,4 @@
 <?php
-require_once("world.php");
 
 $test = array ( "a" => 
 				array ( "x" => 2,
