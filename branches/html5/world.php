@@ -24,9 +24,8 @@ if ($action == "read") {
 	}
 	$update = &get_world_update($world, $last_modify);
 	echo "\n\n";
-	echo json_encode($update);
-	echo "<P>";
-	echo json_encode($world);
+	echo json_encode(array("update" => $update,
+		"last_modify" => $world["max_assigned"]));
 	exit();
 } else if ($action == "update") {
 	if (!isset($_REQUEST["update"])) {
@@ -106,19 +105,20 @@ function world_node_update(&$world_node, &$update, $ts) {
 	}
 }
 
-function &get_world_update(&$world_node, $ts) {
+function &get_world_update(&$world_node, $ts, $new = 0) {
 	if (!is_array($world_node["value"])){
 		$update = $world_node["value"];
 	} else {
 		$update = array();
-		// If newly assigned, send the __new directive
-		if ($world_node["assigned"] >= $ts) {
+		// If newly assigned (and parent not new), send the __new directive
+		if (($world_node["assigned"] > $ts) && !$new) {
 			$update["__new"] = 1;
+			$new = 1;
 		}
 		$children = $world_node["value"];
 		foreach ($children as $key => $child){
-			if ($child["max_assigned"] >= $ts) {
-				$update[$key] = &get_world_update($child,$ts);
+			if ($child["max_assigned"] > $ts) {
+				$update[$key] = &get_world_update($child,$ts,$new);
 			}
 		}
 	}
