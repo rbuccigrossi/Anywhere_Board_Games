@@ -150,15 +150,63 @@ $(document).ready(function() {
   $(piece).draggable({ stack: ".draggable", scroll: false});
 */
     $(".piece").bind({mouseenter: piece_mouseenter, mouseleave: piece_mouseleave,
-		      mousedown: piece_mousedown});
+		      mousedown: piece_mousedown, contextmenu: function(){return false;}
+			  });
     $(".piece_rotate").bind({mousedown: rotate_mousedown});
     $(document).bind({mousemove: board_mousemove, mouseup: board_mouseup});
+});
+
+/* CONTEXT MENU FUNCTIONALITY */
+$.fn.setUpContextMenu = function() {
+	$(this).dialog({
+		autoOpen: false,
+		modal: true,
+		resizable: false,
+		width: 'auto',
+		height: 'auto',
+		minHeight: 'auto',
+		minWidth: 'auto'
+	});
+
+	return $(this);
+};
+
+$.fn.openContextMenu = function(jsEvent) {
+	var menu = $(this);
+	menu.css('padding', 0);
+	menu.dialog('option','position',[jsEvent.clientX, jsEvent.clientY]);
+	menu.bind('dialogopen', function(event, ui) {
+		$('.ui-dialog-titlebar').hide();
+		$('.ui-widget-overlay').unbind('click');
+		$('.ui-widget-overlay').css('opacity',0);
+		$('.ui-widget-overlay').click(function() {
+			menu.dialog('close');
+		});
+	});
+	menu.dialog('open');
+
+	return menu;
+};
+
+$(document).ready(function() {
+	$('.ContextMenu a').css('display','block').button();
+	$('.ContextMenu').setUpContextMenu();
+	$(document).bind('contextmenu', function(e) {
+		$('#background_context_menu').openContextMenu(e);
+		return false;
+	});
 });
 </script>
 </head>
 <body style="background-color:#A0A0A0;">
 <!-- scrolling="no" -->
 <div id="info"></div>
+<div id="background_context_menu" class="ContextMenu">
+	<a href="javascript:void(0);" onClick="$('#background_context_menu').dialog('close'); alert('new piece');" id="new_piece">New Piece</a>
+	<a href="javascript:void(0)" onClick="$('#background_context_menu').dialog('close');" id="option2">Option 2</a>
+	<a href="javascript:void(0)" id="option3">Option 3</a>
+	<a href="javascript:void(0)" id="option4">Option 4</a>
+</div>
 <span class="piece" style="position: absolute; left: 50px; top: 50px;">
   <img class="piece_face" src="piece.png">
   <img class="piece_move" style="position:absolute; opacity: 0;" src="transform-move.png">
