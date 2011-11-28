@@ -17,6 +17,7 @@
 			var drag_piece = false;
 			var drag_offset_x = 0;
 			var drag_offset_y = 0;
+			var piece_idx = 0;
 	
 			function piece_mouseenter(event){
 				var piece_move = $(this).find(".piece_move");
@@ -139,18 +140,23 @@
 		  }
 	  }
 			 */
-	
+
+			 function board_add_piece(img_url){
+				 var new_id = "piece_" + piece_idx;
+				 piece_idx ++;
+				 var piece = $('<span class="piece" id="' + new_id + '" style="position: absolute; left: 50px; top: 50px;">' +
+					 '<img class="piece_face" src="' + img_url + '">' +
+					 '<img class="piece_move" style="position:absolute; opacity: 0;" src="transform-move.png">' +
+					 '<img class="piece_rotate" style="position:absolute; opacity: 0;" src="transform-rotate.png">' +
+					 '</span>');
+				 $("#board").append(piece);
+				 piece.bind({mouseenter: piece_mouseenter, mouseleave: piece_mouseleave,
+					 mousedown: piece_mousedown, contextmenu: function(){return false;}
+				 });
+				 piece.find(".piece_rotate").bind({mousedown: rotate_mousedown});
+			 }
+
 			$(document).ready(function() {
-				/*
-		$(".draggable").draggable({ stack: ".draggable", scroll: false});
-		$(".draggable")[0].oncontextmenu = function() {return false;}
-		
-		var piece = document.createElement('img');
-		piece.setAttribute('src', 'shape03.png');
-		piece.setAttribute('class', 'draggable');
-		$("#board").append(piece);
-		$(piece).draggable({ stack: ".draggable", scroll: false});
-				 */
 				$(".piece").bind({mouseenter: piece_mouseenter, mouseleave: piece_mouseleave,
 					mousedown: piece_mousedown, contextmenu: function(){return false;}
 				});
@@ -214,7 +220,13 @@
 					modal: true,
 					buttons: {
 						"Create a piece": function() {
-							$( this ).dialog( "close" );
+							var image_url = $("#create_piece_url").val();
+							if (!image_url){
+								alert("Please enter an image URL");
+							} else {
+								board_add_piece(image_url);
+								$( this ).dialog( "close" );
+							}
 						},
 						Cancel: function() {
 							$( this ).dialog( "close" );
@@ -230,10 +242,9 @@
 			.bga_dialog label, .bga_dialog input { display:block; }
 			.bga_dialog input.text { margin-bottom:12px; width:95%; padding: .4em; }
 			.bga_dialog fieldset { padding:0; border:0; margin-top:25px; }
-
 		</style>
 	</head>
-	<body style="background-color:#A0A0A0;">
+	<body id="board" style="background-color:#A0A0A0;">
 		<!-- scrolling="no" -->
 		<div id="info"></div>
 		<div id="background_context_menu" class="ContextMenu">
@@ -247,7 +258,7 @@
 			<form>
 				<fieldset>
 					<label for="url">Image URL</label>
-					<input type="text" name="url" id="url" class="text ui-widget-content ui-corner-all" />
+					<input type="text" name="url" id="create_piece_url" class="text ui-widget-content ui-corner-all" />
 				</fieldset>
 			</form>
 		</div>
