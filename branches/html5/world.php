@@ -10,10 +10,28 @@
  */
 $filename = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "bgaworld.json";
 $action = isset($_REQUEST["action"]) ? $_REQUEST["action"] : "read";
+$max_wait_time = 20; // Max time we'll wait for an update
+$wait_increment = 0.05; // wait in increments of 50th of a second
 
 if ($action == "read") {
+	// TODO: Reset last_modify based upon read value
+	// TODO: Wait until file is updated
 	$last_modify = isset($_REQUEST["last_modify"]) ? $_REQUEST["last_modify"] : "-1";
+	$mtime = get_world_mtime($filename);
 	$world = &read_world($filename);
+	// Check to see if we need to wait for an update
+	if ($last_modify >= $world["max_assigned"]){
+		$last_modify = $world["max_assigned"];
+		// Semi-busy wait, that times out after 20 seconds
+		$wait_time = 0;
+		do {
+			usleep($wait_increment * 1000000); // Wait 0.05 seconds
+			$wait_time += $wait_increment;
+			clearstatcache();
+			$new_mtime = get_world_mtime($filename);
+		} while (($new_mtime == $mtime) && ($wait_time < $max_wait_time));
+		$world = &read_world($filename);
+	}
 	$update = &get_world_update($world, $last_modify);
 	echo "\n\n";
 	echo json_encode(array("update" => $update,
@@ -30,12 +48,7 @@ if ($action == "read") {
 	if (!update_world($filename,$update)){
 		exit_json_error("Unable to open $filename");
 	}
-	// TODO: Remove debug
-	echo "\n\n Update = ";
-	print_r($update);
-	echo "<P>\n\n World = ";
-	$world = &read_world($filename);
-	print_r($world);
+	echo json_encode(array('success' => 'true'));
 	exit();
 } else if (($action == "create") || ($action == "delete")) {
 	// Read and update create a world if not there so just delete it
@@ -44,6 +57,11 @@ if ($action == "read") {
 } else {
 	exit_json_error("Unknown action");
 	exit();
+}
+
+
+function get_world_mtime($filename){
+	return (filemtime($filename));
 }
 
 function &read_world($filename) {
@@ -76,7 +94,6 @@ function update_world($filename, &$update){
 }
 
 function exit_json_error($error_text) {
-	echo "\n\n";
 	echo json_encode(array("error" => $error_text));
 	exit();
 }
