@@ -2,9 +2,9 @@
 <html>
 	<head>
 		<title>GBA</title>
-		<link href="css/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
-		<script src="js/jquery.min.js" type="text/javascript"></script>
-		<script src="js/jquery-ui.min.js" type="text/javascript"></script>
+		<link href="../css/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+		<script src="../js/jquery.min.js" type="text/javascript"></script>
+		<script src="../js/jquery-ui.min.js" type="text/javascript"></script>
 		<style type="text/css">
 			#draggable { width: 100px; height: 70px; background: silver; }
 		</style>
@@ -146,8 +146,8 @@
 				 piece_idx ++;
 				 var piece = $('<span class="piece" id="' + new_id + '" style="position: absolute; left: 50px; top: 50px;">' +
 					 '<img class="piece_face" src="' + img_url + '">' +
-					 '<img class="piece_move" style="position:absolute; opacity: 0;" src="transform-move.png">' +
-					 '<img class="piece_rotate" style="position:absolute; opacity: 0;" src="transform-rotate.png">' +
+					 '<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
+					 '<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
 					 '</span>');
 				 $("#board").append(piece);
 				 piece.bind({mouseenter: piece_mouseenter, mouseleave: piece_mouseleave,
@@ -263,14 +263,14 @@
 			</form>
 		</div>
 		<span class="piece" style="position: absolute; left: 50px; top: 50px;">
-			<img class="piece_face" src="piece.png">
-			<img class="piece_move" style="position:absolute; opacity: 0;" src="transform-move.png">
-			<img class="piece_rotate" style="position:absolute; opacity: 0;" src="transform-rotate.png">
+			<img class="piece_face" src="../images/piece.png">
+			<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">
+			<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">
 		</span>
 		<span class="piece" style="position: absolute; left: 250px; top: 50px;">
-			<img class="piece_face" src="shape01.png">
-			<img class="piece_move" style="position:absolute; opacity: 0;" src="transform-move.png">
-			<img class="piece_rotate" style="position:absolute; opacity: 0;" src="transform-rotate.png">
+			<img class="piece_face" src="../images/shape01.png">
+			<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">
+			<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">
 		</span>
 	</body>
 </html>
