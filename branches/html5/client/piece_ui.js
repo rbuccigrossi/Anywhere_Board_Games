@@ -31,6 +31,7 @@ function piece_hide_action_icons(piece){
 }
 
 function set_piece_location(piece, position){
+	world_move_piece(piece.world_piece_index,position.left,position.top);
 	$(piece).offset(position);
 }
 
@@ -120,6 +121,8 @@ function board_add_piece(img_url){
 		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
 		'</span>');
 	$("#board").append(piece);
+	// Record the piece index
+	piece.get(0).world_piece_index = piece_idx;
 	piece.bind({
 		mouseenter: function() {piece_show_action_icons(this);}, 
 		mouseleave: function() {piece_hide_action_icons(this);},
