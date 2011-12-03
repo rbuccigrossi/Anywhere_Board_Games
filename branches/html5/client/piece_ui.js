@@ -38,18 +38,35 @@ function piece_start_drag(piece, x, y){
 	};
 	var board = $(document); // The #board object may not extend to the whole area
 	var drag_function = function (event) {
-		var position = {
-			left: event.pageX - position_on_piece.x,
-			top: event.pageY - position_on_piece.y
+		event.preventDefault();
+		var pageX = event.pageX;
+		var pageY = event.pageY;
+		if (event.touches && (event.touches.length > 0)){
+			pageX = event.touches[0].pageX;
+			pageY = event.touches[0].pageY;
 		}
-		$(piece).offset(position);		
+		var position = {
+			left: pageX - position_on_piece.x,
+			top: pageY - position_on_piece.y
+		}
+		$(piece).offset(position);
+		return(false);
 	};
-	var stop_drag_function = function () {
+	var stop_drag_function = function (event) {
+		event.preventDefault();
 		board.unbind("mousemove.drag");
 		board.unbind("mouseup.drag");
+		board.get(0).removeEventListener("touchmove", drag_function, false)
+		board.get(0).removeEventListener("touchend",stop_drag_function, false);
+		board.get(0).removeEventListener("touchcancel",stop_drag_function, false);
+		return(false);
 	};
 	board.bind("mousemove.drag",drag_function);
 	board.bind("mouseup.drag",stop_drag_function);
+	board.get(0).addEventListener("touchmove",drag_function,false);
+	board.get(0).addEventListener("touchend",stop_drag_function,false);
+	board.get(0).addEventListener("touchcancel",stop_drag_function,false);
+	return(false);
 }
 
 function set_piece_orientation(item, degrees){
@@ -149,15 +166,15 @@ function board_add_piece(img_url){
 		},
 		contextmenu: function(){return false;}
 	});
-	/*
-	piece.get(0).addEventListener("touchstart",function(){
-		alert("hi");
-	});
-	*/
+	piece.get(0).addEventListener("touchstart",function(event){
+		event.preventDefault();
+		piece_start_drag(piece.get(0),event.touches[0].pageX,event.touches[0].pageY);
+		return false;
+	},false);
 	piece.find(".piece_rotate").bind({
 		mousedown: function(event) { 
 			event.preventDefault();  
-			piece_start_rotate(piece.get(0),event.pageX,event.pageY);
+						piece_start_rotate(piece.get(0),event.pageX,event.pageY);
 			return false; 
 		}
 	});
