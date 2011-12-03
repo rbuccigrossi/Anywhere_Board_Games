@@ -1,12 +1,3 @@
-
-var piece_rotate = false;
-var in_drag = false;
-var in_rotate = false;
-var rotate_orig_orientation = 0;
-var drag_piece = false;
-var drag_offset_x = 0;
-var drag_offset_y = 0;
-var piece_idx = 0;
 	
 function piece_show_action_icons(piece){
 	var piece_move = $(piece).find(".piece_move");
@@ -38,78 +29,76 @@ function piece_hide_action_icons(piece){
 		opacity:0
 	},200);
 }
-	
+
 function piece_start_drag(piece, x, y){
-	in_drag = true;
-	drag_piece = piece;
-	var position = $(drag_piece).offset();
-	drag_offset_x = x - position.left;
-	drag_offset_y = y - position.top;
-}
-	
-function rotate_mousedown(event){
-	// START DRAG
-	event.preventDefault();
-	in_rotate = true;
-	drag_piece = $(this).parent().get(0);
-	if (!drag_piece.orientation){
-		drag_piece.orientation = 0;
-	}
-	rotate_orig_orientation = drag_piece.orientation;
-	var piece_face = $(drag_piece).find(".piece_face");
-	var position = {
-		left: drag_piece.offsetLeft + $(piece_face).width()/2,
-		top: drag_piece.offsetTop + $(piece_face).height()/2
-		};
-	drag_offset_x = event.pageX - position.left;
-	drag_offset_y = event.pageY - position.top;
-	return false;
-}
-	
-function board_mousemove(event){
-	var position;
-	if (in_drag){
+	var piece_offset = $(piece).offset();
+	var position_on_piece = {
+		x: (x - piece_offset.left),
+		y: (y - piece_offset.top)
+	};
+	var board = $(document); // The #board object may not extend to the whole area
+	var drag_function = function (event) {
 		var position = {
-			left: event.pageX - drag_offset_x,
-			top: event.pageY - drag_offset_y
-			}
-		$(drag_piece).offset(position);
-	}
-	if (in_rotate){
-		var piece_face = $(drag_piece).find(".piece_face");
-		var position = {
-			left: drag_piece.offsetLeft + $(piece_face).width()/2,
-			top: drag_piece.offsetTop + $(piece_face).height()/2
-			};
-		var new_drag_offset_x = event.pageX - position.left;
-		var new_drag_offset_y = event.pageY - position.top;
-		if (new_drag_offset_x != 0 || new_drag_offset_y != 0){
-			drag_piece.orientation = rotate_orig_orientation
-			+ 360.0*(Math.atan2(new_drag_offset_x,-new_drag_offset_y)
-				- Math.atan2(drag_offset_x,-drag_offset_y))/(2*3.14159);
+			left: event.pageX - position_on_piece.x,
+			top: event.pageY - position_on_piece.y
 		}
-		drag_piece.orientation = ((Math.round(drag_piece.orientation / 5) * 5) + 360) % 360;
-		var r = "rotate(" + drag_piece.orientation + "deg)";
-		$("#info").html("" + position.left + ", " + position.top + " - " + new_drag_offset_x
-			+  ", " + new_drag_offset_y + " ... "
-			+  Math.atan2(new_drag_offset_x,new_drag_offset_y) + " ... "
-			+ Math.atan2(drag_offset_x,drag_offset_y) + " ... " + r);
-		$(piece_face).css("transform",r);
-		$(piece_face).css("-webkit-transform",r);
-		$(piece_face).css("-moz-transform",r);
-		$(piece_face).css("-ms-transform",r);
-	}
+		$(piece).offset(position);		
+	};
+	var stop_drag_function = function () {
+		board.unbind("mousemove.drag");
+		board.unbind("mouseup.drag");
+	};
+	board.bind("mousemove.drag",drag_function);
+	board.bind("mouseup.drag",stop_drag_function);
 }
-	
-function board_mouseup(event){
-	if (in_drag){
-		in_drag = false;
-		drag_piece = false;
+
+function set_piece_orientation(item, degrees){
+	var r = "rotate(" + degrees + "deg)";
+	$(item).css("transform",r);
+	$(item).css("-webkit-transform",r);
+	$(item).css("-moz-transform",r);
+	$(item).css("-ms-transform",r);
+}
+
+function piece_start_rotate(piece, x, y){
+	// Initialize the object orientation if not set
+	if (!piece.orientation){
+		piece.orientation = 0;
 	}
-	if (in_rotate){
-		in_rotate = false;
-		drag_piece = false;
+	var rotate_orig_orientation = piece.orientation;
+	var piece_face = $(piece).find(".piece_face");
+	var piece_center = {
+		left: piece.offsetLeft + $(piece_face).width()/2,
+		top: piece.offsetTop + $(piece_face).height()/2
+		};
+	var original_position_from_center = {
+		x: (x - piece_center.left),
+		y: (y - piece_center.top)
+	};
+	var board = $(document); // The #board object may not extend to the whole area
+	var drag_function = function (event) {
+		var piece_center = {
+			left: piece.offsetLeft + $(piece_face).width()/2,
+			top: piece.offsetTop + $(piece_face).height()/2
+		};
+		var new_position_from_center = {
+			x: (event.pageX - piece_center.left),
+			y: (event.pageY - piece_center.top)
+		};
+		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
+			piece.orientation = rotate_orig_orientation
+			+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
+				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
+		}
+		piece.orientation = ((Math.round(piece.orientation / 5) * 5) + 360) % 360;
+		set_piece_orientation(piece_face,piece.orientation);
 	}
+	var stop_drag_function = function () {
+		board.unbind("mousemove.rotatedrag");
+		board.unbind("mouseup.rotatedrag");
+	};
+	board.bind("mousemove.rotatedrag",drag_function);
+	board.bind("mouseup.rotatedrag",stop_drag_function);
 }
 	
 /*
@@ -142,8 +131,8 @@ function board_mouseup(event){
 			 */
 
 function board_add_piece(img_url){
-	var new_id = "piece_" + piece_idx;
-	piece_idx ++;
+	var new_id = "piece_" + board_add_piece.piece_idx;
+	board_add_piece.piece_idx ++;
 	var piece = $('<span class="piece" id="' + new_id + '" style="position: absolute; left: 50px; top: 50px;">' +
 		'<img class="piece_face" src="' + img_url + '">' +
 		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
@@ -151,28 +140,33 @@ function board_add_piece(img_url){
 		'</span>');
 	$("#board").append(piece);
 	piece.bind({
-		mouseenter: function() { piece_show_action_icons(this); }, 
-		mouseleave: function() { piece_hide_action_icons(this); },
+		mouseenter: function() {piece_show_action_icons(this);}, 
+		mouseleave: function() {piece_hide_action_icons(this);},
 		mousedown: function(event) { 
 			event.preventDefault();  
 			piece_start_drag(this,event.pageX,event.pageY);
 			return false; 
 		},
-		contextmenu: function(){ return false; }
+		contextmenu: function(){return false;}
 	});
+	/*
+	piece.get(0).addEventListener("touchstart",function(){
+		alert("hi");
+	});
+	*/
 	piece.find(".piece_rotate").bind({
-		mousedown: rotate_mousedown
+		mousedown: function(event) { 
+			event.preventDefault();  
+			piece_start_rotate(piece.get(0),event.pageX,event.pageY);
+			return false; 
+		}
 	});
 }
+// Static variable used to hold the index of the current piece
+board_add_piece.piece_idx = 0;
 
 $(document).ready(function() {
 	board_add_piece("../images/piece.png");
 	board_add_piece("../images/shape01.png");
-	$(document).bind({
-		mousemove: board_mousemove, 
-		mouseup: board_mouseup
-	});
 });
 	
-
-
