@@ -13,7 +13,7 @@ $action = isset($_REQUEST["action"]) ? $_REQUEST["action"] : "read";
 $max_wait_time = 20; // Max time we'll wait for an update
 $wait_increment = 0.05; // wait in increments of 50th of a second
 
-if ($action == "read") {
+if ($action === "read") {
 	// TODO: Reset last_modify based upon read value
 	// TODO: Wait until file is updated
 	$last_modify = isset($_REQUEST["last_modify"]) ? $_REQUEST["last_modify"] : "-1";
@@ -37,7 +37,7 @@ if ($action == "read") {
 	echo json_encode(array("update" => $update,
 		"last_modify" => $world["max_assigned"]));
 	exit();
-} else if ($action == "update") {
+} else if ($action === "update") {
 	if (!isset($_REQUEST["update"])) {
 		exit_json_error("Must set update value");
 	}
@@ -50,9 +50,10 @@ if ($action == "read") {
 	}
 	echo json_encode(array('success' => 'true'));
 	exit();
-} else if (($action == "create") || ($action == "delete")) {
+} else if (($action === "create") || ($action === "delete")) {
 	// Read and update create a world if not there so just delete it
 	@unlink($filename);
+	echo json_encode(array('success' => 'true'));
 	exit();
 } else {
 	exit_json_error("Unknown action");
@@ -129,7 +130,7 @@ function world_node_update(&$world_node, &$update, $ts) {
 		$world_node["max_assigned"] = $ts;
 		$children = &$world_node["value"];
 		foreach ($update as $key => &$value) {
-			if ($key == "__new") {
+			if ($key === "__new") {
 				continue; // Don't copy __new directive
 			}
 			if (!array_key_exists($key, $children)) {

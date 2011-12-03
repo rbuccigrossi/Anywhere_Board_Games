@@ -30,6 +30,10 @@ function piece_hide_action_icons(piece){
 	},200);
 }
 
+function set_piece_location(piece, position){
+	$(piece).offset(position);
+}
+
 function piece_start_drag(piece, x, y){
 	var piece_offset = $(piece).offset();
 	var position_on_piece = {
@@ -39,33 +43,21 @@ function piece_start_drag(piece, x, y){
 	var board = $(document); // The #board object may not extend to the whole area
 	var drag_function = function (event) {
 		event.preventDefault();
-		var pageX = event.pageX;
-		var pageY = event.pageY;
-		if (event.touches && (event.touches.length > 0)){
-			pageX = event.touches[0].pageX;
-			pageY = event.touches[0].pageY;
-		}
 		var position = {
-			left: pageX - position_on_piece.x,
-			top: pageY - position_on_piece.y
+			left: event.pageX - position_on_piece.x,
+			top: event.pageY - position_on_piece.y
 		}
-		$(piece).offset(position);
+		set_piece_location(piece,position);
 		return(false);
 	};
 	var stop_drag_function = function (event) {
 		event.preventDefault();
 		board.unbind("mousemove.drag");
 		board.unbind("mouseup.drag");
-		board.get(0).removeEventListener("touchmove", drag_function, false)
-		board.get(0).removeEventListener("touchend",stop_drag_function, false);
-		board.get(0).removeEventListener("touchcancel",stop_drag_function, false);
 		return(false);
 	};
 	board.bind("mousemove.drag",drag_function);
 	board.bind("mouseup.drag",stop_drag_function);
-	board.get(0).addEventListener("touchmove",drag_function,false);
-	board.get(0).addEventListener("touchend",stop_drag_function,false);
-	board.get(0).addEventListener("touchcancel",stop_drag_function,false);
 	return(false);
 }
 
@@ -118,6 +110,93 @@ function piece_start_rotate(piece, x, y){
 	board.bind("mouseup.rotatedrag",stop_drag_function);
 }
 	
+function board_add_piece(img_url){
+	var piece_idx = world_get_new_piece_index();
+	var new_id = "piece_" + piece_idx;
+	world_add_piece(piece_idx,[img_url],50,50);
+	var piece = $('<span class="piece" id="' + new_id + '" style="position: absolute; left: 50px; top: 50px;">' +
+		'<img class="piece_face" src="' + img_url + '">' +
+		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
+		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
+		'</span>');
+	$("#board").append(piece);
+	piece.bind({
+		mouseenter: function() {piece_show_action_icons(this);}, 
+		mouseleave: function() {piece_hide_action_icons(this);},
+		mousedown: function(event) { 
+			event.preventDefault();  
+			piece_start_drag(this,event.pageX,event.pageY);
+			return false; 
+		},
+		contextmenu: function(){return false;}
+	});
+	piece.find(".piece_rotate").bind({
+		mousedown: function(event) { 
+			event.preventDefault();  
+			piece_start_rotate(piece.get(0),event.pageX,event.pageY);
+			return false; 
+		}
+	});
+}
+
+$(document).ready(function() {
+	board_add_piece("../images/piece.png");
+	board_add_piece("../images/shape01.png");
+});
+
+
+// TODO: Set up touch version 
+/*
+function piece_start_drag(piece, x, y){
+	var piece_offset = $(piece).offset();
+	var position_on_piece = {
+		x: (x - piece_offset.left),
+		y: (y - piece_offset.top)
+	};
+	var board = $(document); // The #board object may not extend to the whole area
+	var drag_function = function (event) {
+		event.preventDefault();
+		var pageX = event.pageX;
+		var pageY = event.pageY;
+		if (event.touches && (event.touches.length > 0)){
+			pageX = event.touches[0].pageX;
+			pageY = event.touches[0].pageY;
+		}
+		var position = {
+			left: pageX - position_on_piece.x,
+			top: pageY - position_on_piece.y
+		}
+		$(piece).offset(position);
+		return(false);
+	};
+	var stop_drag_function = function (event) {
+		event.preventDefault();
+		board.unbind("mousemove.drag");
+		board.unbind("mouseup.drag");
+		board.get(0).removeEventListener("touchmove", drag_function, false)
+		board.get(0).removeEventListener("touchend",stop_drag_function, false);
+		board.get(0).removeEventListener("touchcancel",stop_drag_function, false);
+		return(false);
+	};
+	board.bind("mousemove.drag",drag_function);
+	board.bind("mouseup.drag",stop_drag_function);
+	board.get(0).addEventListener("touchmove",drag_function,false);
+	board.get(0).addEventListener("touchend",stop_drag_function,false);
+	board.get(0).addEventListener("touchcancel",stop_drag_function,false);
+	return(false);
+}
+*/
+
+// TODO: Add touch event listeners
+/*
+ 	piece.get(0).addEventListener("touchstart",function(event){
+		event.preventDefault();
+		piece_start_drag(piece.get(0),event.touches[0].pageX,event.touches[0].pageY);
+		return false;
+	},false);
+ */
+
+// TODO: Keyboard interactions
 /*
 	  function board_keypress(event){
 		  if ((event.which == 43) || (event.which == 45) || (event.which == 48)){
@@ -145,45 +224,5 @@ function piece_start_rotate(piece, x, y){
 		  $("body").css("-ms-transform-origin","0% 0%");
 		  }
 	  }
-			 */
+*/
 
-function board_add_piece(img_url){
-	var new_id = "piece_" + board_add_piece.piece_idx;
-	board_add_piece.piece_idx ++;
-	var piece = $('<span class="piece" id="' + new_id + '" style="position: absolute; left: 50px; top: 50px;">' +
-		'<img class="piece_face" src="' + img_url + '">' +
-		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
-		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
-		'</span>');
-	$("#board").append(piece);
-	piece.bind({
-		mouseenter: function() {piece_show_action_icons(this);}, 
-		mouseleave: function() {piece_hide_action_icons(this);},
-		mousedown: function(event) { 
-			event.preventDefault();  
-			piece_start_drag(this,event.pageX,event.pageY);
-			return false; 
-		},
-		contextmenu: function(){return false;}
-	});
-	piece.get(0).addEventListener("touchstart",function(event){
-		event.preventDefault();
-		piece_start_drag(piece.get(0),event.touches[0].pageX,event.touches[0].pageY);
-		return false;
-	},false);
-	piece.find(".piece_rotate").bind({
-		mousedown: function(event) { 
-			event.preventDefault();  
-						piece_start_rotate(piece.get(0),event.pageX,event.pageY);
-			return false; 
-		}
-	});
-}
-// Static variable used to hold the index of the current piece
-board_add_piece.piece_idx = 0;
-
-$(document).ready(function() {
-	board_add_piece("../images/piece.png");
-	board_add_piece("../images/shape01.png");
-});
-	
