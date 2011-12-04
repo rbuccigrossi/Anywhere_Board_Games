@@ -12,27 +12,76 @@ function world_get_new_piece_index(){
 
 function showResult(res)
 {
-  console.log(res);
+	console.log(res);
 }
 
 /*
  * faces - an array of image URLS
  */
 function world_add_piece(index,faces,x,y){
-	var world_update = {"pieces": new Object()};
-	world_update.pieces[index] =  {"faces": faces, "x": x, "y": y};
-	$.ajax({type: 'POST', url: world_server_url, 
-		data: { action: "update", update: JSON.stringify(world_update)}, 
-		success: showResult, dataType: "text"});
+	var world_update = {
+		"pieces": new Object()
+		};
+	world_update.pieces[index] =  {
+		"faces": faces, 
+		"x": x, 
+		"y": y
+	};
+	$.ajax({
+		type: 'POST', 
+		url: world_server_url, 
+		data: {
+			action: "update", 
+			update: JSON.stringify(world_update)
+			}, 
+		success: showResult, 
+		dataType: "text"
+	});
 }
 
-// TODO: QUEUE THE PIECE UPDATES...
 function world_move_piece(index,x,y){
-	var world_update = {"pieces": new Object()};
-	world_update.pieces[index] =  {"x": x, "y": y};
-	$.ajax({type: 'POST', url: world_server_url, 
-		data: { action: "update", update: JSON.stringify(world_update)}, 
-		success: showResult, dataType: "text"});
+	// Check if we already are running (works since single threaded)
+	var ajax_loop_running = (index in world_move_piece);
+	// Store the next move into the array (overwriting one if currently running)
+	world_move_piece[index] = {
+		x: x, 
+		y: y,
+		pending: 1
+	};
+	// If we aren't running, start our ajax loop
+	if (!ajax_loop_running){
+		var call_next_move = function () {
+			// Check if there is a move request pending
+			if (world_move_piece[index].pending) {
+				// Mark that we are sending the request
+				world_move_piece[index].pending = 0;
+				// Create the world update object
+				var world_update = {
+					"pieces": new Object()
+				};
+				world_update.pieces[index] =  {
+					"x": world_move_piece[index].x, 
+					"y": world_move_piece[index].y
+				};
+				// Send the ajax request, calling the next move on success
+				$.ajax({
+					type: 'POST', 
+					url: world_server_url, 
+					data: {
+						action: "update", 
+						update: JSON.stringify(world_update)
+					}, 
+					success: call_next_move, 
+					dataType: "text"
+				});
+			} else {
+				// We are out of requests, so delete the next move and terminate
+				delete world_move_piece[index];
+			}
+		}
+		// Call our ajax loop on the new piece
+		call_next_move();
+	}
 }
 
 function world_listener_start(){
@@ -47,9 +96,17 @@ function world_listener_start(){
 		alert("Error updating the World.  Please check your connection and press reload.");
 	}
 	var world_listener = function() {
-		$.ajax({type: 'POST', url: world_server_url, 
-			data: { action: "read", last_modify: JSON.stringify(world_last_ts)}, 
-			success: world_update_handler, failure: world_update_failure, dataType: "text"});
+		$.ajax({
+			type: 'POST', 
+			url: world_server_url, 
+			data: {
+				action: "read", 
+				last_modify: JSON.stringify(world_last_ts)
+				}, 
+			success: world_update_handler, 
+			failure: world_update_failure, 
+			dataType: "text"
+		});
 	}
 	world_listener();
 }

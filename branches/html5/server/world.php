@@ -11,11 +11,10 @@
 $filename = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "bgaworld.json";
 $action = isset($_REQUEST["action"]) ? $_REQUEST["action"] : "read";
 $max_wait_time = 20; // Max time we'll wait for an update
-$wait_increment = 0.05; // wait in increments of 50th of a second
+$wait_increment = 0.1; // wait in increments of 50th of a second
 
 if ($action === "read") {
-	// TODO: Reset last_modify based upon read value
-	// TODO: Wait until file is updated
+	// TODO: Move last_modify to separate file
 	$last_modify = isset($_REQUEST["last_modify"]) ? $_REQUEST["last_modify"] : "-1";
 	$mtime = get_world_mtime($filename);
 	$world = &read_world($filename);
@@ -27,10 +26,8 @@ if ($action === "read") {
 		do {
 			usleep($wait_increment * 1000000); // Wait 0.05 seconds
 			$wait_time += $wait_increment;
-			clearstatcache();
-			$new_mtime = get_world_mtime($filename);
-		} while (($new_mtime == $mtime) && ($wait_time < $max_wait_time));
-		$world = &read_world($filename);
+			$world = &read_world($filename);
+		} while (($last_modify >= $world["max_assigned"]) && ($wait_time < $max_wait_time));
 	}
 	$update = &get_world_update($world, $last_modify);
 	echo "\n\n";
