@@ -1,4 +1,9 @@
-	
+/*
+ *	piece_ui.js is responsible for displaying and allowing the user to manipulate the
+ *	pieces on the board.  It assumes that there is a world JavaScript environment defined
+ *	so that it can register itself as a listener
+ */
+
 function piece_show_action_icons(piece){
 	var piece_move = $(piece).find(".piece_move");
 	var piece_rotate = $(piece).find(".piece_rotate");
@@ -118,7 +123,7 @@ function board_add_piece(img_url){
 	world_add_piece([img_url],50,50);
 }
 
-world_on_new_piece_handler = function (piece_idx, piece_data){
+function on_new_piece_handler(piece_idx, piece_data){
 	var img_url = piece_data.faces[0];
 	var x = piece_data.x;
 	var y = piece_data.y;
@@ -161,6 +166,8 @@ world_on_new_piece_handler = function (piece_idx, piece_data){
 
 
 $(document).ready(function() {
+	// Register ourselves in the world
+	world_on_new_piece_handler = on_new_piece_handler; 
 //	board_add_piece("../images/piece.png");
 //	board_add_piece("../images/shape01.png");
 });
