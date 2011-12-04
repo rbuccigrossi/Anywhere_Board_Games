@@ -18,7 +18,8 @@ function showResult(res)
 /*
  * faces - an array of image URLS
  */
-function world_add_piece(index,faces,x,y){
+function world_add_piece(faces,x,y){
+	var index = world_get_new_piece_index();
 	var world_update = {
 		"pieces": new Object()
 		};
@@ -39,6 +40,7 @@ function world_add_piece(index,faces,x,y){
 	});
 }
 
+// TODO Get unique user and ignore self events
 function world_move_piece(index,x,y){
 	// Check if we already are running (works since single threaded)
 	var ajax_loop_running = (index in world_move_piece);
@@ -84,11 +86,55 @@ function world_move_piece(index,x,y){
 	}
 }
 
+var world_on_piece_change_handlers = {};
+var world_on_new_piece_handler = function(){};
+
+function execute_world_update(update){
+	var piece_index;
+	// Handle a new world
+	if ("__new" in update) {
+		// Reset max piece index
+		world_max_piece_index = -1;
+		// Delete existing pieces
+		for (piece_index in world_on_piece_change_handlers){
+			world_on_piece_change_handlers[piece_index](null);
+			// Unregister the handler
+			delete world_on_piece_change_handlers[piece_index];
+		}
+		// Now add new pieces
+		if ("pieces" in update){
+			for (piece_index in update.pieces) {
+				if (piece_index > world_max_piece_index){
+					world_max_piece_index = piece_index;
+				}
+				world_on_new_piece_handler(piece_index, update.pieces[piece_index]);
+			}
+		}
+	} else if ("pieces" in update) {
+		// Iterate pieces, looking for new, updates, or deletes
+		for (piece_index in update.pieces) {
+			if ("__new" in update.pieces[piece_index]){
+				if (piece_index > world_max_piece_index){
+					world_max_piece_index = piece_index;
+				}
+				world_on_new_piece_handler(piece_index, update.pieces[piece_index]);
+			} else if (piece_index in world_on_piece_change_handlers){
+				world_on_piece_change_handlers[piece_index](update.pieces[piece_index]);
+				// Check if the piece was deleted
+				if (update.pieces[piece_index] === null){
+					// Unregister the handler
+					delete world_on_piece_change_handlers[piece_index];
+				}
+			}
+		}
+	}
+}
+
 function world_listener_start(){
 	var world_update_handler = function(data){
-		console.log(data);
 		data = JSON.parse(data);
 		var update = data["update"];
+		execute_world_update(update);
 		world_last_ts = data["last_modify"];
 		world_listener();
 	}

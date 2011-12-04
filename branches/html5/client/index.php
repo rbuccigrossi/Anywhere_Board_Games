@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<title>GBA</title>
 		<link href="../css/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
 		<script src="../js/jquery.min.js" type="text/javascript"></script>

@@ -31,8 +31,11 @@ function piece_hide_action_icons(piece){
 }
 
 function set_piece_location(piece, position){
-	world_move_piece(piece.world_piece_index,position.left,position.top);
-	$(piece).offset(position);
+	var offset = $(piece).offset();
+	if ((offset.left != position.left) || (offset.top != position.top)){
+		world_move_piece(piece.world_piece_index,position.left,position.top);
+//		$(piece).offset(position);
+	}
 }
 
 function piece_start_drag(piece, x, y){
@@ -112,10 +115,16 @@ function piece_start_rotate(piece, x, y){
 }
 	
 function board_add_piece(img_url){
-	var piece_idx = world_get_new_piece_index();
+	world_add_piece([img_url],50,50);
+}
+
+world_on_new_piece_handler = function (piece_idx, piece_data){
+	var img_url = piece_data.faces[0];
+	var x = piece_data.x;
+	var y = piece_data.y;
 	var new_id = "piece_" + piece_idx;
-	world_add_piece(piece_idx,[img_url],50,50);
-	var piece = $('<span class="piece" id="' + new_id + '" style="position: absolute; left: 50px; top: 50px;">' +
+	var piece = $('<span class="piece" id="' + new_id + 
+		'" style="position: absolute; left: ' + x + 'px; top: ' + y + 'px;">' +
 		'<img class="piece_face" src="' + img_url + '">' +
 		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
 		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
@@ -140,11 +149,20 @@ function board_add_piece(img_url){
 			return false; 
 		}
 	});
+	// Set up change handler for piece
+	world_on_piece_change_handlers[piece_idx] = function(piece_data){
+		if (piece_data === null){
+			piece.remove();
+		} else if (("x" in piece_data) && ("y" in piece_data)){
+			$(piece).offset({left: piece_data.x, top: piece_data.y});	
+		}
+	}
 }
 
+
 $(document).ready(function() {
-	board_add_piece("../images/piece.png");
-	board_add_piece("../images/shape01.png");
+//	board_add_piece("../images/piece.png");
+//	board_add_piece("../images/shape01.png");
 });
 
 
