@@ -60,6 +60,7 @@
 			});
 	
 			// TODO: Add error checking from http://jqueryui.com/demos/dialog/modal-form.html
+			// TODO: Make sure "Enter" submis the form
 			$(document).ready(function() {
 				$( "#create_piece_dialog" ).dialog({
 					dialogClass: 'bga_dialog bga_small_text_dialog',
