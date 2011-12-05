@@ -1,5 +1,4 @@
 
-
 var world_max_piece_index = -1;
 var world_server_url = "../server/world.php";
 var world_last_ts = 0;
@@ -92,7 +91,7 @@ var world_on_new_piece_handler = function(){};
 function execute_world_update(update){
 	var piece_index;
 	// Handle a new world
-	if ("__new" in update) {
+	if ((!(update instanceof Object)) || ("__new" in update)) {
 		// Reset max piece index
 		world_max_piece_index = -1;
 		// Delete existing pieces
@@ -102,10 +101,10 @@ function execute_world_update(update){
 			delete world_on_piece_change_handlers[piece_index];
 		}
 		// Now add new pieces
-		if ("pieces" in update){
+		if ((update instanceof Object) && ("pieces" in update)){
 			for (piece_index in update.pieces) {
-				if (piece_index > world_max_piece_index){
-					world_max_piece_index = piece_index;
+				if (Number(piece_index) > world_max_piece_index){
+					world_max_piece_index = Number(piece_index);
 				}
 				world_on_new_piece_handler(piece_index, update.pieces[piece_index]);
 			}
@@ -114,8 +113,8 @@ function execute_world_update(update){
 		// Iterate pieces, looking for new, updates, or deletes
 		for (piece_index in update.pieces) {
 			if ("__new" in update.pieces[piece_index]){
-				if (piece_index > world_max_piece_index){
-					world_max_piece_index = piece_index;
+				if (Number(piece_index) > world_max_piece_index){
+					world_max_piece_index = Number(piece_index);
 				}
 				world_on_new_piece_handler(piece_index, update.pieces[piece_index]);
 			} else if (piece_index in world_on_piece_change_handlers){
