@@ -60,7 +60,6 @@
 			});
 	
 			// TODO: Add error checking from http://jqueryui.com/demos/dialog/modal-form.html
-			// TODO: Make sure "Enter" submis the form
 			$(document).ready(function() {
 				$( "#create_piece_dialog" ).dialog({
 					dialogClass: 'bga_dialog bga_small_text_dialog',
@@ -69,7 +68,7 @@
 					width: 350,
 					modal: true,
 					buttons: {
-						"Create a piece": function() {
+						"OK": function() {
 							var image_url = $("#create_piece_url").val();
 							if (!image_url){
 								alert("Please enter an image URL");
@@ -83,6 +82,14 @@
 						}
 					}
 				});
+				// Bind enter to OK to avoid submitting the form to the script
+				$( "#create_piece_dialog" ).bind("keydown", function(e){
+					if (e.keyCode == 13){
+						e.preventDefault();
+						$(':button:contains("OK")').click();
+						return false;
+					}
+				})
 			});
 	
 

@@ -159,5 +159,6 @@ function world_listener_start(){
 }
 
 $(document).ready(function(){
-	world_listener_start();
+	// The timeout lets the iPhone4 work in full screen mode
+	setTimeout("world_listener_start()",1000);
 });
