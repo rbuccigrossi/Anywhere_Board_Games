@@ -1,7 +1,7 @@
 /*
  *	piece_ui.js is responsible for displaying and allowing the user to manipulate the
  *	pieces on the board.  It assumes that there is a world JavaScript environment defined
- *	so that it can register itself as a listener
+ *	so that it can register itself as a producer and listener to world events
  */
 
 function piece_show_action_icons(piece){
@@ -43,11 +43,28 @@ function set_piece_location(piece, position){
 	}
 }
 
-function piece_start_drag(piece, x, y){
+/*
+ * Handles a mouse down event (single pointer) upon a piece
+ * 
+ * If a user clicks down upon a piece, we want to be able to do different things
+ * depending upon if the user presses and holds (without moving), presses and drags
+ * (moving), presses and releases (single click), and possibly double click.
+ * 
+ * If a user presses and drags, we move the piece
+ * If a user presses and holds (0.5 seconds), we rotate the piece
+ * If a user presses and releases (a click), we display a context menu
+ * (A future possibility is to have double click flip a piece)
+ */
+function on_piece_mouse_down(event){
+	// We do not want regular event processing on a piece mouse down
+	event.preventDefault();
+	// Record the piece we are manipulating for use in new event handlers we'll define'
+	var piece = this;
+	// Store where on the piece we clicked (for use with dragging)
 	var piece_offset = $(piece).offset();
 	var position_on_piece = {
-		x: (x - piece_offset.left),
-		y: (y - piece_offset.top)
+		x: (event.pageX - piece_offset.left),
+		y: (event.pageY - piece_offset.top)
 	};
 	var board = $(document); // The #board object may not extend to the whole area
 	var drag_function = function (event) {
@@ -67,7 +84,7 @@ function piece_start_drag(piece, x, y){
 	};
 	board.bind("mousemove.drag",drag_function);
 	board.bind("mouseup.drag",stop_drag_function);
-	return(false);
+	return (false);
 }
 
 function set_piece_orientation(item, degrees){
@@ -140,11 +157,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.bind({
 		mouseenter: function() {piece_show_action_icons(this);}, 
 		mouseleave: function() {piece_hide_action_icons(this);},
-		mousedown: function(event) { 
-			event.preventDefault();  
-			piece_start_drag(this,event.pageX,event.pageY);
-			return false; 
-		},
+		mousedown: on_piece_mouse_down,
 		contextmenu: function(){return false;}
 	});
 	piece.find(".piece_rotate").bind({
@@ -175,7 +188,7 @@ $(document).ready(function() {
 
 // TODO: Set up touch version 
 /*
-function piece_start_drag(piece, x, y){
+function on_piece_mouse_down(piece, x, y){
 	var piece_offset = $(piece).offset();
 	var position_on_piece = {
 		x: (x - piece_offset.left),
@@ -219,7 +232,7 @@ function piece_start_drag(piece, x, y){
 /*
  	piece.get(0).addEventListener("touchstart",function(event){
 		event.preventDefault();
-		piece_start_drag(piece.get(0),event.touches[0].pageX,event.touches[0].pageY);
+		on_piece_mouse_down(piece.get(0),event.touches[0].pageX,event.touches[0].pageY);
 		return false;
 	},false);
  */

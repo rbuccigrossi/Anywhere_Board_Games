@@ -16,7 +16,6 @@ $wait_increment = 0.1; // wait in increments of 50th of a second
 if ($action === "read") {
 	// TODO: Move last_modify to separate file
 	$last_modify = isset($_REQUEST["last_modify"]) ? $_REQUEST["last_modify"] : "-1";
-	$mtime = get_world_mtime($filename);
 	$world = &read_world($filename);
 	// Check to see if we need to wait for an update
 	if ($last_modify >= $world["max_assigned"]){

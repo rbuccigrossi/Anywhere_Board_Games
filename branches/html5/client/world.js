@@ -111,6 +111,7 @@ function execute_world_update(update){
 		}
 	} else if ("pieces" in update) {
 		// Iterate pieces, looking for new, updates, or deletes
+		// TODO need to check for null before __new
 		for (piece_index in update.pieces) {
 			if ("__new" in update.pieces[piece_index]){
 				if (Number(piece_index) > world_max_piece_index){
@@ -131,6 +132,7 @@ function execute_world_update(update){
 
 function world_listener_start(){
 	var world_update_handler = function(data){
+		// TODO: Handle parse error
 		data = JSON.parse(data);
 		var update = data["update"];
 		execute_world_update(update);
