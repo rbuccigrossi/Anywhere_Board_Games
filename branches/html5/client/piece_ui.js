@@ -1,7 +1,8 @@
 /*
- *	piece_ui.js is responsible for displaying and allowing the user to manipulate the
- *	pieces on the board.  It assumes that there is a world JavaScript environment defined
- *	so that it can register itself as a producer and listener to world events
+ *	piece_ui.js is responsible for displaying and allowing the user to
+ *	manipulate the pieces on the board.  It assumes that there is a
+ *	world JavaScript environment defined so that it can register
+ *	itself as a producer and listener to world events
  */
 
 function piece_show_action_icons(piece){
@@ -39,7 +40,7 @@ function set_piece_location(piece, position){
 	var offset = $(piece).offset();
 	if ((offset.left != position.left) || (offset.top != position.top)){
 		world_move_piece(piece.world_piece_index,position.left,position.top);
-//		$(piece).offset(position);
+		$(piece).offset(position);
 	}
 }
 
@@ -67,6 +68,9 @@ function on_piece_mouse_down(event){
 		y: (event.pageY - piece_offset.top)
 	};
 	var board = $(document); // The #board object may not extend to the whole area
+	// Turn off move events for the piece
+	piece.user_moving = true;
+	$(piece).css("opacity",0.5);
 	var drag_function = function (event) {
 		event.preventDefault();
 		var position = {
@@ -78,6 +82,8 @@ function on_piece_mouse_down(event){
 	};
 	var stop_drag_function = function (event) {
 		event.preventDefault();
+		piece.user_moving = false;
+		$(piece).css("opacity",1);
 		board.unbind("mousemove.drag");
 		board.unbind("mouseup.drag");
 		return(false);
@@ -86,6 +92,52 @@ function on_piece_mouse_down(event){
 	board.bind("mouseup.drag",stop_drag_function);
 	return (false);
 }
+
+/*
+ *  Handle touch event (separate from on_piece_mouse_down in case we 
+ *  want to handle multi-touch)
+ */
+function on_piece_touch_start(event){
+	// We do not want regular event processing on a piece mouse down
+	event.preventDefault();
+	// Record the piece we are manipulating for use in new event handlers we'll define'
+	var piece = this;
+	// Store where on the piece we first touched (for use with dragging)
+	var piece_offset = $(piece).offset();
+	var position_on_piece = {
+		x: (event.touches[0].pageX - piece_offset.left),
+		y: (event.touches[0].pageY - piece_offset.top)
+	};
+	var board = $(document); // The #board object may not extend to the whole area
+	// Turn off move events for the piece
+	piece.user_moving = true;
+	$(piece).css("opacity",0.5);
+	var drag_function = function (event) {
+		event.preventDefault();
+		if (event.touches && (event.touches.length > 0)){
+			var position = {
+				left: event.touches[0].pageX - position_on_piece.x,
+				top: event.touches[0].pageY - position_on_piece.y
+			}
+			set_piece_location(piece,position);
+		}
+		return(false);
+	};
+	var stop_drag_function = function (event) {
+		event.preventDefault();
+		piece.user_moving = false;
+		$(piece).css("opacity",1);
+		board.get(0).removeEventListener("touchmove", drag_function, false)
+		board.get(0).removeEventListener("touchend",stop_drag_function, false);
+		board.get(0).removeEventListener("touchcancel",stop_drag_function, false);
+		return(false);
+	};
+	board.get(0).addEventListener("touchmove",drag_function,false);
+	board.get(0).addEventListener("touchend",stop_drag_function,false);
+	board.get(0).addEventListener("touchcancel",stop_drag_function,false);
+	return (false);
+}
+
 
 function set_piece_orientation(item, degrees){
 	var r = "rotate(" + degrees + "deg)";
@@ -151,15 +203,19 @@ function on_new_piece_handler(piece_idx, piece_data){
 		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
 		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
 		'</span>');
+	// Add to the board
 	$("#board").append(piece);
 	// Record the piece index
 	piece.get(0).world_piece_index = piece_idx;
+	// Record that we are not moving the piece
+	piece.get(0).user_moving = false;
 	piece.bind({
-		mouseenter: function() {piece_show_action_icons(this);}, 
-		mouseleave: function() {piece_hide_action_icons(this);},
+//		mouseenter: function() {piece_show_action_icons(this);}, 
+//		mouseleave: function() {piece_hide_action_icons(this);},
 		mousedown: on_piece_mouse_down,
 		contextmenu: function(){return false;}
 	});
+	// Add mouse click event
 	piece.find(".piece_rotate").bind({
 		mousedown: function(event) { 
 			event.preventDefault();  
@@ -167,12 +223,16 @@ function on_new_piece_handler(piece_idx, piece_data){
 			return false; 
 		}
 	});
+	// Add mouse touch event (for mobile devices)
+	piece.get(0).addEventListener("touchstart",on_piece_touch_start,false);
 	// Set up change handler for piece
 	world_on_piece_change_handlers[piece_idx] = function(piece_data){
 		if (piece_data === null){
 			piece.remove();
 		} else if (("x" in piece_data) && ("y" in piece_data)){
-			$(piece).offset({left: piece_data.x, top: piece_data.y});	
+			if (!($(piece).get(0).user_moving)){
+				$(piece).offset({left: piece_data.x, top: piece_data.y});	
+			}
 		}
 	}
 }

@@ -2,7 +2,9 @@
 <html>
 	<head>
 		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<title>GBA</title>
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name = "viewport" content = "minimum-scale=0.0001, maximum-scale=10.0">
+		<title>Board Game Arena</title>
 		<link href="../css/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
 		<script src="../js/jquery.min.js" type="text/javascript"></script>
 		<script src="../js/jquery-ui.min.js" type="text/javascript"></script>
