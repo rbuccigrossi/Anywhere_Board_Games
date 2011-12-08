@@ -5,6 +5,14 @@
  *	itself as a producer and listener to world events
  */
 
+/*
+ * Make a unique client ID that can be used to ignore update messages
+ * that we generated and have already displayed (like moves)
+ *
+ * TODO: make it truly unique (currently low probability of hitting another client)
+ */
+var g_client_id = (""+Math.random()).split(".").pop();
+
 function piece_show_action_icons(piece){
 	var piece_move = $(piece).find(".piece_move");
 	var piece_rotate = $(piece).find(".piece_rotate");
@@ -39,7 +47,8 @@ function piece_hide_action_icons(piece){
 function set_piece_location(piece, position){
 	var offset = $(piece).offset();
 	if ((offset.left != position.left) || (offset.top != position.top)){
-		world_move_piece(piece.world_piece_index,position.left,position.top);
+		world_move_piece(piece.world_piece_index, g_client_id, 
+						 position.left, position.top);
 		$(piece).offset(position);
 	}
 }
@@ -68,8 +77,6 @@ function on_piece_mouse_down(event){
 		y: (event.pageY - piece_offset.top)
 	};
 	var board = $(document); // The #board object may not extend to the whole area
-	// Turn off move events for the piece
-	piece.user_moving = true;
 	$(piece).css("opacity",0.5);
 	var drag_function = function (event) {
 		event.preventDefault();
@@ -82,7 +89,6 @@ function on_piece_mouse_down(event){
 	};
 	var stop_drag_function = function (event) {
 		event.preventDefault();
-		piece.user_moving = false;
 		$(piece).css("opacity",1);
 		board.unbind("mousemove.drag");
 		board.unbind("mouseup.drag");
@@ -109,8 +115,6 @@ function on_piece_touch_start(event){
 		y: (event.touches[0].pageY - piece_offset.top)
 	};
 	var board = $(document); // The #board object may not extend to the whole area
-	// Turn off move events for the piece
-	piece.user_moving = true;
 	$(piece).css("opacity",0.5);
 	var drag_function = function (event) {
 		event.preventDefault();
@@ -125,7 +129,6 @@ function on_piece_touch_start(event){
 	};
 	var stop_drag_function = function (event) {
 		event.preventDefault();
-		piece.user_moving = false;
 		$(piece).css("opacity",1);
 		board.get(0).removeEventListener("touchmove", drag_function, false)
 		board.get(0).removeEventListener("touchend",stop_drag_function, false);
@@ -208,7 +211,6 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Record the piece index
 	piece.get(0).world_piece_index = piece_idx;
 	// Record that we are not moving the piece
-	piece.get(0).user_moving = false;
 	piece.bind({
 //		mouseenter: function() {piece_show_action_icons(this);}, 
 //		mouseleave: function() {piece_hide_action_icons(this);},
@@ -230,7 +232,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 		if (piece_data === null){
 			piece.remove();
 		} else if (("x" in piece_data) && ("y" in piece_data)){
-			if (!($(piece).get(0).user_moving)){
+			if (!("client" in piece_data) || 
+				(piece_data.client != g_client_id)) {
 				$(piece).offset({left: piece_data.x, top: piece_data.y});	
 			}
 		}

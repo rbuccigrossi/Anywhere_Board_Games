@@ -40,7 +40,7 @@ function world_add_piece(faces,x,y){
 }
 
 // TODO Get unique user and ignore self events
-function world_move_piece(index,x,y){
+function world_move_piece(index,client,x,y){
 	// Check if we already are running (works since single threaded)
 	var ajax_loop_running = (index in world_move_piece);
 	// Store the next move into the array (overwriting one if currently running)
@@ -61,6 +61,7 @@ function world_move_piece(index,x,y){
 					"pieces": new Object()
 				};
 				world_update.pieces[index] =  {
+					"client": client,
 					"x": world_move_piece[index].x, 
 					"y": world_move_piece[index].y
 				};
