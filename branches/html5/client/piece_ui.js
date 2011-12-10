@@ -233,7 +233,9 @@ function on_new_piece_handler(piece_idx, piece_data){
 		}
 	});
 	// Add mouse touch event (for mobile devices)
-	piece.get(0).addEventListener("touchstart",on_piece_touch_start,false);
+	if (piece.get(0).addEventListener){
+		piece.get(0).addEventListener("touchstart",on_piece_touch_start,false);
+	}
 	// Set up change handler for piece
 	world_on_piece_change_handlers[piece_idx] = function(piece_data){
 		if (piece_data === null){
