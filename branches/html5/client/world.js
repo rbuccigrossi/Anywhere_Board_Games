@@ -82,8 +82,8 @@ function world_move_piece(index,client,x,y){
 			}
 		}
 		// Call our ajax loop on the new piece
-		setTimeout(call_next_move,50);
-//		call_next_move();
+		//		setTimeout(call_next_move,50);
+		call_next_move();
 	}
 }
 

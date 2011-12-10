@@ -53,94 +53,101 @@ function set_piece_location(piece, position){
 	}
 }
 
+// Helper function to determine if an event is a touch event
+function is_touch_event(event){
+	return (typeof event.touches != 'undefined');
+}
+
+// Helper function to get the event coordinates for either mouse or touch event
+function get_event_coordinates(event){
+	var coord;
+	if (is_touch_event(event)){
+		coord = {x: event.touches[0].pageX, 
+				 y: event.touches[0].pageY};
+	} else {
+		coord = {x: event.pageX, 
+				 y: event.pageY};
+	}
+	return (coord);
+}
+
 /*
- * Handles a mouse down event (single pointer) upon a piece
+ * Handles a mouse down event or single touch upon a piece
  * 
  * If a user clicks down upon a piece, we want to be able to do different things
- * depending upon if the user presses and holds (without moving), presses and drags
- * (moving), presses and releases (single click), and possibly double click.
+ * depending upon if the user presses and drags or  presses and releases (single click)
  * 
  * If a user presses and drags, we move the piece
- * If a user presses and holds (0.5 seconds), we rotate the piece
- * If a user presses and releases (a click), we display a context menu
- * (A future possibility is to have double click flip a piece)
+ * If a user presses and releases without moving (a click), we display a context menu
+ *
+ * For touch support, we treat single touch events along side
  */
-function on_piece_mouse_down(event){
-	// We do not want regular event processing on a piece mouse down
+function on_piece_touch_start(event){
+	// Ignore multi-touch or no-touch
+	if (is_touch_event(event) && (event.touches.length != 1)){
+		return true; // Allow event to propogate
+	}
+	// We do not want regular event processing
 	event.preventDefault();
 	// Record the piece we are manipulating for use in new event handlers we'll define'
 	var piece = this;
 	// Store where on the piece we clicked (for use with dragging)
 	var piece_offset = $(piece).offset();
+	var start_click = get_event_coordinates(event);
 	var position_on_piece = {
-		x: (event.pageX - piece_offset.left),
-		y: (event.pageY - piece_offset.top)
+		x: (start_click.x - piece_offset.left),
+		y: (start_click.y - piece_offset.top)
 	};
-	var board = $(document); // The #board object may not extend to the whole area
+	// Holds if we are clicking or dragging
+	var do_click = 1;
+	// For click-drag we'll use the document for mouse move and mouse up events
+	var board = $(document);
+	// Make the piece transparent to note we are dragging or clicking on it
 	$(piece).css("opacity",0.5);
+	// Now register the drag function
 	var drag_function = function (event) {
 		event.preventDefault();
-		var position = {
-			left: event.pageX - position_on_piece.x,
-			top: event.pageY - position_on_piece.y
+		var click = get_event_coordinates(event);
+		var new_offset = {
+			left: click.x - position_on_piece.x,
+			top: click.y - position_on_piece.y
 		}
-		set_piece_location(piece,position);
-		return(false);
-	};
-	var stop_drag_function = function (event) {
-		event.preventDefault();
-		$(piece).css("opacity",1);
-		board.unbind("mousemove.drag");
-		board.unbind("mouseup.drag");
-		return(false);
-	};
-	board.bind("mousemove.drag",drag_function);
-	board.bind("mouseup.drag",stop_drag_function);
-	return (false);
-}
-
-/*
- *  Handle touch event (separate from on_piece_mouse_down in case we 
- *  want to handle multi-touch)
- */
-function on_piece_touch_start(event){
-	// We do not want regular event processing on a piece mouse down
-	event.preventDefault();
-	// Record the piece we are manipulating for use in new event handlers we'll define'
-	var piece = this;
-	// Store where on the piece we first touched (for use with dragging)
-	var piece_offset = $(piece).offset();
-	var position_on_piece = {
-		x: (event.touches[0].pageX - piece_offset.left),
-		y: (event.touches[0].pageY - piece_offset.top)
-	};
-	var board = $(document); // The #board object may not extend to the whole area
-	$(piece).css("opacity",0.5);
-	var drag_function = function (event) {
-		event.preventDefault();
-		if (event.touches && (event.touches.length > 0)){
-			var position = {
-				left: event.touches[0].pageX - position_on_piece.x,
-				top: event.touches[0].pageY - position_on_piece.y
-			}
-			set_piece_location(piece,position);
+		var current_piece_offset = $(piece).offset();
+		if ((current_piece_offset.left != new_offset.left) || 
+			(current_piece_offset.top != new_offset.top)){
+			do_click = 0; // We moved, so this is a drag, not a click
+			set_piece_location(piece,new_offset);
 		}
 		return(false);
 	};
 	var stop_drag_function = function (event) {
 		event.preventDefault();
 		$(piece).css("opacity",1);
-		board.get(0).removeEventListener("touchmove", drag_function, false)
-		board.get(0).removeEventListener("touchend",stop_drag_function, false);
-		board.get(0).removeEventListener("touchcancel",stop_drag_function, false);
+		// We are done, so unregister listeners
+		if (is_touch_event(event)){
+			board.get(0).removeEventListener("touchmove", drag_function, false);
+			board.get(0).removeEventListener("touchend", stop_drag_function, false);
+			board.get(0).removeEventListener("touchcancel", stop_drag_function, false);
+		} else {
+			board.unbind("mousemove.drag");
+			board.unbind("mouseup.drag");
+		}
+		// If we haven't moved, propogate a click event
+		if (do_click){
+			console.log("Click!");
+		}
 		return(false);
 	};
-	board.get(0).addEventListener("touchmove",drag_function,false);
-	board.get(0).addEventListener("touchend",stop_drag_function,false);
-	board.get(0).addEventListener("touchcancel",stop_drag_function,false);
+	if (is_touch_event(event)){
+		board.get(0).addEventListener("touchmove",drag_function,false);
+		board.get(0).addEventListener("touchend",stop_drag_function,false);
+		board.get(0).addEventListener("touchcancel",stop_drag_function,false);
+	} else {
+		board.bind("mousemove.drag",drag_function);
+		board.bind("mouseup.drag",stop_drag_function);
+	}
 	return (false);
 }
-
 
 function set_piece_orientation(item, degrees){
 	var r = "rotate(" + degrees + "deg)";
@@ -214,7 +221,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.bind({
 //		mouseenter: function() {piece_show_action_icons(this);}, 
 //		mouseleave: function() {piece_hide_action_icons(this);},
-		mousedown: on_piece_mouse_down,
+		mousedown: on_piece_touch_start,
 		contextmenu: function(){return false;}
 	});
 	// Add mouse click event
@@ -244,61 +251,11 @@ function on_new_piece_handler(piece_idx, piece_data){
 $(document).ready(function() {
 	// Register ourselves in the world
 	world_on_new_piece_handler = on_new_piece_handler; 
+//	$(document).bind("click", function () {alert("hi"); return false;}); // We can handle click events for context menu
 //	board_add_piece("../images/piece.png");
 //	board_add_piece("../images/shape01.png");
 });
 
-
-// TODO: Set up touch version 
-/*
-function on_piece_mouse_down(piece, x, y){
-	var piece_offset = $(piece).offset();
-	var position_on_piece = {
-		x: (x - piece_offset.left),
-		y: (y - piece_offset.top)
-	};
-	var board = $(document); // The #board object may not extend to the whole area
-	var drag_function = function (event) {
-		event.preventDefault();
-		var pageX = event.pageX;
-		var pageY = event.pageY;
-		if (event.touches && (event.touches.length > 0)){
-			pageX = event.touches[0].pageX;
-			pageY = event.touches[0].pageY;
-		}
-		var position = {
-			left: pageX - position_on_piece.x,
-			top: pageY - position_on_piece.y
-		}
-		$(piece).offset(position);
-		return(false);
-	};
-	var stop_drag_function = function (event) {
-		event.preventDefault();
-		board.unbind("mousemove.drag");
-		board.unbind("mouseup.drag");
-		board.get(0).removeEventListener("touchmove", drag_function, false)
-		board.get(0).removeEventListener("touchend",stop_drag_function, false);
-		board.get(0).removeEventListener("touchcancel",stop_drag_function, false);
-		return(false);
-	};
-	board.bind("mousemove.drag",drag_function);
-	board.bind("mouseup.drag",stop_drag_function);
-	board.get(0).addEventListener("touchmove",drag_function,false);
-	board.get(0).addEventListener("touchend",stop_drag_function,false);
-	board.get(0).addEventListener("touchcancel",stop_drag_function,false);
-	return(false);
-}
-*/
-
-// TODO: Add touch event listeners
-/*
- 	piece.get(0).addEventListener("touchstart",function(event){
-		event.preventDefault();
-		on_piece_mouse_down(piece.get(0),event.touches[0].pageX,event.touches[0].pageY);
-		return false;
-	},false);
- */
 
 // TODO: Keyboard interactions
 /*
