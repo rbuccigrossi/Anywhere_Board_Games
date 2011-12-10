@@ -11,6 +11,7 @@
 		<style type="text/css">
 			#draggable { width: 100px; height: 70px; background: silver; }
 		</style>
+		<script src="popup_menu.js" type="text/javascript"></script>
 		<script src="world.js" type="text/javascript"></script>
 		<script src="piece_ui.js" type="text/javascript"></script>
 		<script type="text/javascript">

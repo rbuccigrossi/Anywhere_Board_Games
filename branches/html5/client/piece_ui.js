@@ -48,7 +48,7 @@ function set_piece_location(piece, position){
 	var offset = $(piece).offset();
 	if ((offset.left != position.left) || (offset.top != position.top)){
 		world_move_piece(piece.world_piece_index, g_client_id, 
-						 position.left, position.top);
+			position.left, position.top);
 		$(piece).offset(position);
 	}
 }
@@ -62,13 +62,30 @@ function is_touch_event(event){
 function get_event_coordinates(event){
 	var coord;
 	if (is_touch_event(event)){
-		coord = {x: event.touches[0].pageX, 
-				 y: event.touches[0].pageY};
+		coord = {
+			x: event.touches[0].pageX, 
+			y: event.touches[0].pageY
+		};
 	} else {
-		coord = {x: event.pageX, 
-				 y: event.pageY};
+		coord = {
+			x: event.pageX, 
+			y: event.pageY
+		};
 	}
 	return (coord);
+}
+
+function show_piece_popup_menu(piece,coord){
+	var menu_items = [{
+		label: "Lock", 
+		callback: function(){},
+		args: piece
+	},{
+		label: "Rotate",
+		callback: function(){},
+		args: piece
+	}];
+	create_popup_menu(menu_items, $('#board'),coord);
 }
 
 /*
@@ -134,7 +151,11 @@ function on_piece_touch_start(event){
 		}
 		// If we haven't moved, propogate a click event
 		if (do_click){
-			console.log("Click!");
+			var coord = get_event_coordinates(event);
+			show_piece_popup_menu(piece,{
+				left: coord.x,
+				top: coord.y
+			});
 		}
 		return(false);
 	};
@@ -167,7 +188,7 @@ function piece_start_rotate(piece, x, y){
 	var piece_center = {
 		left: piece.offsetLeft + $(piece_face).width()/2,
 		top: piece.offsetTop + $(piece_face).height()/2
-		};
+	};
 	var original_position_from_center = {
 		x: (x - piece_center.left),
 		y: (y - piece_center.top)
@@ -219,10 +240,12 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.get(0).world_piece_index = piece_idx;
 	// Record that we are not moving the piece
 	piece.bind({
-//		mouseenter: function() {piece_show_action_icons(this);}, 
-//		mouseleave: function() {piece_hide_action_icons(this);},
+		//		mouseenter: function() {piece_show_action_icons(this);}, 
+		//		mouseleave: function() {piece_hide_action_icons(this);},
 		mousedown: on_piece_touch_start,
-		contextmenu: function(){return false;}
+		contextmenu: function(){
+			return false;
+		}
 	});
 	// Add mouse click event
 	piece.find(".piece_rotate").bind({
@@ -243,7 +266,10 @@ function on_new_piece_handler(piece_idx, piece_data){
 		} else if (("x" in piece_data) && ("y" in piece_data)){
 			if (!("client" in piece_data) || 
 				(piece_data.client != g_client_id)) {
-				$(piece).offset({left: piece_data.x, top: piece_data.y});	
+				$(piece).offset({
+					left: piece_data.x, 
+					top: piece_data.y
+				});	
 			}
 		}
 	}
