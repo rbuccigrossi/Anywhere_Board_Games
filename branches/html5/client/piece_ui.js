@@ -76,15 +76,13 @@ function get_event_coordinates(event){
 }
 
 function show_piece_popup_menu(piece,coord){
-	var menu_items = [{
-		label: "Lock", 
-		callback: function(){},
-		args: piece
-	},{
-		label: "Rotate",
-		callback: function(){},
-		args: piece
-	}];
+	var menu_items = [];
+	if (piece.lock){
+		menu_items.push({label: "Unlock", callback: function(){piece.lock=0;}, args: null});
+	} else {
+		menu_items.push({label: "Rotate", callback: function(){}, args: null});
+		menu_items.push({label: "Lock", callback: function(){piece.lock=1;}, args: null});
+	}
 	create_popup_menu(menu_items, $('#board'),coord);
 }
 
@@ -151,10 +149,9 @@ function on_piece_touch_start(event){
 		}
 		// If we haven't moved, propogate a click event
 		if (do_click){
-			var coord = get_event_coordinates(event);
 			show_piece_popup_menu(piece,{
-				left: coord.x,
-				top: coord.y
+				left: start_click.x-10,
+				top: start_click.y-10
 			});
 		}
 		return(false);
