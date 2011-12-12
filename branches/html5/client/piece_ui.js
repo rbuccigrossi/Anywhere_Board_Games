@@ -161,14 +161,18 @@ function on_piece_touch_start(event){
 				left: start_click.x-10,
 				top: start_click.y-10
 			});
-		}
-		if (piece.lock){
-			// If locked, let the event propogate
-			return(true);
-		} else {
 			// We do not want regular event processing
 			event.preventDefault(); 
 			return(false);
+		} else {
+			if (piece.lock){
+				// If locked, let the event propogate
+				return(true);
+			} else {
+				// We do not want regular event processing
+				event.preventDefault(); 
+				return(false);
+			}
 		}
 	};
 	if (is_touch_event(event)){
@@ -259,6 +263,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 	$("#board").append(piece);
 	// Record the piece index
 	piece.get(0).world_piece_index = piece_idx;
+	// Record the lock state
+	piece.get(0).lock = piece_data.lock;
 	// Record that we are not moving the piece
 	piece.bind({
 		//		mouseenter: function() {piece_show_action_icons(this);}, 
