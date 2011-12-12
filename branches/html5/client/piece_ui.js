@@ -78,10 +78,14 @@ function get_event_coordinates(event){
 function show_piece_popup_menu(piece,coord){
 	var menu_items = [];
 	if (piece.lock){
-		menu_items.push({label: "Unlock", callback: function(){piece.lock=0;}, args: null});
+		menu_items.push({label: "Unlock", callback: function(){
+				world_piece_set_lock(piece.world_piece_index,0);
+			}, args: null});
 	} else {
 		menu_items.push({label: "Rotate", callback: function(){}, args: null});
-		menu_items.push({label: "Lock", callback: function(){piece.lock=1;}, args: null});
+		menu_items.push({label: "Lock", callback: function(){
+				world_piece_set_lock(piece.world_piece_index,1);
+			}, args: null});
 	}
 	create_popup_menu(menu_items, $('#board'),coord);
 }
@@ -102,8 +106,6 @@ function on_piece_touch_start(event){
 	if (is_touch_event(event) && (event.touches.length != 1)){
 		return true; // Allow event to propogate
 	}
-	// We do not want regular event processing
-	event.preventDefault();
 	// Record the piece we are manipulating for use in new event handlers we'll define'
 	var piece = this;
 	// Store where on the piece we clicked (for use with dragging)
@@ -117,11 +119,8 @@ function on_piece_touch_start(event){
 	var do_click = 1;
 	// For click-drag we'll use the document for mouse move and mouse up events
 	var board = $(document);
-	// Make the piece transparent to note we are dragging or clicking on it
-	$(piece).css("opacity",0.5);
 	// Now register the drag function
 	var drag_function = function (event) {
-		event.preventDefault();
 		var click = get_event_coordinates(event);
 		var new_offset = {
 			left: click.x - position_on_piece.x,
@@ -131,12 +130,21 @@ function on_piece_touch_start(event){
 		if ((current_piece_offset.left != new_offset.left) || 
 			(current_piece_offset.top != new_offset.top)){
 			do_click = 0; // We moved, so this is a drag, not a click
-			set_piece_location(piece,new_offset);
+			if (! piece.lock){
+				// If not locked, allow the piece to be dragged
+				set_piece_location(piece,new_offset);
+			}
 		}
-		return(false);
+		if (piece.lock){
+			// If locked, let the event propogate
+			return(true);
+		} else {
+			// We do not want regular event processing
+			event.preventDefault(); 
+			return(false);
+		}
 	};
 	var stop_drag_function = function (event) {
-		event.preventDefault();
 		$(piece).css("opacity",1);
 		// We are done, so unregister listeners
 		if (is_touch_event(event)){
@@ -154,7 +162,14 @@ function on_piece_touch_start(event){
 				top: start_click.y-10
 			});
 		}
-		return(false);
+		if (piece.lock){
+			// If locked, let the event propogate
+			return(true);
+		} else {
+			// We do not want regular event processing
+			event.preventDefault(); 
+			return(false);
+		}
 	};
 	if (is_touch_event(event)){
 		board.get(0).addEventListener("touchmove",drag_function,false);
@@ -164,7 +179,16 @@ function on_piece_touch_start(event){
 		board.bind("mousemove.drag",drag_function);
 		board.bind("mouseup.drag",stop_drag_function);
 	}
-	return (false);
+	if (piece.lock){
+		// If locked, let the event propogate
+		return(true);
+	} else {
+		// We do not want regular event processing
+		event.preventDefault();
+		// Make the piece transparent to note we are dragging or clicking on it
+		$(piece).css("opacity",0.5);
+		return(false);
+	}
 }
 
 function set_piece_orientation(item, degrees){
@@ -260,13 +284,17 @@ function on_new_piece_handler(piece_idx, piece_data){
 	world_on_piece_change_handlers[piece_idx] = function(piece_data){
 		if (piece_data === null){
 			piece.remove();
-		} else if (("x" in piece_data) && ("y" in piece_data)){
-			if (!("client" in piece_data) || 
-				(piece_data.client != g_client_id)) {
-				$(piece).offset({
-					left: piece_data.x, 
-					top: piece_data.y
-				});	
+		} else {
+			if (("x" in piece_data) && ("y" in piece_data)){
+				if (!("client" in piece_data) || (piece_data.client != g_client_id)) {
+					$(piece).offset({
+						left: piece_data.x, 
+						top: piece_data.y
+					});	
+				}
+			}
+			if ("lock" in piece_data) {
+				piece.get(0).lock = piece_data.lock;
 			}
 		}
 	}

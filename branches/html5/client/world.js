@@ -39,7 +39,6 @@ function world_add_piece(faces,x,y){
 	});
 }
 
-// TODO Get unique user and ignore self events
 function world_move_piece(index,client,x,y){
 	// Check if we already are running (works since single threaded)
 	var ajax_loop_running = (index in world_move_piece);
@@ -85,6 +84,26 @@ function world_move_piece(index,client,x,y){
 		//		setTimeout(call_next_move,50);
 		call_next_move();
 	}
+}
+
+function world_piece_set_lock(index,lock){
+	// Create the world update object
+	var world_update = {
+		"pieces": new Object()
+	};
+	world_update.pieces[index] =  {
+		"lock": lock
+	};
+	// Send the ajax request, calling the next move on success
+	$.ajax({
+		type: 'POST', 
+		url: world_server_url, 
+		data: {
+			action: "update", 
+			update: JSON.stringify(world_update)
+		}, 
+		dataType: "text"
+	});
 }
 
 var world_on_piece_change_handlers = {};
