@@ -1,51 +1,90 @@
 /*
  *	piece_ui.js is responsible for displaying and allowing the user to
- *	manipulate the pieces on the board.  It assumes that there is a
- *	world JavaScript environment defined so that it can register
- *	itself as a producer and listener to world events
+ *	manipulate the pieces on the board.
+ *	
+ *	It requires:
+ *	 - The world javascript functions (world.js)
+ *	 - A #board defined in HTML to add elements
  */
 
+/**
+ * on_new_piece_handler - Callback for when a new piece is added to the world
+ * 
+ * @param piece_idx The index of the piece in the world (needed for world update calls)
+ * @param piece_data Data about the newly added piece
+ */
+function on_new_piece_handler(piece_idx, piece_data){
+	// Create piece HTML in the proper location
+	var jq_piece = $('<span class="piece" id="piece_' + piece_idx + 
+		'" style="position: absolute; left: ' + piece_data.x + 'px; top: ' + piece_data.y + 'px;">' +
+		'<img class="piece_face" src="' + piece_data.faces[0] + '">' +
+		'</span>');
+	// Add to the board
+	$("#board").append(jq_piece);
+	// Get the object for the piece itself
+	var piece = jq_piece.get(0);
+	// Record the piece index into the piece object
+	piece.world_piece_index = piece_idx;
+	// Record the lock state into the piece object
+	piece.lock = piece_data.lock;
+	// Add the move and context menu handlers
+	$(piece).bind({
+		mousedown: on_piece_touch_start,
+		contextmenu: function(){
+			return false;
+		}
+	});
+	// Add mouse touch event (for mobile devices)
+	if (piece.addEventListener){
+		piece.addEventListener("touchstart",on_piece_touch_start,false);
+	}
+	// Set up change handler for piece
+	world_on_piece_change_handlers[piece_idx] = function(piece_data){
+		if (piece_data === null){
+			// If piece_data is null, then the piece is removed, so get rid of it
+			$(piece).remove();
+		} else {
+			// Move the piece (as long as we didn't move it initially)
+			if (("x" in piece_data) && ("y" in piece_data)){
+				if (!("client" in piece_data) || (piece_data.client != g_client_id)) {
+					$(piece).offset({
+						left: piece_data.x, 
+						top: piece_data.y
+					});	
+				}
+			}
+			// Set the lock status
+			if ("lock" in piece_data) {
+				piece.lock = piece_data.lock;
+			}
+		}
+	}
+}
+
+// Register our new piece handler
+$(document).ready(function() {
+	world_on_new_piece_handler = on_new_piece_handler; 
+});
+
+
 /*
- * Make a unique client ID that can be used to ignore update messages
+ * This is a unique client ID that can be used to ignore update messages
  * that we generated and have already displayed (like moves)
  *
  * TODO: make it truly unique (currently low probability of hitting another client)
  */
 var g_client_id = (""+Math.random()).split(".").pop();
 
-function piece_show_action_icons(piece){
-	var piece_move = $(piece).find(".piece_move");
-	var piece_rotate = $(piece).find(".piece_rotate");
-	var piece_face = $(piece).find(".piece_face");
-	var position = $(piece_face).offset();
-	//    piece_move.position({my: "top left", at: "top left", of: piece_face});
-	position.left = piece.offsetLeft + $(piece_face).width() / 2 - $(piece_move).width() - 8;
-	position.top = piece.offsetTop + $(piece_face).height() / 2 - $(piece_move).height() / 2;
-	$(piece_move).offset(position);
-	position.left = piece.offsetLeft + $(piece_face).width() / 2 + 8;
-	position.top = piece.offsetTop + $(piece_face).height() / 2 - $(piece_rotate).height() / 2;
-	$(piece_rotate).offset(position);
-	piece_move.stop(true,true).animate({
-		opacity:1
-	},200);
-	piece_rotate.stop(true,true).animate({
-		opacity:1
-	},200);
-}
-	
-function piece_hide_action_icons(piece){
-	var piece_move = $(piece).find(".piece_move");
-	var piece_rotate = $(piece).find(".piece_rotate");
-	piece_move.stop(true,true).animate({
-		opacity:0
-	},200);
-	piece_rotate.stop(true,true).animate({
-		opacity:0
-	},200);
-}
-
+/*
+ * set_piece_location - moves the piece to the given position visibly and
+ * calls the world update for the piece
+ * 
+ * @param piece The piece DOM object
+ * @param position (left, top) position for the piece
+ */
 function set_piece_location(piece, position){
 	var offset = $(piece).offset();
+	// Make sure that the piece actually moved before we update the world
 	if ((offset.left != position.left) || (offset.top != position.top)){
 		world_move_piece(piece.world_piece_index, g_client_id, 
 			position.left, position.top);
@@ -53,15 +92,26 @@ function set_piece_location(piece, position){
 	}
 }
 
-// Helper function to determine if an event is a touch event
+/*
+ * is_touch_event - Helper function to determine if an event is a touch event
+ * 
+ * @param event The mouse or touch event
+ */
 function is_touch_event(event){
 	return (typeof event.touches != 'undefined');
 }
 
-// Helper function to get the event coordinates for either mouse or touch event
+/*
+ * get_event_coordinates - Helper function to get the event coordinates for either a 
+ * mouse or touch event
+ * 
+ * @param event The mouse or touch event
+ */
 function get_event_coordinates(event){
 	var coord;
 	if (is_touch_event(event)){
+		// If this is a touch event, use the first touch
+		// TODO: Allow multiple touches and use the closest touch to the object (targetTouches)
 		coord = {
 			x: event.touches[0].pageX, 
 			y: event.touches[0].pageY
@@ -75,7 +125,14 @@ function get_event_coordinates(event){
 	return (coord);
 }
 
-function show_piece_popup_menu(piece,coord){
+/*
+ * show_piece_popup_menu - Generates the pop-up menu for the given piece at the given
+ * coordinates.  The contents of the pop-up menu are based upon the state of the piece.
+ * 
+ * @param piece The piece DOM object
+ * @param position (left, top) position for the piece
+ */
+function show_piece_popup_menu(piece, position){
 	var menu_items = [];
 	if (piece.lock){
 		menu_items.push({label: "Unlock", callback: function(){
@@ -87,11 +144,11 @@ function show_piece_popup_menu(piece,coord){
 				world_piece_set_lock(piece.world_piece_index,1);
 			}, args: null});
 	}
-	create_popup_menu(menu_items, $('#board'),coord);
+	create_popup_menu(menu_items, $('#board'),position);
 }
 
 /*
- * Handles a mouse down event or single touch upon a piece
+ * on_piece_touch_start - Handles a mouse down or touch event upon a piece
  * 
  * If a user clicks down upon a piece, we want to be able to do different things
  * depending upon if the user presses and drags or  presses and releases (single click)
@@ -99,14 +156,16 @@ function show_piece_popup_menu(piece,coord){
  * If a user presses and drags, we move the piece
  * If a user presses and releases without moving (a click), we display a context menu
  *
- * For touch support, we treat single touch events along side
+ * For touch support, we treat single touch events almost exactly like mouse events.
+ * 
+ * @param event The mouse down or touch start event
  */
 function on_piece_touch_start(event){
 	// Ignore multi-touch or no-touch
 	if (is_touch_event(event) && (event.touches.length != 1)){
 		return true; // Allow event to propogate
 	}
-	// Record the piece we are manipulating for use in new event handlers we'll define'
+	// Record the piece we are manipulating for use in new event handlers we'll define
 	var piece = this;
 	// Store where on the piece we clicked (for use with dragging)
 	var piece_offset = $(piece).offset();
@@ -118,7 +177,7 @@ function on_piece_touch_start(event){
 	// Holds if we are clicking or dragging
 	var do_click = 1;
 	// For click-drag we'll use the document for mouse move and mouse up events
-	var board = $(document);
+	var board = $(document).get(0);
 	// Now register the drag function
 	var drag_function = function (event) {
 		var click = get_event_coordinates(event);
@@ -148,14 +207,15 @@ function on_piece_touch_start(event){
 		$(piece).css("opacity",1);
 		// We are done, so unregister listeners
 		if (is_touch_event(event)){
-			board.get(0).removeEventListener("touchmove", drag_function, false);
-			board.get(0).removeEventListener("touchend", stop_drag_function, false);
-			board.get(0).removeEventListener("touchcancel", stop_drag_function, false);
+			board.removeEventListener("touchmove", drag_function, false);
+			board.removeEventListener("touchend", stop_drag_function, false);
+			board.removeEventListener("touchcancel", stop_drag_function, false);
 		} else {
-			board.unbind("mousemove.drag");
-			board.unbind("mouseup.drag");
+			$(board).unbind("mousemove.drag");
+			$(board).unbind("mouseup.drag");
 		}
 		// If we haven't moved, propogate a click event
+		// TODO: Allow event propogation and use a regular click...
 		if (do_click){
 			show_piece_popup_menu(piece,{
 				left: start_click.x-10,
@@ -175,13 +235,15 @@ function on_piece_touch_start(event){
 			}
 		}
 	};
+	// Add the events to monitor drags and releases to the board (since can drag off the piece)
+	// We do this even if the piece is locked so that we can handle regular clicks
 	if (is_touch_event(event)){
-		board.get(0).addEventListener("touchmove",drag_function,false);
-		board.get(0).addEventListener("touchend",stop_drag_function,false);
-		board.get(0).addEventListener("touchcancel",stop_drag_function,false);
+		board.addEventListener("touchmove",drag_function,false);
+		board.addEventListener("touchend",stop_drag_function,false);
+		board.addEventListener("touchcancel",stop_drag_function,false);
 	} else {
-		board.bind("mousemove.drag",drag_function);
-		board.bind("mouseup.drag",stop_drag_function);
+		$(board).bind("mousemove.drag",drag_function);
+		$(board).bind("mouseup.drag",stop_drag_function);
 	}
 	if (piece.lock){
 		// If locked, let the event propogate
@@ -248,74 +310,6 @@ function board_add_piece(img_url){
 	world_add_piece([img_url],50,50);
 }
 
-function on_new_piece_handler(piece_idx, piece_data){
-	var img_url = piece_data.faces[0];
-	var x = piece_data.x;
-	var y = piece_data.y;
-	var new_id = "piece_" + piece_idx;
-	var piece = $('<span class="piece" id="' + new_id + 
-		'" style="position: absolute; left: ' + x + 'px; top: ' + y + 'px;">' +
-		'<img class="piece_face" src="' + img_url + '">' +
-		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
-		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
-		'</span>');
-	// Add to the board
-	$("#board").append(piece);
-	// Record the piece index
-	piece.get(0).world_piece_index = piece_idx;
-	// Record the lock state
-	piece.get(0).lock = piece_data.lock;
-	// Record that we are not moving the piece
-	piece.bind({
-		//		mouseenter: function() {piece_show_action_icons(this);}, 
-		//		mouseleave: function() {piece_hide_action_icons(this);},
-		mousedown: on_piece_touch_start,
-		contextmenu: function(){
-			return false;
-		}
-	});
-	// Add mouse click event
-	piece.find(".piece_rotate").bind({
-		mousedown: function(event) { 
-			event.preventDefault();  
-			piece_start_rotate(piece.get(0),event.pageX,event.pageY);
-			return false; 
-		}
-	});
-	// Add mouse touch event (for mobile devices)
-	if (piece.get(0).addEventListener){
-		piece.get(0).addEventListener("touchstart",on_piece_touch_start,false);
-	}
-	// Set up change handler for piece
-	world_on_piece_change_handlers[piece_idx] = function(piece_data){
-		if (piece_data === null){
-			piece.remove();
-		} else {
-			if (("x" in piece_data) && ("y" in piece_data)){
-				if (!("client" in piece_data) || (piece_data.client != g_client_id)) {
-					$(piece).offset({
-						left: piece_data.x, 
-						top: piece_data.y
-					});	
-				}
-			}
-			if ("lock" in piece_data) {
-				piece.get(0).lock = piece_data.lock;
-			}
-		}
-	}
-}
-
-
-$(document).ready(function() {
-	// Register ourselves in the world
-	world_on_new_piece_handler = on_new_piece_handler; 
-//	$(document).bind("click", function () {alert("hi"); return false;}); // We can handle click events for context menu
-//	board_add_piece("../images/piece.png");
-//	board_add_piece("../images/shape01.png");
-});
-
-
 // TODO: Keyboard interactions
 /*
 	  function board_keypress(event){
@@ -346,3 +340,51 @@ $(document).ready(function() {
 	  }
 */
 
+// The original idea was to display icons on hover...
+
+/*  
+		'<img class="piece_move" style="position:absolute; opacity: 0;" src="../images/transform-move.png">' +
+		'<img class="piece_rotate" style="position:absolute; opacity: 0;" src="../images/transform-rotate.png">' +
+
+	$(piece).find(".piece_rotate").bind({
+		mousedown: function(event) { 
+			event.preventDefault();  
+			piece_start_rotate(piece,event.pageX,event.pageY);
+			return false; 
+		}
+	});
+
+
+function piece_show_action_icons(piece){
+	var piece_move = $(piece).find(".piece_move");
+	var piece_rotate = $(piece).find(".piece_rotate");
+	var piece_face = $(piece).find(".piece_face");
+	var position = $(piece_face).offset();
+	//    piece_move.position({my: "top left", at: "top left", of: piece_face});
+	position.left = piece.offsetLeft + $(piece_face).width() / 2 - $(piece_move).width() - 8;
+	position.top = piece.offsetTop + $(piece_face).height() / 2 - $(piece_move).height() / 2;
+	$(piece_move).offset(position);
+	position.left = piece.offsetLeft + $(piece_face).width() / 2 + 8;
+	position.top = piece.offsetTop + $(piece_face).height() / 2 - $(piece_rotate).height() / 2;
+	$(piece_rotate).offset(position);
+	piece_move.stop(true,true).animate({
+		opacity:1
+	},200);
+	piece_rotate.stop(true,true).animate({
+		opacity:1
+	},200);
+}
+	
+function piece_hide_action_icons(piece){
+	var piece_move = $(piece).find(".piece_move");
+	var piece_rotate = $(piece).find(".piece_rotate");
+	piece_move.stop(true,true).animate({
+		opacity:0
+	},200);
+	piece_rotate.stop(true,true).animate({
+		opacity:0
+	},200);
+}
+
+
+ */
