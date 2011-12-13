@@ -92,6 +92,7 @@
 						$(':button:contains("OK")').click();
 						return false;
 					}
+					return true;
 				})
 			});
 	
@@ -117,7 +118,7 @@
 		<div id="create_piece_dialog" title="Create a New Piece">
 			<form>
 				<fieldset>
-					<label for="url">Image URL</label>
+					<label for="create_piece_url">Image URL</label>
 					<input type="text" name="url" id="create_piece_url" class="text ui-widget-content ui-corner-all" />
 				</fieldset>
 			</form>
