@@ -125,6 +125,33 @@ function world_piece_set_lock(piece_index,lock){
 }
 
 /*
+ * world_piece_set_orientation - Updates the orientation of a piece with the world server
+ * 
+ * @param piece_index The piece index
+ * @param orientation The orientation in degrees
+ */
+function world_piece_set_orientation(piece_index,orientation){
+	// Create the world update object
+	var world_update = {
+		"pieces": new Object()
+	};
+	world_update.pieces[piece_index] =  {
+		"orientation": orientation
+	};
+	// Send the ajax request, calling the next move on success
+	$.ajax({
+		type: 'POST', 
+		url: world_server_url, 
+		data: {
+			action: "update", 
+			update: JSON.stringify(world_update)
+		}, 
+		dataType: "text"
+	});
+}
+
+
+/*
  * world_on_new_piece_handler - This is a handler function(piece_index, piece_data)
  * that is set by the code interested in listening to piece additions to the world
  * When a new piece is added, the piece_index is set to the index used by the world

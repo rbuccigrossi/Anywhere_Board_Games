@@ -51,3 +51,30 @@ function util_get_event_coordinates(event){
 	}
 	return (coord);
 }
+
+/*
+ * util_create_ui_overlay - Generates a ui-widget-overlay, sets the window resize
+ * callback to manipulate it, and returns the DOM object
+ *
+ * @param click_callback Callback(event) for click event
+ * @return ui_overlay DOM object
+ */
+function util_create_ui_overlay(click_callback){
+	var js_overlay = $('<div class="ui-widget-overlay"></div>').css('opacity',0).appendTo('body');
+	var set_overlay_dimension = function (){
+		js_overlay.width($(document).width());
+		js_overlay.height($(document).height());
+	}
+	$(window).bind("resize",set_overlay_dimension);
+	js_overlay.bind("click",function(event){
+		$(window).unbind("resize",set_overlay_dimension);
+		js_overlay.remove();
+		if (click_callback){
+			return (click_callback(event));
+		}
+		else {
+			return true;
+		}
+	});
+	return (js_overlay.get(0))
+}

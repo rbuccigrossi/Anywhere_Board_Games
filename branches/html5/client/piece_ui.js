@@ -26,7 +26,10 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Record the piece index into the piece object
 	piece.world_piece_index = piece_idx;
 	// Record the lock state into the piece object
-	piece.lock = piece_data.lock;
+	piece.lock = piece_data.lock ? piece_data.lock : 0;
+	// Record the orientation
+	piece.orientation = piece_data.orientation ? piece_data.orientation : 0;
+	set_piece_orientation(piece,piece.orientation);
 	// Add the move handler
 	$(piece).bind({
 		mousedown: on_piece_touch_start
@@ -49,6 +52,10 @@ function on_new_piece_handler(piece_idx, piece_data){
 						top: piece_data.y
 					});	
 				}
+			}
+			if ("orientation" in piece_data){
+				piece.orientation = piece_data.orientation;
+				set_piece_orientation(piece,piece.orientation);
 			}
 			// Set the lock status
 			if ("lock" in piece_data) {
@@ -96,14 +103,28 @@ function set_piece_location(piece, position){
 function show_piece_popup_menu(piece, position){
 	var menu_items = [];
 	if (piece.lock){
-		menu_items.push({label: "Unlock", callback: function(){
+		menu_items.push({
+			label: "Unlock", 
+			callback: function(){
 				world_piece_set_lock(piece.world_piece_index,0);
-			}, args: null});
+			}, 
+			args: null
+		});
 	} else {
-		menu_items.push({label: "Rotate", callback: function(){}, args: null});
-		menu_items.push({label: "Lock", callback: function(){
+		menu_items.push({
+			label: "Rotate", 
+			callback: function(event){
+				piece_start_rotate(piece, event);
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Lock", 
+			callback: function(){
 				world_piece_set_lock(piece.world_piece_index,1);
-			}, args: null});
+			}, 
+			args: null
+		});
 	}
 	create_popup_menu(menu_items, $('#board'),position);
 }
@@ -218,53 +239,86 @@ function on_piece_touch_start(event){
 	}
 }
 
-function set_piece_orientation(item, degrees){
-	var r = "rotate(" + degrees + "deg)";
-	$(item).css("transform",r);
-	$(item).css("-webkit-transform",r);
-	$(item).css("-moz-transform",r);
-	$(item).css("-ms-transform",r);
+function set_piece_orientation(piece, orientation){
+	var r = "rotate(" + orientation + "deg)";
+	var piece_face = $(piece).find(".piece_face");
+	$(piece_face).css("transform",r);
+	$(piece_face).css("-webkit-transform",r);
+	$(piece_face).css("-moz-transform",r);
+	$(piece_face).css("-ms-transform",r);
 }
 
-function piece_start_rotate(piece, x, y){
+/**
+ * piece_start_rotate - Initiate the rotation of a piece
+ * 
+ * @param piece The piece object to be rotated
+ * @param event The initiating event
+ */
+function piece_start_rotate(piece, event){
 	// Initialize the object orientation if not set
 	if (!piece.orientation){
 		piece.orientation = 0;
 	}
-	var rotate_orig_orientation = piece.orientation;
+	var start_click = util_get_event_coordinates(event);
+	var start_orientation = piece.orientation;
 	var piece_face = $(piece).find(".piece_face");
 	var piece_center = {
 		left: piece.offsetLeft + $(piece_face).width()/2,
 		top: piece.offsetTop + $(piece_face).height()/2
 	};
 	var original_position_from_center = {
-		x: (x - piece_center.left),
-		y: (y - piece_center.top)
+		x: (start_click.x - piece_center.left),
+		y: (start_click.y - piece_center.top)
 	};
-	var board = $(document); // The #board object may not extend to the whole area
+	var overlay = util_create_ui_overlay();
+	// We'll use the document for mouse move and up events'
+	var board = $(document).get(0);
+	// Register a move function
 	var drag_function = function (event) {
+		var click = util_get_event_coordinates(event);
 		var piece_center = {
 			left: piece.offsetLeft + $(piece_face).width()/2,
 			top: piece.offsetTop + $(piece_face).height()/2
 		};
 		var new_position_from_center = {
-			x: (event.pageX - piece_center.left),
-			y: (event.pageY - piece_center.top)
+			x: (click.x - piece_center.left),
+			y: (click.y - piece_center.top)
 		};
 		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
-			piece.orientation = rotate_orig_orientation
+			piece.orientation = start_orientation
 			+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
 		}
 		piece.orientation = ((Math.round(piece.orientation / 5) * 5) + 360) % 360;
-		set_piece_orientation(piece_face,piece.orientation);
+		set_piece_orientation(piece,piece.orientation);
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
 	}
-	var stop_drag_function = function () {
-		board.unbind("mousemove.rotatedrag");
-		board.unbind("mouseup.rotatedrag");
+	var stop_drag_function = function (event) {
+		// Update the orientation with the world
+		world_piece_set_orientation(piece.world_piece_index,piece.orientation);
+		// Click on the overlay to destroy it
+		$(overlay).trigger('click');
+		// Remove listeners
+		if (board.removeEventListener){
+			board.removeEventListener("touchmove", drag_function, false);
+			board.removeEventListener("touchend", stop_drag_function, false);
+			board.removeEventListener("touchcancel", stop_drag_function, false);
+		}
+		$(board).unbind("mousemove.rotatedrag");
+		$(board).unbind("mouseup.rotatedrag");
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
 	};
-	board.bind("mousemove.rotatedrag",drag_function);
-	board.bind("mouseup.rotatedrag",stop_drag_function);
+	if (board.addEventListener){
+		board.addEventListener("touchmove",drag_function,false);
+		board.addEventListener("touchend",stop_drag_function,false);
+		board.addEventListener("touchcancel",stop_drag_function,false);
+	}
+	$(board).bind("mousemove.rotatedrag",drag_function);
+	$(board).bind("mouseup.rotatedrag",stop_drag_function);
 }
 	
 function board_add_piece(img_url){

@@ -13,10 +13,10 @@ function create_popup_menu(menu_items_config, parent, position){
 	parent.append(menu);
 	// Given a menu config, this creates a hander to call the callback and close the dialog
 	function popup_callback_maker(config){
-		return function() { 
-			config.callback(config.args);
+		return function(event) { 
 			menu.dialog('close');
 			menu.remove();
+			return config.callback(event,config.args);
 		};		
 	}
 	// Now create the menu items with the appropriate callback
