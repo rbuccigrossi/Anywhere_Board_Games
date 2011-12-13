@@ -3,10 +3,10 @@
  *
  * @param menu_items_config Array of (label, callback, args) to create the menu items
  * @param parent DOM object into which the pop-up menu is placed
- * @param offset offset (top, left) pair for the placement of the menu
+ * @param position Client position (top, left) pair for the placement of the menu
  */
 
-function create_popup_menu(menu_items_config, parent, offset){
+function create_popup_menu(menu_items_config, parent, position){
 	var i, menu, menu_item;
 	// Create and add the menu items
 	menu = $('<div id="hi"></div>');
@@ -42,12 +42,10 @@ function create_popup_menu(menu_items_config, parent, offset){
 		minHeight: 'auto',
 		minWidth: 'auto'
 	});
-	// Position the dialog at 0,0 to keep the iphone from jumping
-	menu.dialog('option','position',[0,0]);
+	menu.dialog('option','position',[position.left, position.top]);
 	// When the dialog opens, set the overlay to close the dialog if you click elsewhere
 	menu.bind('dialogopen', function(event, ui) {
 		$('.popup .ui-dialog-titlebar').hide();
-		$('.popup').offset(offset);
 		$('.ui-widget-overlay').unbind('click');
 		$('.ui-widget-overlay').css('opacity',0);
 		$('.ui-widget-overlay').bind('mousedown',function() {

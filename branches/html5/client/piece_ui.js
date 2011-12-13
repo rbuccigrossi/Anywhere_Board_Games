@@ -90,39 +90,6 @@ function set_piece_location(piece, position){
 }
 
 /*
- * is_touch_event - Helper function to determine if an event is a touch event
- * 
- * @param event The mouse or touch event
- */
-function is_touch_event(event){
-	return (typeof event.touches != 'undefined');
-}
-
-/*
- * get_event_coordinates - Helper function to get the event coordinates for either a 
- * mouse or touch event
- * 
- * @param event The mouse or touch event
- */
-function get_event_coordinates(event){
-	var coord;
-	if (is_touch_event(event)){
-		// If this is a touch event, use the first touch
-		// TODO: Allow multiple touches and use the closest touch to the object (targetTouches)
-		coord = {
-			x: event.touches[0].pageX, 
-			y: event.touches[0].pageY
-		};
-	} else {
-		coord = {
-			x: event.pageX, 
-			y: event.pageY
-		};
-	}
-	return (coord);
-}
-
-/*
  * show_piece_popup_menu - Generates the pop-up menu for the given piece at the given
  * coordinates.  The contents of the pop-up menu are based upon the state of the piece.
  * 
@@ -159,14 +126,14 @@ function show_piece_popup_menu(piece, position){
  */
 function on_piece_touch_start(event){
 	// Ignore multi-touch or no-touch
-	if (is_touch_event(event) && (event.touches.length != 1)){
+	if (util_is_touch_event(event) && (event.touches.length != 1)){
 		return true; // Allow event to propogate
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
 	var piece = this;
 	// Store where on the piece we clicked (for use with dragging)
 	var piece_offset = $(piece).offset();
-	var start_click = get_event_coordinates(event);
+	var start_click = util_get_event_coordinates(event);
 	var position_on_piece = {
 		x: (start_click.x - piece_offset.left),
 		y: (start_click.y - piece_offset.top)
@@ -177,7 +144,7 @@ function on_piece_touch_start(event){
 	var board = $(document).get(0);
 	// Now register the drag function
 	var drag_function = function (event) {
-		var click = get_event_coordinates(event);
+		var click = util_get_event_coordinates(event);
 		var new_offset = {
 			left: click.x - position_on_piece.x,
 			top: click.y - position_on_piece.y
@@ -203,7 +170,7 @@ function on_piece_touch_start(event){
 	var stop_drag_function = function (event) {
 		$(piece).css("opacity",1);
 		// We are done, so unregister listeners
-		if (is_touch_event(event)){
+		if (util_is_touch_event(event)){
 			board.removeEventListener("touchmove", drag_function, false);
 			board.removeEventListener("touchend", stop_drag_function, false);
 			board.removeEventListener("touchcancel", stop_drag_function, false);
@@ -214,10 +181,10 @@ function on_piece_touch_start(event){
 		// If we haven't moved, propogate a click event
 		// TODO: Allow event propogation and use a regular click...
 		if (do_click){
-			show_piece_popup_menu(piece,{
+			show_piece_popup_menu(piece,util_page_to_client_coord({
 				left: start_click.x-10,
 				top: start_click.y-10
-			});
+			}));
 			// We do not want regular event processing
 			event.preventDefault(); 
 			return(false);
@@ -234,7 +201,7 @@ function on_piece_touch_start(event){
 	};
 	// Add the events to monitor drags and releases to the board (since can drag off the piece)
 	// We do this even if the piece is locked so that we can handle regular clicks
-	if (is_touch_event(event)){
+	if (util_is_touch_event(event)){
 		board.addEventListener("touchmove",drag_function,false);
 		board.addEventListener("touchend",stop_drag_function,false);
 		board.addEventListener("touchcancel",stop_drag_function,false);
