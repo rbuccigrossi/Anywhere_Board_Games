@@ -11,7 +11,7 @@ function create_popup_menu(menu_items_config, parent, offset){
 	// Create and add the menu items
 	menu = $('<div id="hi"></div>');
 	parent.append(menu);
-	// Given a menu config, this creates a callback function
+	// Given a menu config, this creates a hander to call the callback and close the dialog
 	function popup_callback_maker(config){
 		return function() { 
 			config.callback(config.args);
@@ -27,8 +27,11 @@ function create_popup_menu(menu_items_config, parent, offset){
 		menu_item.bind('click',popup_callback_maker(menu_items_config[i]));
 		menu.append(menu_item);
 	}
+	// Style the menu
 	menu.css('padding', 0);
+	// Turn links unto jquery ui buttons
 	menu.find('a').css('display','block').button();
+	// Set up the dialog box
 	menu.dialog({
 		dialogClass: 'popup bga_small_text_dialog',
 		autoOpen: false,
@@ -39,7 +42,9 @@ function create_popup_menu(menu_items_config, parent, offset){
 		minHeight: 'auto',
 		minWidth: 'auto'
 	});
-	menu.dialog('option','position',[0,0]); // Hack for iphone jumping
+	// Position the dialog at 0,0 to keep the iphone from jumping
+	menu.dialog('option','position',[0,0]);
+	// When the dialog opens, set the overlay to close the dialog if you click elsewhere
 	menu.bind('dialogopen', function(event, ui) {
 		$('.popup .ui-dialog-titlebar').hide();
 		$('.popup').offset(offset);
@@ -51,9 +56,11 @@ function create_popup_menu(menu_items_config, parent, offset){
 			return true;
 		});
 	});
-	menu.bind('focus', function(event, ui){   // Remove first item being hovered
+	// Unset the hover that the jquery dialog places on the first item
+	menu.bind('focus', function(event, ui){ 
 		menu.find('a').removeClass('ui-state-focus ui-state-hover');
 	});
+	// Now open the dialog
 	menu.dialog('open');
 }
 

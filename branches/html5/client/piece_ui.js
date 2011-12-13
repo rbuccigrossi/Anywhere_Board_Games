@@ -61,11 +61,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 	}
 }
 
-// Register our new piece handler
-$(document).ready(function() {
-	world_on_new_piece_handler = on_new_piece_handler; 
-});
-
+// Register our new piece handler (make sure it is registered before document load)
+world_on_new_piece_handler = on_new_piece_handler; 
 
 /*
  * This is a unique client ID that can be used to ignore update messages
