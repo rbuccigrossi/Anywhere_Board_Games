@@ -9,7 +9,7 @@
 function create_popup_menu(menu_items_config, parent, position){
 	var i, menu, menu_item;
 	// Create and add the menu items
-	menu = $('<div id="hi"></div>');
+	menu = $('<div style="display:none;"></div>');
 	parent.append(menu);
 	// Given a menu config, this creates a hander to call the callback and close the dialog
 	function popup_callback_maker(config){

@@ -27,12 +27,9 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.world_piece_index = piece_idx;
 	// Record the lock state into the piece object
 	piece.lock = piece_data.lock;
-	// Add the move and context menu handlers
+	// Add the move handler
 	$(piece).bind({
-		mousedown: on_piece_touch_start,
-		contextmenu: function(){
-			return false;
-		}
+		mousedown: on_piece_touch_start
 	});
 	// Add mouse touch event (for mobile devices)
 	if (piece.addEventListener){
@@ -273,6 +270,46 @@ function piece_start_rotate(piece, x, y){
 function board_add_piece(img_url){
 	world_add_piece([img_url],50,50);
 }
+
+/*
+ * show_board_popup_menu - Generates the pop-up menu for the board.
+ * 
+ * @param position (left, top) position for the piece
+ */
+function show_board_popup_menu(position){
+	var menu_items = [];
+	menu_items.push({
+		label: "Add Piece...", 
+		callback: function(){
+			$( '#create_piece_dialog' ).dialog('open');
+		}, 
+		args: null
+	});
+	create_popup_menu(menu_items, $('#board'),position);
+}
+
+/*
+ * on_board_click - handler for board click events. If we are the destination of
+ * the click, then pop-up the menu.
+ *
+ * @param event Click event
+ */
+function on_board_click(event){
+	if (event.target.nodeName == "HTML"){
+		show_board_popup_menu(util_page_to_client_coord({
+			left: event.pageX-10,
+			top: event.pageY-10
+		}));
+		event.preventDefault();
+		return (false);
+	}
+	return (true);
+}
+
+// Register popup menu on board click
+$(document).ready(function(){
+	$(document).bind("click", on_board_click);
+});
 
 // TODO: Keyboard interactions
 /*
