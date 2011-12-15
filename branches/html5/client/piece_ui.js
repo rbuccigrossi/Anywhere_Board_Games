@@ -149,6 +149,7 @@ function on_piece_touch_start(event){
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
 	var piece = this;
+//	$(piece).detach().appendTo("#board");
 	// Store where on the piece we clicked (for use with dragging)
 	var piece_offset = $(piece).offset();
 	var start_click = util_get_event_coordinates(event);

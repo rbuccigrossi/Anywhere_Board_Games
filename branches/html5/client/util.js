@@ -78,3 +78,16 @@ function util_create_ui_overlay(click_callback){
 	});
 	return (js_overlay.get(0))
 }
+
+function util_get_browser_width(){
+  if( typeof( window.innerWidth ) == 'number' ) {
+    //Non-IE
+    return window.innerWidth;
+  } else if( document.documentElement && document.documentElement.clientWidth ) {
+    //IE 6+ in 'standards compliant mode'
+    return document.documentElement.clientWidth;
+  } else {
+    //IE 4 compatible
+    return document.body.clientWidth;
+  }
+}
