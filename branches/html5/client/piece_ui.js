@@ -125,6 +125,13 @@ function show_piece_popup_menu(piece, position){
 			}, 
 			args: null
 		});
+		menu_items.push({
+			label: "Delete", 
+			callback: function(){
+				world_piece_delete(piece.world_piece_index);
+			}, 
+			args: null
+		});
 	}
 	create_popup_menu(menu_items, $('#board'),position);
 }
