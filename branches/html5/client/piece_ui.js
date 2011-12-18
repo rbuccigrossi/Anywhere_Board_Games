@@ -27,6 +27,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.world_piece_index = piece_idx;
 	// Record the lock state into the piece object
 	piece.lock = piece_data.lock ? piece_data.lock : 0;
+	// Record the faces
+	piece.faces = piece_data.faces;
 	// Record the orientation
 	piece.orientation = piece_data.orientation ? piece_data.orientation : 0;
 	set_piece_orientation(piece,piece.orientation);
@@ -122,6 +124,13 @@ function show_piece_popup_menu(piece, position){
 			label: "Lock", 
 			callback: function(){
 				world_piece_set_lock(piece.world_piece_index,1);
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Clone", 
+			callback: function(){
+				piece_clone(piece);
 			}, 
 			args: null
 		});
@@ -245,6 +254,17 @@ function on_piece_touch_start(event){
 		$(piece).css("opacity",0.5);
 		return(false);
 	}
+}
+
+/*
+ * piece_clone - Creates a new piece in the world that is a copy of the given piece
+ * TODO: Make sure that new features (like z index) are added to this function
+ * 
+ * @param piece The piece to clone
+ */
+function piece_clone(piece){
+	var offset = $(piece).offset();
+	world_add_piece(piece.faces, offset.left + 10, offset.top + 10);
 }
 
 function set_piece_orientation(piece, orientation){
