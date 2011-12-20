@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoardGameArena", "BoardGameArena\BoardGameArena.csproj", "{8E3B8206-AED3-4885-BA56-B56730FA940B}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "BGASetup", "BGASetup\BGASetup.vdproj", "{F1A36DB0-BD24-4E67-9014-2BB9078F4615}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8E3B8206-AED3-4885-BA56-B56730FA940B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E3B8206-AED3-4885-BA56-B56730FA940B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E3B8206-AED3-4885-BA56-B56730FA940B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E3B8206-AED3-4885-BA56-B56730FA940B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1A36DB0-BD24-4E67-9014-2BB9078F4615}.Debug|Any CPU.ActiveCfg = Debug
+		{F1A36DB0-BD24-4E67-9014-2BB9078F4615}.Release|Any CPU.ActiveCfg = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
