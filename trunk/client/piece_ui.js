@@ -367,6 +367,20 @@ function show_board_popup_menu(position){
 		}, 
 		args: null
 	});
+	menu_items.push({
+		label: "Download Board", 
+		callback: function(){
+			window.open(world_server_url + "?action=download");
+		}, 
+		args: null
+	});
+	menu_items.push({
+		label: "Upload Board", 
+		callback: function(){
+			$( '#upload_board_dialog' ).dialog('open');
+		}, 
+		args: null
+	});
 	create_popup_menu(menu_items, $('#board'),position);
 }
 
