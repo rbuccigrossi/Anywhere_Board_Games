@@ -51,6 +51,20 @@ if ($action === "read") {
 	@unlink($filename);
 	echo json_encode(array('success' => 'true'));
 	exit();
+} else if ($action === "download") {
+	// Download the whole JSON file (but use binary and give it an abg extension for now)
+	header('Content-type: application/octet-stream');
+	header('Content-Disposition: attachment; filename="board_game.bga"');
+	readfile($filename);
+	exit();
+} else if ($action === "upload") {
+	// TODO: Instead of replacing world, we need to update it...
+	if (replace_world($filename,$_FILES['file']['tmp_name'])){
+		echo "\n\nWorld uploaded";
+	} else {
+		echo "\n\nError uploading world";
+	}
+	exit();
 } else {
 	exit_json_error("Unknown action");
 	exit();
@@ -85,6 +99,22 @@ function update_world($filename, &$update){
 	world_node_update($world, $update, $world["max_assigned"] + 1);
 	ftruncate($file, 0);
 	fwrite($file, json_encode($world));
+	flock($file, LOCK_UN);
+	fclose($file);
+	return (1);
+}
+
+function replace_world($filename, $source_file){
+	// TODO: Error checking on uploaded file
+	$file_data = @file_get_contents($source_file);
+	// Lock the world
+	$file = @fopen($filename, "c+");
+	if (!$file) {
+		return (0);
+	}
+	flock($file, LOCK_EX);
+	ftruncate($file, 0);
+	fwrite($file, $file_data);
 	flock($file, LOCK_UN);
 	fclose($file);
 	return (1);
