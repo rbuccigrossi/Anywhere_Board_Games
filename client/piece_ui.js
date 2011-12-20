@@ -381,6 +381,13 @@ function show_board_popup_menu(position){
 		}, 
 		args: null
 	});
+	menu_items.push({
+		label: "Clear Board", 
+		callback: function(){
+			world_clear();
+		}, 
+		args: null
+	});
 	create_popup_menu(menu_items, $('#board'),position);
 }
 

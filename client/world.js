@@ -61,6 +61,24 @@ function world_add_piece(faces,x,y){
 }
 
 /*
+ * world_clear - Clear the world on the world server
+ * 
+ */
+function world_clear(){
+	var world_update = null;
+	$.ajax({
+		type: 'POST', 
+		url: world_server_url, 
+		data: {
+			action: "update", 
+			update: JSON.stringify(world_update)
+			}, 
+		dataType: "text"
+	});
+}
+
+
+/*
  * world_move_piece - Updates the location of a piece with the world server.  It also
  * records a client string representing who is moving the piece so that the client
  * can ignore move updates that they themselves make.
