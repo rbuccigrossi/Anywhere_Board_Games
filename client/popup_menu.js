@@ -54,9 +54,7 @@ function create_popup_menu(menu_items_config, parent, position){
 			menu.remove();
 			return true;
 		});
-	});
-	// Unset the hover that the jquery dialog places on the first item
-	menu.bind('focus', function(event, ui){ 
+		// Unset the hover that the jquery dialog places on the first item
 		menu.find('a').removeClass('ui-state-focus ui-state-hover');
 	});
 	// Now open the dialog

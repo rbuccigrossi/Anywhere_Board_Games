@@ -54,15 +54,21 @@ if ($action === "read") {
 } else if ($action === "download") {
 	// Download the whole JSON file (but use binary and give it an abg extension for now)
 	header('Content-type: application/octet-stream');
-	header('Content-Disposition: attachment; filename="board_game.bga"');
-	readfile($filename);
+	header('Content-Disposition: attachment; filename="board_game.abg"');
+	$world = &read_world($filename);
+	$update = &get_world_update($world, 0);
+	echo json_encode($update);
 	exit();
 } else if ($action === "upload") {
-	// TODO: Instead of replacing world, we need to update it...
-	if (replace_world($filename,$_FILES['file']['tmp_name'])){
-		echo "\n\nWorld uploaded";
+	$new_data = read_world($_FILES['file']['tmp_name']);
+	if ($new_data){
+		if (update_world($filename,$new_data)){
+			echo "\n\nWorld uploaded";		
+		} else {
+			echo "\n\nError updating world";
+		}
 	} else {
-		echo "\n\nError uploading world";
+		echo "\n\nError parsing uploaded file";
 	}
 	exit();
 } else {
