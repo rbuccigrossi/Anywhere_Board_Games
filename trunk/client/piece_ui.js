@@ -55,9 +55,12 @@ function on_new_piece_handler(piece_idx, piece_data){
 					});	
 				}
 			}
+			// Rotate the piece (as long as we didn't rotate it initially)
 			if ("orientation" in piece_data){
-				piece.orientation = piece_data.orientation;
-				set_piece_orientation(piece,piece.orientation);
+				if (!("client" in piece_data) || (piece_data.client != g_client_id)) {
+					piece.orientation = piece_data.orientation;
+					set_piece_orientation(piece,piece.orientation);
+				}
 			}
 			// Set the lock status
 			if ("lock" in piece_data) {
@@ -89,8 +92,13 @@ function set_piece_location(piece, position){
 	var offset = $(piece).offset();
 	// Make sure that the piece actually moved before we update the world
 	if ((offset.left != position.left) || (offset.top != position.top)){
-		world_move_piece(piece.world_piece_index, g_client_id, 
-			position.left, position.top);
+		// Update the world (setting the client so we can ignore return messages)
+		world_update_piece(piece.world_piece_index,{
+			"client": g_client_id,
+			"x": position.left,
+			"y": position.top
+		});
+		// Move the piece locally
 		$(piece).offset(position);
 	}
 }
@@ -108,7 +116,7 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Unlock", 
 			callback: function(){
-				world_piece_set_lock(piece.world_piece_index,0);
+				world_update_piece(piece.world_piece_index,{"lock": 0});
 			}, 
 			args: null
 		});
@@ -123,7 +131,7 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Lock", 
 			callback: function(){
-				world_piece_set_lock(piece.world_piece_index,1);
+				world_update_piece(piece.world_piece_index,{"lock": 1});
 			}, 
 			args: null
 		});
@@ -137,7 +145,8 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Delete", 
 			callback: function(){
-				world_piece_delete(piece.world_piece_index);
+				// Setting the piece to null deletes it
+				world_update_piece(piece.world_piece_index,null); 
 			}, 
 			args: null
 		});
@@ -264,7 +273,11 @@ function on_piece_touch_start(event){
  */
 function piece_clone(piece){
 	var offset = $(piece).offset();
-	world_add_piece(piece.faces, offset.left + 10, offset.top + 10);
+	world_add_piece({
+		"faces": piece.faces, 
+		"x": (offset.left + 10), 
+		"y": (offset.top + 10)
+	});
 }
 
 function set_piece_orientation(piece, orientation){
@@ -318,14 +331,18 @@ function piece_start_rotate(piece, event){
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
 		}
 		piece.orientation = ((Math.round(piece.orientation / 5) * 5) + 360) % 360;
+		// Update the world, setting the client so we can ignore the events
+		world_update_piece(piece.world_piece_index,{
+			"client": g_client_id,
+			"orientation": piece.orientation
+		})
+		// Update locally
 		set_piece_orientation(piece,piece.orientation);
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
 	}
 	var stop_drag_function = function (event) {
-		// Update the orientation with the world
-		world_piece_set_orientation(piece.world_piece_index,piece.orientation);
 		// Click on the overlay to destroy it
 		$(overlay).trigger('click');
 		// Remove listeners
@@ -350,7 +367,11 @@ function piece_start_rotate(piece, event){
 }
 	
 function board_add_piece(img_url){
-	world_add_piece([img_url],50,50);
+	world_add_piece({
+		"faces": [img_url],
+		"x": 50,
+		"y": 50
+	});
 }
 
 /*
@@ -384,7 +405,7 @@ function show_board_popup_menu(position){
 	menu_items.push({
 		label: "Clear Board", 
 		callback: function(){
-			world_clear();
+			world_update(0); // Updating the world to 0 clears it
 		}, 
 		args: null
 	});
