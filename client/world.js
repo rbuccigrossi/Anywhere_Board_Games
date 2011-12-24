@@ -25,6 +25,7 @@ var world_server_url = "../server/world.php";
  * to the world.
  * 
  * TODO: (LOW) There is a small race condition if two pieces are added simultaneously
+ * TODO: (LOW) Fill in any null holes from previously deleted pieces first
  */
 function world_get_new_piece_index(){
 	world_max_piece_index ++;
@@ -34,181 +35,73 @@ function world_get_new_piece_index(){
 /*
  * world_add_piece - Adds a piece to the world server
  * 
- * @param faces An array of image URLs
- * @param x The x location
- * @param y The y location
+ * @param piece_data Object containing new piece data
  */
-function world_add_piece(faces,x,y){
-	// TODO: (LOW) Fill in any null holes from previously deleted pieces first
+function world_add_piece(piece_data){
 	var piece_index = world_get_new_piece_index();
-	var world_update = {
-		"pieces": new Object()
-		};
-	world_update.pieces[piece_index] =  {
-		"faces": faces, 
-		"x": x, 
-		"y": y
-	};
-	$.ajax({
-		type: 'POST', 
-		url: world_server_url, 
-		data: {
-			action: "update", 
-			update: JSON.stringify(world_update)
-			}, 
-		dataType: "text"
-	});
+	world_update_piece(piece_index,piece_data);
 }
 
 /*
- * world_clear - Clear the world on the world server
+ * world_update - Sends an update array to the world.  Any subsequent calls will be 
+ * combined into a single update until the previous ajax call is completed.
  * 
+ * @param update The update to implement in the world
  */
-function world_clear(){
-	var world_update = null;
-	$.ajax({
-		type: 'POST', 
-		url: world_server_url, 
-		data: {
-			action: "update", 
-			update: JSON.stringify(world_update)
-			}, 
-		dataType: "text"
-	});
-}
-
-
-/*
- * world_move_piece - Updates the location of a piece with the world server.  It also
- * records a client string representing who is moving the piece so that the client
- * can ignore move updates that they themselves make.
- * 
- * @param piece_index The piece index
- * @param client The ID of the client that is moving the piece
- * @param x The x location (left)
- * @param y The y location (top)
- */
-function world_move_piece(piece_index,client,x,y){
-	// Check if we already are running (works since single threaded)
-	var ajax_loop_running = (piece_index in world_move_piece);
-	// Store the next move into the array (overwriting one if currently running)
-	world_move_piece[piece_index] = {
-		x: x, 
-		y: y,
-		pending: 1
-	};
+function world_update(update){
+	// Do we already have a pending update?
+	if ("pending_update" in world_update){
+		// Merge the update into the existing pending update
+		$.extend(true,world_update.pending_update, update);
+	} else {
+		// We don't have a pending update, so simply set it
+		world_update.pending_update = update;
+	}
 	// If we aren't running, start our ajax loop
-	if (!ajax_loop_running){
-		var call_next_move = function () {
+	if (!("ajax_loop_running" in world_update)){
+		world_update.ajax_loop_running = true;
+		var call_next_update = function () {
 			// Check if there is a move request pending
-			if (world_move_piece[piece_index].pending) {
-				// Mark that we are sending the request
-				world_move_piece[piece_index].pending = 0;
-				// Create the world update object
-				var world_update = {
-					"pieces": new Object()
-				};
-				world_update.pieces[piece_index] =  {
-					"client": client,
-					"x": world_move_piece[piece_index].x, 
-					"y": world_move_piece[piece_index].y
-				};
-				// Send the ajax request, calling the next move on success
+			if ("pending_update" in world_update) {
+				// Copy the update and clear the pending one (so that
+				// it can be assigned while the ajax is running)
+				var update = world_update.pending_update;
+				delete world_update.pending_update;
+				// Send the ajax request, calling the next update on success
 				$.ajax({
 					type: 'POST', 
 					url: world_server_url, 
 					data: {
 						action: "update", 
-						update: JSON.stringify(world_update)
+						update: JSON.stringify(update)
 					}, 
-					success: call_next_move, 
+					success: call_next_update, 
 					dataType: "text"
 				});
 			} else {
-				// We are out of requests, so delete the next move and terminate
-				delete world_move_piece[piece_index];
+				// We are out of requests, so mark that we are not running
+				// and terminate
+				delete world_update.ajax_loop_running;
 			}
 		}
-		// Call our ajax loop on the new piece
-		//		setTimeout(call_next_move,50);
-		call_next_move();
+		// Call our ajax loop on the new update
+		call_next_update();
 	}
 }
 
 /*
- * world_piece_set_lock - Updates the lock state of a piece with the world server
+ * world_update_piece - Convenience function to update a piece given a piece
+ * index and an array of attributes
  * 
- * @param piece_index The piece index
- * @param lock The boolean lock state
+ * @param piece_index Index of the peice to update
+ * @param piece_update Object containing the attributes to update 
  */
-function world_piece_set_lock(piece_index,lock){
-	// Create the world update object
-	var world_update = {
+function world_update_piece(piece_index, piece_update){
+	var update = {
 		"pieces": new Object()
 	};
-	world_update.pieces[piece_index] =  {
-		"lock": lock
-	};
-	// Send the ajax request, calling the next move on success
-	$.ajax({
-		type: 'POST', 
-		url: world_server_url, 
-		data: {
-			action: "update", 
-			update: JSON.stringify(world_update)
-		}, 
-		dataType: "text"
-	});
-}
-
-/*
- * world_piece_delete - Tells the world to delete the piece (we wait for
- * confirmation from the server to actually delete it
- * 
- * @param piece_index The piece index
- */
-function world_piece_delete(piece_index){
-	// Create the world update object
-	var world_update = {
-		"pieces": new Object()
-	};
-	world_update.pieces[piece_index] = null;
-	// Send the ajax request, calling the next move on success
-	$.ajax({
-		type: 'POST', 
-		url: world_server_url, 
-		data: {
-			action: "update", 
-			update: JSON.stringify(world_update)
-		}, 
-		dataType: "text"
-	});
-}
-
-/*
- * world_piece_set_orientation - Updates the orientation of a piece with the world server
- * 
- * @param piece_index The piece index
- * @param orientation The orientation in degrees
- */
-function world_piece_set_orientation(piece_index,orientation){
-	// Create the world update object
-	var world_update = {
-		"pieces": new Object()
-	};
-	world_update.pieces[piece_index] =  {
-		"orientation": orientation
-	};
-	// Send the ajax request, calling the next move on success
-	$.ajax({
-		type: 'POST', 
-		url: world_server_url, 
-		data: {
-			action: "update", 
-			update: JSON.stringify(world_update)
-		}, 
-		dataType: "text"
-	});
+	update.pieces[piece_index] =  piece_update;
+	world_update(update);
 }
 
 
