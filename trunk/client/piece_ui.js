@@ -37,12 +37,10 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Record the faces
 	piece.faces = piece_data.faces;
 	// Initialize the z index
-	if ("z" in piece_data){
-		piece.z = piece_data.z;
-	} else {
-		piece.z = 0;
+	if (!("z" in piece_data)){
+		piece_data.z = 0;
 	}
-	$(piece).css('z-index',piece.z);
+	set_piece_z_index(piece, piece_data.z);
 	// Record the orientation
 	piece.orientation = piece_data.orientation ? piece_data.orientation : 0;
 	set_piece_orientation(piece,piece.orientation);
@@ -80,8 +78,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 			}
 			// Set z index
 			if ("z" in piece_data){
-				piece.z = piece_data.z;
-				$(piece).css('z-index',piece.z);
+				set_piece_z_index(piece, piece_data.z);
 			}
 			// Set the lock status
 			if ("lock" in piece_data) {
@@ -124,10 +121,8 @@ function correct_piece_z_indices(){
 	for (i in g_pieces){
 		piece = g_pieces[i];
 		if (piece.z != z){
-			piece.z = z;
 			piece_updates[piece.world_piece_index] = {"z": z};
-			$(piece).css('z-index',z);
-			console.log("" + i + " " + z + " " + g_pieces[i].z);
+			set_piece_z_index(piece, z);
 		}
 		z++;
 	}
@@ -138,15 +133,27 @@ function correct_piece_z_indices(){
 
 
 /*
- * move_piece_to_top - moves the piece to the top, and updates the
+ * move_piece_to_front - moves the piece to the top, and updates the
  * z-indices for all pieces
  * 
  * @param piece The piece DOM object
  */
-function move_piece_to_top(piece){
+function move_piece_to_front(piece){
 	piece.z = 100000; // Assume we don't have that many pieces
 	correct_piece_z_indices();
 }
+
+/*
+ * move_piece_to_back - moves the piece to the back, and updates the
+ * z-indices for all pieces
+ * 
+ * @param piece The piece DOM object
+ */
+function move_piece_to_back(piece){
+	piece.z = -1; // Assume we don't have any negative z indices
+	correct_piece_z_indices();
+}
+
 
 // Register our new piece handler (make sure it is registered before document load)
 world_on_new_piece_handler = on_new_piece_handler; 
@@ -207,6 +214,13 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 		menu_items.push({
+			label: "Send to back", 
+			callback: function(){
+				move_piece_to_back(piece);
+			}, 
+			args: null
+		});
+		menu_items.push({
 			label: "Lock", 
 			callback: function(){
 				world_update_piece(piece.world_piece_index,{"lock": 1});
@@ -252,7 +266,6 @@ function on_piece_touch_start(event){
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
 	var piece = this;
-//	$(piece).detach().appendTo("#board");
 	// Store where on the piece we clicked (for use with dragging)
 	var piece_offset = $(piece).offset();
 	var start_click = util_get_event_coordinates(event);
@@ -260,10 +273,6 @@ function on_piece_touch_start(event){
 		x: (start_click.x - piece_offset.left),
 		y: (start_click.y - piece_offset.top)
 	};
-	// If the piece isn't locked, move it to the top on click
-	if (!piece.lock){
-		move_piece_to_top(piece);
-	}
 	// Holds if we are clicking or dragging
 	var do_click = 1;
 	// For click-drag we'll use the document for mouse move and mouse up events
@@ -278,7 +287,13 @@ function on_piece_touch_start(event){
 		var current_piece_offset = $(piece).offset();
 		if ((current_piece_offset.left != new_offset.left) || 
 			(current_piece_offset.top != new_offset.top)){
-			do_click = 0; // We moved, so this is a drag, not a click
+			if (do_click){
+				do_click = 0; // We moved, so this is a drag, not a click
+				if (! piece.lock){
+					// If not locked and we started dragging, raise the piece to the top
+					move_piece_to_front(piece);
+				}
+			}
 			if (! piece.lock){
 				// If not locked, allow the piece to be dragged
 				set_piece_location(piece,new_offset);
@@ -362,6 +377,24 @@ function piece_clone(piece){
 	});
 }
 
+/*
+ * set_piece_z_index - Sets the object member z and updates the CSS
+ *
+ * @param piece The piece to update
+ * @param z_index The new z-index
+ */
+function set_piece_z_index(piece, z_index){
+	piece.z = z_index;
+	$(piece).css("z-index",z_index);
+}
+
+/*
+ * set_piece_orientation - Sets the piece orientation through CSS
+ * TODO: Move setting object member "orientation" here as well
+ *
+ * @param piece The piece to update
+ * @param orientation The orientation in degrees
+ */
 function set_piece_orientation(piece, orientation){
 	var r = "rotate(" + orientation + "deg)";
 	var piece_face = $(piece).find(".piece_face");
