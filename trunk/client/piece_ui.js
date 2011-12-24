@@ -7,6 +7,11 @@
  *	 - A #board defined in HTML to add elements
  */
 
+// TODO:  Z-INDEX - CENTRALIZED SETTING Z-INDEX, ADD SEND TO BACK
+
+// All of the current pieces
+var g_pieces = [];
+
 /**
  * on_new_piece_handler - Callback for when a new piece is added to the world
  * 
@@ -23,12 +28,21 @@ function on_new_piece_handler(piece_idx, piece_data){
 	$("#board").append(jq_piece);
 	// Get the object for the piece itself
 	var piece = jq_piece.get(0);
+	// Add the piece to our global list
+	g_pieces.push(piece);
 	// Record the piece index into the piece object
 	piece.world_piece_index = piece_idx;
 	// Record the lock state into the piece object
 	piece.lock = piece_data.lock ? piece_data.lock : 0;
 	// Record the faces
 	piece.faces = piece_data.faces;
+	// Initialize the z index
+	if ("z" in piece_data){
+		piece.z = piece_data.z;
+	} else {
+		piece.z = 0;
+	}
+	$(piece).css('z-index',piece.z);
 	// Record the orientation
 	piece.orientation = piece_data.orientation ? piece_data.orientation : 0;
 	set_piece_orientation(piece,piece.orientation);
@@ -43,6 +57,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Set up change handler for piece
 	world_on_piece_change_handlers[piece_idx] = function(piece_data){
 		if (piece_data === null){
+			// Remove the piece from our global list
+			g_pieces.splice(g_pieces.indexOf(piece),1);
 			// If piece_data is null, then the piece is removed, so get rid of it
 			$(piece).remove();
 		} else {
@@ -62,12 +78,74 @@ function on_new_piece_handler(piece_idx, piece_data){
 					set_piece_orientation(piece,piece.orientation);
 				}
 			}
+			// Set z index
+			if ("z" in piece_data){
+				piece.z = piece_data.z;
+				$(piece).css('z-index',piece.z);
+			}
 			// Set the lock status
 			if ("lock" in piece_data) {
 				piece.lock = piece_data.lock;
 			}
 		}
 	}
+}
+
+/*
+ * compare_piece_z_indices - Compares the z-index for two pieces, returning
+ * -1 if a.z < b.z, 1 if a.z > b.z, and 0 if a.z = b.z
+ * 
+ * @param a The first piece
+ * @param b the second piece
+ * @return comparison_value
+ */
+function compare_piece_z_indices(a,b){
+	if (a.z < b.z){
+		return (-1);
+	} else if (a.z > b.z){
+		return (1);
+	} else {
+		return (0);
+	}
+}
+
+/*
+ * correct_piece_z_indices - Iterates through all pieces, updating the z-indices so that
+ * they are positive and there are no gaps, and then updates the world and the local
+ * client for any piece that is moved
+ */
+function correct_piece_z_indices(){
+	// First, sort the pieces by the z-index
+	g_pieces.sort(compare_piece_z_indices);
+	var z = 0;
+	var i;
+	var piece_updates = {};
+	var piece;
+	for (i in g_pieces){
+		piece = g_pieces[i];
+		if (piece.z != z){
+			piece.z = z;
+			piece_updates[piece.world_piece_index] = {"z": z};
+			$(piece).css('z-index',z);
+			console.log("" + i + " " + z + " " + g_pieces[i].z);
+		}
+		z++;
+	}
+	if (piece_updates){
+		world_update({"pieces": piece_updates});
+	}
+}
+
+
+/*
+ * move_piece_to_top - moves the piece to the top, and updates the
+ * z-indices for all pieces
+ * 
+ * @param piece The piece DOM object
+ */
+function move_piece_to_top(piece){
+	piece.z = 100000; // Assume we don't have that many pieces
+	correct_piece_z_indices();
 }
 
 // Register our new piece handler (make sure it is registered before document load)
@@ -182,6 +260,10 @@ function on_piece_touch_start(event){
 		x: (start_click.x - piece_offset.left),
 		y: (start_click.y - piece_offset.top)
 	};
+	// If the piece isn't locked, move it to the top on click
+	if (!piece.lock){
+		move_piece_to_top(piece);
+	}
 	// Holds if we are clicking or dragging
 	var do_click = 1;
 	// For click-drag we'll use the document for mouse move and mouse up events
