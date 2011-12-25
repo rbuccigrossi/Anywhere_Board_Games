@@ -19,10 +19,17 @@ var g_pieces = [];
  * @param piece_data Data about the newly added piece
  */
 function on_new_piece_handler(piece_idx, piece_data){
+	// Set some defaults if not there
+	if (!("z" in piece_data)){
+		piece_data.z = 0;
+	}
+	if (!("face_showing" in piece_data)){
+		piece_data.face_showing = 0;
+	}
 	// Create piece HTML in the proper location
 	var jq_piece = $('<span class="piece" id="piece_' + piece_idx + 
 		'" style="position: absolute; left: ' + piece_data.x + 'px; top: ' + piece_data.y + 'px;">' +
-		'<img class="piece_face" src="' + piece_data.faces[0] + '">' +
+		'<img class="piece_face" src="' + piece_data.faces[piece_data.face_showing] + '">' +
 		'</span>');
 	// Add to the board
 	$("#board").append(jq_piece);
@@ -37,10 +44,9 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Record the faces
 	piece.faces = piece_data.faces;
 	// Initialize the z index
-	if (!("z" in piece_data)){
-		piece_data.z = 0;
-	}
 	set_piece_z_index(piece, piece_data.z);
+	// Set the face
+	set_piece_face_showing(piece,piece_data.face_showing);
 	// Record the orientation
 	piece.orientation = piece_data.orientation ? piece_data.orientation : 0;
 	set_piece_orientation(piece,piece.orientation);
@@ -79,6 +85,10 @@ function on_new_piece_handler(piece_idx, piece_data){
 			// Set z index
 			if ("z" in piece_data){
 				set_piece_z_index(piece, piece_data.z);
+			}
+			// Set the face that's showing
+			if ("face_showing" in piece_data){
+				set_piece_face_showing(piece,piece_data.face_showing);
 			}
 			// Set the lock status
 			if ("lock" in piece_data) {
@@ -213,6 +223,35 @@ function show_piece_popup_menu(piece, position){
 			}, 
 			args: null
 		});
+		if (piece.faces.length > 2){
+			menu_items.push({
+				label: "Roll", 
+				callback: function(){
+					piece.face_showing = Math.floor(Math.random() * piece.faces.length);
+					set_piece_face_showing(piece,piece.face_showing);
+					world_update_piece(piece.world_piece_index,{
+						"face_showing": piece.face_showing
+					});
+				}, 
+				args: null
+			});
+		}
+		if (piece.faces.length > 1){
+			menu_items.push({
+				label: "Flip", 
+				callback: function(){
+					piece.face_showing ++;
+					if (piece.face_showing >= piece.faces.length){
+						piece.face_showing = 0;
+					}
+					set_piece_face_showing(piece,piece.face_showing);
+					world_update_piece(piece.world_piece_index,{
+						"face_showing": piece.face_showing
+					});
+				}, 
+				args: null
+			});
+		}
 		menu_items.push({
 			label: "Send to back", 
 			callback: function(){
@@ -378,6 +417,18 @@ function piece_clone(piece){
 }
 
 /*
+ * set_piece_face_showing - Sets the object member face_showing and updates
+ * the visible face showing
+ *
+ * @param piece The piece to update
+ * @param face_showing The face index to display
+ */
+function set_piece_face_showing(piece, face_showing){
+	piece.face_showing = face_showing;
+	$(piece).find('img').attr('src',piece.faces[piece.face_showing]);
+}
+
+/*
  * set_piece_z_index - Sets the object member z and updates the CSS
  *
  * @param piece The piece to update
@@ -442,7 +493,7 @@ function piece_start_rotate(piece, event){
 		};
 		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
 			piece.orientation = start_orientation
-			+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
+				+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
 		}
 		piece.orientation = ((Math.round(piece.orientation / 5) * 5) + 360) % 360;
@@ -481,9 +532,9 @@ function piece_start_rotate(piece, event){
 	$(board).bind("mouseup.rotatedrag",stop_drag_function);
 }
 	
-function board_add_piece(img_url){
+function board_add_piece(faces){
 	world_add_piece({
-		"faces": [img_url],
+		"faces": faces,
 		"x": 50,
 		"y": 50,
 		"z": g_pieces.length
@@ -553,9 +604,9 @@ $(document).ready(function(){
 
 // Function create new piece dialog
 function open_new_piece_dialog(){
-	var dialog = $('<div title="Create a New Piece"><form><fieldset>' +
-		'<label for="create_piece_url">Image URL</label>' +
-		'<input type="text" name="url" id="create_piece_url" class="text ui-widget-content ui-corner-all" />' +
+	var dialog = $('<div title="Add a New Piece"><form><fieldset>' +
+		'<label style="width: 20%;">Face URL: </label>' +
+		'<input style="width: 75%;" type="text" name="face_url[]" id="create_piece_url" class="text ui-widget-content ui-corner-all" />' +
 		'</fieldset></form></div>');
 	// Add to the board
 	$("#board").append(dialog);
@@ -566,12 +617,23 @@ function open_new_piece_dialog(){
 		width: 350,
 		modal: true,
 		buttons: {
+			"Add a face": function() {
+				var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
+					'<input style="width: 75%;" type="text" name="face_url[]" class="text ui-widget-content ui-corner-all" />');
+				dialog.find("fieldset").append(new_url);
+			},
 			"OK": function() {
-				var image_url = $("#create_piece_url").val();
-				if (!image_url){
+				// Accumulate the face URLs
+				var faces = [];
+				dialog.find('input[name="face_url[]"]').each(function(idx,item){
+					if ($(item).val()){
+						faces.push($(item).val());
+					}
+				});
+				if (faces.length == 0){
 					alert("Please enter an image URL");
 				} else {
-					board_add_piece(image_url);
+					board_add_piece(faces);
 					$(this).dialog( "close" );
 					$(this).remove();
 				}
@@ -622,7 +684,7 @@ function open_new_piece_dialog(){
 		  $("body").css("-ms-transform-origin","0% 0%");
 		  }
 	  }
-*/
+ */
 
 // The original idea was to display icons on hover...
 

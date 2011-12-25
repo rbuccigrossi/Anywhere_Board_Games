@@ -60,9 +60,7 @@
 		</script>
 		<style>
 			.bga_small_text_dialog { font-size: 67.5%; }
-			.bga_dialog label, .bga_dialog input { display:block; }
-			.bga_dialog input.text { margin-bottom:12px; width:95%; padding: .4em; }
-			.bga_dialog fieldset { padding:0; border:0; margin-top:25px; }
+			.bga_dialog fieldset { padding:0; border:0; }
 		</style>
 	</head>
 	<body id="board" style="background-color:#A0A0A0;">
