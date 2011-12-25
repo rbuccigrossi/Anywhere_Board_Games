@@ -7,8 +7,6 @@
  *	 - A #board defined in HTML to add elements
  */
 
-// TODO:  Z-INDEX - CENTRALIZED SETTING Z-INDEX, ADD SEND TO BACK
-
 // All of the current pieces
 var g_pieces = [];
 
@@ -172,7 +170,7 @@ world_on_new_piece_handler = on_new_piece_handler;
  * This is a unique client ID that can be used to ignore update messages
  * that we generated and have already displayed (like moves)
  *
- * TODO: make it truly unique (currently low probability of hitting another client)
+ * TODO: LOW - Make the client ID truly unique (currently low probability of hitting another client)
  */
 var g_client_id = (""+Math.random()).split(".").pop();
 
@@ -359,7 +357,6 @@ function on_piece_touch_start(event){
 			$(board).unbind("mouseup.drag");
 		}
 		// If we haven't moved, propogate a click event
-		// TODO: Allow event propogation and use a regular click...
 		if (do_click){
 			show_piece_popup_menu(piece,util_page_to_client_coord({
 				left: start_click.x-10,
@@ -403,7 +400,7 @@ function on_piece_touch_start(event){
 
 /*
  * piece_clone - Creates a new piece in the world that is a copy of the given piece
- * TODO: Make sure that new features (like z index) are added to this function
+ * TODO: HIGH - Make sure that new features (like z index) are added to this function
  * 
  * @param piece The piece to clone
  */
@@ -441,7 +438,7 @@ function set_piece_z_index(piece, z_index){
 
 /*
  * set_piece_orientation - Sets the piece orientation through CSS
- * TODO: Move setting object member "orientation" here as well
+ * TODO: HIGH - Move setting object member "orientation" here as well
  *
  * @param piece The piece to update
  * @param orientation The orientation in degrees
@@ -457,6 +454,7 @@ function set_piece_orientation(piece, orientation){
 
 /**
  * piece_start_rotate - Initiate the rotation of a piece
+ * TODO: MEDIUM - Disable other click events when conducting and ending rotate
  * 
  * @param piece The piece object to be rotated
  * @param event The initiating event
@@ -656,7 +654,7 @@ function open_new_piece_dialog(){
 	dialog.dialog('open');
 }
 
-// TODO: Keyboard interactions
+// TODO: LOW - Keyboard interactions
 /*
 	  function board_keypress(event){
 		  if ((event.which == 43) || (event.which == 45) || (event.which == 48)){
