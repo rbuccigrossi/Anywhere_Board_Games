@@ -485,7 +485,8 @@ function board_add_piece(img_url){
 	world_add_piece({
 		"faces": [img_url],
 		"x": 50,
-		"y": 50
+		"y": 50,
+		"z": g_pieces.length
 	});
 }
 
@@ -499,7 +500,7 @@ function show_board_popup_menu(position){
 	menu_items.push({
 		label: "Add Piece...", 
 		callback: function(){
-			$( '#create_piece_dialog' ).dialog('open');
+			open_new_piece_dialog();
 		}, 
 		args: null
 	});
@@ -549,6 +550,49 @@ function on_board_click(event){
 $(document).ready(function(){
 	$(document).bind("click", on_board_click);
 });
+
+// Function create new piece dialog
+function open_new_piece_dialog(){
+	var dialog = $('<div title="Create a New Piece"><form><fieldset>' +
+		'<label for="create_piece_url">Image URL</label>' +
+		'<input type="text" name="url" id="create_piece_url" class="text ui-widget-content ui-corner-all" />' +
+		'</fieldset></form></div>');
+	// Add to the board
+	$("#board").append(dialog);
+	dialog.dialog({
+		dialogClass: 'bga_dialog bga_small_text_dialog',
+		autoOpen: false,
+		height: 300,
+		width: 350,
+		modal: true,
+		buttons: {
+			"OK": function() {
+				var image_url = $("#create_piece_url").val();
+				if (!image_url){
+					alert("Please enter an image URL");
+				} else {
+					board_add_piece(image_url);
+					$(this).dialog( "close" );
+					$(this).remove();
+				}
+			},
+			Cancel: function() {
+				$(this).dialog( "close" );
+				$(this).remove();
+			}
+		}
+	});
+	// Bind enter to OK to avoid submitting the form to the script
+	dialog.bind("keydown", function(e){
+		if (e.keyCode == 13){
+			e.preventDefault();
+			$(':button:contains("OK")').click();
+			return false;
+		}
+		return true;
+	});
+	dialog.dialog('open');
+}
 
 // TODO: Keyboard interactions
 /*
