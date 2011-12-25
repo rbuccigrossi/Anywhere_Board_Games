@@ -1,5 +1,8 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+12/24/2011 (abg_v0.111224.tar.gz)
+ - Brings a piece to front on drag
+ - Added ability "Send to Back" a piece
 
 12/21/2011 (abg_v0.111220.tar.gz)
  - Now supports loading and saving board state
