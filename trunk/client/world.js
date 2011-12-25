@@ -24,8 +24,8 @@ var world_server_url = "../server/world.php";
  * world_get_new_piece_index - Gets the index of the next piece to be added
  * to the world.
  * 
- * TODO: (LOW) There is a small race condition if two pieces are added simultaneously
- * TODO: (LOW) Fill in any null holes from previously deleted pieces first
+ * TODO: LOW -  There is a small race condition if two pieces are added simultaneously
+ * TODO: LOW - Fill in any null holes from previously deleted pieces first
  */
 function world_get_new_piece_index(){
 	world_max_piece_index ++;
@@ -178,7 +178,7 @@ function world_listener_start(){
 	// When the Ajax call is successful, this handles the update data and 
 	// then calls the listener again
 	var world_update_handler = function(data){
-		// TODO: Handle parse error
+		// TODO: LOW - Handle parse error
 		data = JSON.parse(data);
 		var update = data["update"];
 		execute_world_update(update);

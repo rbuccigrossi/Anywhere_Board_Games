@@ -14,7 +14,7 @@ $max_wait_time = 20; // Max time we'll wait for an update
 $wait_increment = 0.1; // wait in increments of 50th of a second
 
 if ($action === "read") {
-	// TODO: Move last_modify to separate file
+	// TODO: LOW - Move last_modify to separate file
 	$last_modify = isset($_REQUEST["last_modify"]) ? $_REQUEST["last_modify"] : "-1";
 	$world = &read_world($filename);
 	// Check to see if we need to wait for an update
@@ -105,22 +105,6 @@ function update_world($filename, &$update){
 	world_node_update($world, $update, $world["max_assigned"] + 1);
 	ftruncate($file, 0);
 	fwrite($file, json_encode($world));
-	flock($file, LOCK_UN);
-	fclose($file);
-	return (1);
-}
-
-function replace_world($filename, $source_file){
-	// TODO: Error checking on uploaded file
-	$file_data = @file_get_contents($source_file);
-	// Lock the world
-	$file = @fopen($filename, "c+");
-	if (!$file) {
-		return (0);
-	}
-	flock($file, LOCK_EX);
-	ftruncate($file, 0);
-	fwrite($file, $file_data);
 	flock($file, LOCK_UN);
 	fclose($file);
 	return (1);

@@ -38,7 +38,7 @@ function util_get_event_coordinates(event){
 	var coord;
 	if (util_is_touch_event(event)){
 		// If this is a touch event, use the first touch
-		// TODO: Allow multiple touches and use the closest touch to the object (targetTouches)
+		// TODO: LOW - Allow multiple touches and use the closest touch to the object (targetTouches)
 		coord = {
 			x: event.touches[0].pageX, 
 			y: event.touches[0].pageY

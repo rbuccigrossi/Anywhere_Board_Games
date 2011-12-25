@@ -4,7 +4,7 @@
 *
 **/
 
-// TODO: Delete the div after it is submitted
+// TODO: LOW - Delete the div after it is submitted
 
 var IFrameSubmit = {
 

@@ -20,7 +20,7 @@
 		<script src="iframesubmit.js" type="text/javascript"></script>
 		<script type="text/javascript">
 	
-			// TODO: Add error checking from http://jqueryui.com/demos/dialog/modal-form.html
+			// TODO: LOW - Add error checking from http://jqueryui.com/demos/dialog/modal-form.html
 			$(document).ready(function() {
 				$( "#upload_board_dialog" ).dialog({
 					dialogClass: 'bga_dialog bga_small_text_dialog',
