@@ -171,6 +171,7 @@ function execute_world_update(update){
 /*
  * world_listener_start - Implements an Ajax loop that checks for updates from
  * the world server.  It calls "execute_world_update" if there is an update.
+ * TODO: MEDIUM - Research use of polling instead of server-side wait (issues with iphone 4.2)
  */
 function world_listener_start(){
 	// Holds the transaction stamp of the latest update
