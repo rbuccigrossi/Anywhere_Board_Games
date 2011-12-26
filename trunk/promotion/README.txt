@@ -1,5 +1,10 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+12/25/2011 (abg_v0.111225.tar.gz)
+ - Now pieces can have multiple sides!
+ - Added flip (for > 1 side) and roll (for > 2 sides)
+ - New and cloned pieces are placed on top
+
 12/24/2011 (abg_v0.111224.tar.gz)
  - Brings a piece to front on drag
  - Added ability "Send to Back" a piece
