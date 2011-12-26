@@ -199,6 +199,7 @@ function set_piece_location(piece, position){
 /*
  * show_piece_popup_menu - Generates the pop-up menu for the given piece at the given
  * coordinates.  The contents of the pop-up menu are based upon the state of the piece.
+ * TODO: MEDIUM - Combine background and locked piece menus
  * 
  * @param piece The piece DOM object
  * @param position (left, top) position for the piece
@@ -206,6 +207,13 @@ function set_piece_location(piece, position){
 function show_piece_popup_menu(piece, position){
 	var menu_items = [];
 	if (piece.lock){
+		menu_items.push({
+			label: "Multi-select", 
+			callback: function(event){
+				board_start_area_highlight(event);
+			}, 
+			args: null
+		});
 		menu_items.push({
 			label: "Unlock", 
 			callback: function(){
@@ -477,8 +485,6 @@ function piece_start_rotate(piece, event){
 	};
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
-	// We'll use the document for mouse move and up events'
-	var board = $(document).get(0);
 	// Register a move function
 	var drag_function = function (event) {
 		var click = util_get_event_coordinates(event);
@@ -524,7 +530,68 @@ function piece_start_rotate(piece, event){
 	$(overlay).bind("mousemove.rotatedrag",drag_function);
 	$(overlay).bind("mouseup.rotatedrag",stop_drag_function);
 }
+
+/**
+ * board_start_area_highlight - Initiate highlight of a region of the desktop
+ * TODO: HIGH - set alrea_select_callback parameters
+ * 
+ * @param event The initiating event
+ * @param area_select_callback Callback (param TBD) when area is highlighted 
+ */
+function board_start_area_highlight(event, area_select_callback){
+	var start_click = util_get_event_coordinates(event);
+	var highlight_offset = {left: start_click.x, top: start_click.y};
+	var highlight_dimensions = {width: 10, height: 10};
+	// Add an overlay we'll use for down, move, and up events
+	var overlay = util_create_ui_overlay();
+	// Add a highlight div
+	var jq_highlight = $('<div class="abg_highlight"></div>');
+	$('#board').append(jq_highlight);
+	jq_highlight.css('background-color','#0000FF');
+	jq_highlight.css('opacity',0.5);
+	jq_highlight.css('z-index','999'); // Below overlay but above pieces
+	jq_highlight.css('border','1px dashed #A0A0FF');
+	jq_highlight.offset(highlight_offset);
+	jq_highlight.width(highlight_dimensions.width);
+	jq_highlight.height(highlight_dimensions.height);	
 	
+	// Register a move function
+	var drag_function = function (event) {
+		var click = util_get_event_coordinates(event);
+		highlight_offset = {left: Math.min(click.x, start_click.x),
+							top: Math.min(click.y, start_click.y)};
+		highlight_dimensions = {width: Math.abs(click.x - start_click.x),
+								height: Math.abs(click.y - start_click.y)};		
+		jq_highlight.offset(highlight_offset);
+		jq_highlight.width(highlight_dimensions.width);
+		jq_highlight.height(highlight_dimensions.height);	
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
+	}
+	var stop_drag_function = function (event) {
+		jq_highlight.remove();
+		if (area_select_callback){
+			area_select_callback();
+		}
+		// Click on the overlay to destroy it (and remove listeners)
+		$(overlay).trigger('click');
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
+	};
+	if (overlay.addEventListener){
+		overlay.addEventListener("touchstart",util_ignore_event,false);
+		overlay.addEventListener("touchmove",drag_function,false);
+		overlay.addEventListener("touchend",stop_drag_function,false);
+		overlay.addEventListener("touchcancel",stop_drag_function,false);
+	}
+	$(overlay).bind("mousedown.rotatedrag",util_ignore_event);
+	$(overlay).bind("mousemove.rotatedrag",drag_function);
+	$(overlay).bind("mouseup.rotatedrag",stop_drag_function);
+}
+
+
 function board_add_piece(faces){
 	world_add_piece({
 		"faces": faces,
@@ -541,6 +608,13 @@ function board_add_piece(faces){
  */
 function show_board_popup_menu(position){
 	var menu_items = [];
+	menu_items.push({
+		label: "Multi-select", 
+		callback: function(event){
+			board_start_area_highlight(event);
+		}, 
+		args: null
+	});
 	menu_items.push({
 		label: "Add Piece...", 
 		callback: function(){
