@@ -455,7 +455,6 @@ function set_piece_orientation(piece, orientation){
 
 /**
  * piece_start_rotate - Initiate the rotation of a piece
- * TODO: MEDIUM - Disable other click events when conducting and ending rotate
  * 
  * @param piece The piece object to be rotated
  * @param event The initiating event
@@ -476,6 +475,7 @@ function piece_start_rotate(piece, event){
 		x: (start_click.x - piece_center.left),
 		y: (start_click.y - piece_center.top)
 	};
+	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
 	// We'll use the document for mouse move and up events'
 	var board = $(document).get(0);
@@ -508,27 +508,21 @@ function piece_start_rotate(piece, event){
 		return(false);
 	}
 	var stop_drag_function = function (event) {
-		// Click on the overlay to destroy it
+		// Click on the overlay to destroy it (and remove listeners)
 		$(overlay).trigger('click');
-		// Remove listeners
-		if (board.removeEventListener){
-			board.removeEventListener("touchmove", drag_function, false);
-			board.removeEventListener("touchend", stop_drag_function, false);
-			board.removeEventListener("touchcancel", stop_drag_function, false);
-		}
-		$(board).unbind("mousemove.rotatedrag");
-		$(board).unbind("mouseup.rotatedrag");
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
 	};
-	if (board.addEventListener){
-		board.addEventListener("touchmove",drag_function,false);
-		board.addEventListener("touchend",stop_drag_function,false);
-		board.addEventListener("touchcancel",stop_drag_function,false);
+	if (overlay.addEventListener){
+		overlay.addEventListener("touchstart",util_ignore_event,false);
+		overlay.addEventListener("touchmove",drag_function,false);
+		overlay.addEventListener("touchend",stop_drag_function,false);
+		overlay.addEventListener("touchcancel",stop_drag_function,false);
 	}
-	$(board).bind("mousemove.rotatedrag",drag_function);
-	$(board).bind("mouseup.rotatedrag",stop_drag_function);
+	$(overlay).bind("mousedown.rotatedrag",util_ignore_event);
+	$(overlay).bind("mousemove.rotatedrag",drag_function);
+	$(overlay).bind("mouseup.rotatedrag",stop_drag_function);
 }
 	
 function board_add_piece(faces){
