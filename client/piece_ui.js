@@ -409,7 +409,8 @@ function piece_clone(piece){
 	world_add_piece({
 		"faces": piece.faces, 
 		"x": (offset.left + 10), 
-		"y": (offset.top + 10)
+		"y": (offset.top + 10),
+		"z": g_pieces.length
 	});
 }
 
