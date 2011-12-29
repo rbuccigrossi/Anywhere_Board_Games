@@ -7,7 +7,7 @@
 		<meta name="viewport" content="minimum-scale=0.0001, maximum-scale=10.0">
 		-->
 		<title>Board Game Arena</title>
-		<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-darkness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+		<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
 		<style type="text/css">
@@ -63,7 +63,7 @@
 			.bga_dialog fieldset { padding:0; border:0; }
 		</style>
 	</head>
-	<body id="board" style="background-color: black;">
+	<body id="board" style="background-color: #001000;">
 		<!-- scrolling="no" -->
 		<div id="info"></div>
 		<div id="upload_board_dialog" title="Upload a Board">

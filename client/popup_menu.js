@@ -4,9 +4,11 @@
  * @param menu_items_config Array of (label, callback, args) to create the menu items
  * @param parent DOM object into which the pop-up menu is placed
  * @param position Client position (top, left) pair for the placement of the menu
+ * @param cancel_callback A callback if the menu is closed by clicking the overlay
+ * @return menu The jQuery dialog object
  */
 
-function create_popup_menu(menu_items_config, parent, position){
+function create_popup_menu(menu_items_config, parent, position, cancel_callback){
 	var i, menu, menu_item;
 	// Create and add the menu items
 	menu = $('<div style="display:none;"></div>');
@@ -49,14 +51,19 @@ function create_popup_menu(menu_items_config, parent, position){
 		$('.popup .ui-dialog-titlebar').hide();
 		$('.ui-widget-overlay').unbind('click');
 		$('.ui-widget-overlay').css('opacity',0);
-		$('.ui-widget-overlay').bind('mousedown',function() {
+		$('.ui-widget-overlay').bind('mousedown',function(event) {
 			menu.dialog('close');
 			menu.remove();
-			return true;
+			if (cancel_callback){
+				cancel_callback(event);
+			}
+			event.preventDefault();
+			return false;
 		});
 		// Unset the hover that the jquery dialog places on the first item
 		menu.find('a').removeClass('ui-state-focus ui-state-hover');
 	});
 	// Now open the dialog
 	menu.dialog('open');
+	return(menu);
 }
