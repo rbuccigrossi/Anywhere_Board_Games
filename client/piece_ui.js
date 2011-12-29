@@ -481,6 +481,18 @@ function set_piece_orientation(piece, orientation){
 	$(piece_face).css("-moz-transform",r);
 	$(piece_face).css("-ms-transform",r);
 }
+/*
+ * get_piece_center(piece) - returns the center coordinates (left, top) of the piece.
+ * It relies on finding "piece_face" for now.
+ * 
+ * @param piece The piece object
+ */
+function get_piece_center(piece){
+	return ({
+		left: piece.offsetLeft + $(piece).width()/2,
+		top: piece.offsetTop + $(piece).height()/2
+	});
+}
 
 /**
  * piece_start_rotate - Initiate the rotation of a piece.  We treat mouse slightly differently
@@ -498,11 +510,7 @@ function piece_start_rotate(piece, event){
 	}
 	var start_click = util_get_event_coordinates(event);
 	var start_orientation = piece.orientation;
-	var piece_face = $(piece).find(".piece_face");
-	var piece_center = {
-		left: piece.offsetLeft + $(piece_face).width()/2,
-		top: piece.offsetTop + $(piece_face).height()/2
-	};
+	var piece_center = get_piece_center(piece);
 	var original_position_from_center = {
 		x: (start_click.x - piece_center.left),
 		y: (start_click.y - piece_center.top)
@@ -512,10 +520,6 @@ function piece_start_rotate(piece, event){
 	// Handle start drag events by resetting location for rotation calculations
 	var start_drag_function = function (event){
 		start_click = util_get_event_coordinates(event);
-		piece_center = {
-			left: piece.offsetLeft + $(piece_face).width()/2,
-			top: piece.offsetTop + $(piece_face).height()/2
-		};
 		original_position_from_center = {
 			x: (start_click.x - piece_center.left),
 			y: (start_click.y - piece_center.top)
@@ -526,10 +530,6 @@ function piece_start_rotate(piece, event){
 	// Handle drag events by calculating and executing new piece orientation
 	var drag_function = function (event) {
 		var click = util_get_event_coordinates(event);
-		var piece_center = {
-			left: piece.offsetLeft + $(piece_face).width()/2,
-			top: piece.offsetTop + $(piece_face).height()/2
-		};
 		var new_position_from_center = {
 			x: (click.x - piece_center.left),
 			y: (click.y - piece_center.top)
@@ -653,6 +653,7 @@ function board_start_area_highlight(event, area_select_callback){
  * depicts a pop-up menu for multi-selected items.  If the highlighted region
  * is zero size, the user did a click without a drag, so we allow the caller
  * to specify a click callback to handle that event.
+ * TODO: IMMEDIATE - Handle successful highlight and create highlight menu
  * 
  * @param event The event that initiated the multi-select
  * @param click_callback A callback in case the user did not drag
@@ -749,8 +750,6 @@ function on_board_click(event){
 	return true;
 }
 
-// TODO: IMMEDIATE - On touch, we want to handle clicks correclty and permit drags
-// TODO: IMMEDIATE - Get click events working for mouse too
 /*
  * on_board_touch_event - event handler for mouse or touch events on the board
  *  - If we are a touch device, then we ignore touches and make sure that click events

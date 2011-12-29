@@ -63,7 +63,7 @@
 			.bga_dialog fieldset { padding:0; border:0; }
 		</style>
 	</head>
-	<body id="board" style="background-color:#A0A0A0;">
+	<body id="board" style="background-color: black;">
 		<!-- scrolling="no" -->
 		<div id="info"></div>
 		<div id="upload_board_dialog" title="Upload a Board">
