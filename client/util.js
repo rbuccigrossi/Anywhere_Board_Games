@@ -40,9 +40,15 @@ function util_get_event_coordinates(event){
 		// If this is a touch event, use the first touch
 		// TODO: LOW - Allow multiple touches and use the closest touch to the object (targetTouches)
 		if (event.touches.length > 0){
-			coord = { x: event.touches[0].pageX, y: event.touches[0].pageY };
+			coord = {
+				x: event.touches[0].pageX, 
+				y: event.touches[0].pageY
+			};
 		} else {
-			coord = { x: event.changedTouches[0].pageX, y: event.changedTouches[0].pageY };			
+			coord = {
+				x: event.changedTouches[0].pageX, 
+				y: event.changedTouches[0].pageY
+			};			
 		}
 	} else {
 		coord = {
