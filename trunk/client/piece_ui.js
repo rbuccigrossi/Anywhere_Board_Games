@@ -576,7 +576,7 @@ function piece_start_rotate(piece, event){
  * touch, we reset the location of the highlight area on a touch start.
  * 
  * @param event The initiating event
- * @param area_select_callback Callback (param RECT) when area is highlighted 
+ * @param area_select_callback Callback (rect,event) when area is highlighted 
  */
 function board_start_area_highlight(event, area_select_callback){
 	var start_click = util_get_event_coordinates(event);
@@ -631,7 +631,7 @@ function board_start_area_highlight(event, area_select_callback){
 				y: highlight_offset.top,
 				width: highlight_dimensions.width,
 				height: highlight_dimensions.height
-				});
+				},event);
 		}
 		// We do not want regular event processing
 		event.preventDefault(); 
@@ -649,6 +649,71 @@ function board_start_area_highlight(event, area_select_callback){
 }
 
 /*
+ * piece_in_rect - returns true if the given piece's center is in the rect (x,y,width,height)
+ * 
+ * @param piece
+ * @param rect
+ */
+function piece_in_rect(piece, rect){
+	var center = get_piece_center(piece);
+	return ((center.left >= rect.x) && (center.left <= (rect.x + rect.width))
+	&& (center.top >= rect.y) && ((center.top <= (rect.y + rect.height))));
+}
+
+/*
+ * show_multiselect_popup_menu - Generates the pop-up menu for the given pieces.
+ * 
+ * @param pieces The selected pieces
+ * @param position (left, top) position for the pop-up
+ */
+function show_multiselect_popup_menu(pieces, position){
+	var menu_items = [];
+	var locked_pieces = [];
+	var unlocked_pieces = [];
+	// Figure out which pieces are locked, and which are unlocked
+	$.each(pieces, function (index,piece){
+		if (piece.lock){
+			locked_pieces.push(piece);
+		} else {
+			unlocked_pieces.push(piece);
+		}
+	});
+	// Highlight the unlocked pieces
+	$.each(unlocked_pieces, function (index,piece){$(piece).css("opacity",0.5);});
+	if (unlocked_pieces.length > 0){
+		menu_items.push({
+			label: "Move", 
+			callback: function(event){
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Rotate", 
+			callback: function(event){
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Lock", 
+			callback: function(event){
+			}, 
+			args: null
+		});
+	}
+	if (locked_pieces.length > 0){
+		menu_items.push({
+			label: "Unlock", 
+			callback: function(event){
+			}, 
+			args: null
+		});
+	}
+	create_popup_menu(menu_items, $('#board'), position, function(){
+		$.each(unlocked_pieces, function (index,piece){$(piece).css("opacity",1);});
+	});
+}
+
+/*
  * board_start_multi_select - Allows the user to highlight a region and then
  * depicts a pop-up menu for multi-selected items.  If the highlighted region
  * is zero size, the user did a click without a drag, so we allow the caller
@@ -658,16 +723,27 @@ function board_start_area_highlight(event, area_select_callback){
  * @param event The event that initiated the multi-select
  * @param click_callback A callback in case the user did not drag
  */
-
 function board_start_multi_select(event, click_callback){
-	board_start_area_highlight(event,function(rect){
+	board_start_area_highlight(event,function(rect,event){
 		// If rect is empty, do a click event
 		if (rect.width == 0 || rect.height == 0){
 			if (click_callback){
 				click_callback(event);
 			}
 		} else {
-//			alert("MULTI-SELECT "+rect.x+" "+rect.y+" "+rect.width+" "+rect.height);
+			var highlighted_pieces = [];
+			$.each(g_pieces, function (index,value){
+				if (piece_in_rect(value,rect)) {
+					highlighted_pieces.push(value);
+				}
+			});
+			if (highlighted_pieces.length > 0){
+				var start_click = util_get_event_coordinates(event);
+				show_multiselect_popup_menu(highlighted_pieces, util_page_to_client_coord({
+					left: start_click.x-10,
+					top: start_click.y-10
+				}));
+			}
 		}
 	});
 }
