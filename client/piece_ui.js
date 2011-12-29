@@ -724,7 +724,7 @@ function show_multiselect_popup_menu(pieces, position){
  * @param click_callback A callback in case the user did not drag
  */
 function board_start_multi_select(event, click_callback){
-	board_start_area_highlight(event,function(rect,event){
+	board_start_area_highlight(event, function(rect){
 		// If rect is empty, do a click event
 		if (rect.width == 0 || rect.height == 0){
 			if (click_callback){
@@ -738,10 +738,9 @@ function board_start_multi_select(event, click_callback){
 				}
 			});
 			if (highlighted_pieces.length > 0){
-				var start_click = util_get_event_coordinates(event);
 				show_multiselect_popup_menu(highlighted_pieces, util_page_to_client_coord({
-					left: start_click.x-10,
-					top: start_click.y-10
+					left: Math.floor(rect.x + (rect.width / 2)),
+					top: Math.floor(rect.y + (rect.height / 2))
 				}));
 			}
 		}
@@ -846,7 +845,7 @@ function on_board_touch_start(event){
 			return true; // Let the event propogate
 		} else {
 			// We are a mouse device, so initiate a multi-select highlight
-			board_start_multi_select(event,on_board_click);
+			board_start_multi_select(event, on_board_click);
 			event.preventDefault();
 			return false;
 		}
