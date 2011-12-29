@@ -152,13 +152,17 @@ function correct_piece_z_indices(){
 	for (i in g_pieces){
 		piece = g_pieces[i];
 		if (piece.z != z){
-			piece_updates[piece.world_piece_index] = {"z": z};
+			piece_updates[piece.world_piece_index] = {
+				"z": z
+			};
 			set_piece_z_index(piece, z);
 		}
 		z++;
 	}
 	if (piece_updates){
-		world_update({"pieces": piece_updates});
+		world_update({
+			"pieces": piece_updates
+		});
 	}
 }
 
@@ -227,7 +231,9 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Unlock", 
 			callback: function(){
-				world_update_piece(piece.world_piece_index,{"lock": 0});
+				world_update_piece(piece.world_piece_index,{
+					"lock": 0
+				});
 			}, 
 			args: null
 		});
@@ -278,7 +284,9 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Lock", 
 			callback: function(){
-				world_update_piece(piece.world_piece_index,{"lock": 1});
+				world_update_piece(piece.world_piece_index,{
+					"lock": 1
+				});
 			}, 
 			args: null
 		});
@@ -305,7 +313,7 @@ function show_piece_popup_menu(piece, position){
  * on_piece_touch_start - Handles a mouse down or touch event upon a piece
  * 
  * If a user clicks down upon a piece, we want to be able to do different things
- * depending upon if the user presses and drags or  presses and releases (single click)
+ * depending upon if the user presses and drags or presses and releases (single click)
  * 
  * If a user presses and drags, we move the piece
  * If a user presses and releases without moving (a click), we display a context menu
@@ -317,114 +325,57 @@ function show_piece_popup_menu(piece, position){
 function on_piece_touch_start(event){
 	// Ignore multi-touch or no-touch
 	if (util_is_touch_event(event) && (event.touches.length != 1)){
-		return true; // Allow event to propogate
+		return(true); // Allow event to propogate
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
 	var piece = this;
-	// Store where on the piece we clicked (for use with dragging)
-	var piece_offset = $(piece).offset();
 	var start_click = util_get_event_coordinates(event);
-	var position_on_piece = {
-		x: (start_click.x - piece_offset.left),
-		y: (start_click.y - piece_offset.top)
-	};
-	// Holds if we are clicking or dragging
-	var do_click = 1;
-	// For click-drag we'll use the document for mouse move and mouse up events
-	var board = $(document).get(0);
-	// Handle a click (no drag), by showing the piece menu
+	// Handle a click (no drag movement), by showing the piece menu
 	var click_function = function () {
 		show_piece_popup_menu(piece,util_page_to_client_coord({
 			left: start_click.x-10,
 			top: start_click.y-10
 		}));
 	}
-	// Handle drag by moving the piece if not locked
-	var drag_function = function (event) {
-		var click = util_get_event_coordinates(event);
-		var new_offset = {
-			left: click.x - position_on_piece.x,
-			top: click.y - position_on_piece.y
-		}
-		var current_piece_offset = $(piece).offset();
-		if ((current_piece_offset.left != new_offset.left) || 
-			(current_piece_offset.top != new_offset.top)){
-			if (do_click){
-				do_click = 0; // We moved, so this is a drag, not a click
-				if (! piece.lock){
-					// If not locked and we started dragging, raise the piece to the top
-					move_piece_to_front(piece);
-				}
-			}
-			if (! piece.lock){
-				// If not locked, allow the piece to be dragged
-				set_piece_location(piece,new_offset);
-			}
-		}
-		if (piece.lock){
-			// If locked, let the event propogate
-			return(true);
-		} else {
-			// We do not want regular event processing
-			event.preventDefault(); 
-			return(false);
-		}
-	};
-	// Handle stop drag by unregistering events and clicking if we haven't moved
-	var stop_drag_function = function (event) {
-		$(piece).css("opacity",1);
-		// We are done, so unregister listeners
-		if (util_is_touch_event(event)){
-			board.removeEventListener("touchmove", drag_function, false);
-			board.removeEventListener("touchend", stop_drag_function, false);
-			board.removeEventListener("touchcancel", stop_drag_function, false);
-		} else {
-			$(board).unbind("mousemove.drag");
-			$(board).unbind("mouseup.drag");
-		}
-		// If we haven't moved, call our click function to display the menu
-		if (do_click){
-			click_function();
-			// We do not want regular event processing
-			event.preventDefault(); 
-			return(false);
-		} else {
-			if (piece.lock){
-				// If locked, let the event propogate
-				return(true);
-			} else {
-				// We do not want regular event processing
-				event.preventDefault(); 
-				return(false);
-			}
-		}
-	};
-	// If the piece is locked and we are a mouse event, start a multi-select drag event
-	if (!util_is_touch_event(event) && piece.lock){
-		board_start_multi_select(event, click_function);
-		event.preventDefault();
-		return false;
-	}
-	// Add the events to monitor drags and releases to the board (since can drag off the piece)
-	// We do this even if the piece is locked so that we can handle regular clicks
-	if (util_is_touch_event(event)){
-		board.addEventListener("touchmove",drag_function,false);
-		board.addEventListener("touchend",stop_drag_function,false);
-		board.addEventListener("touchcancel",stop_drag_function,false);
-	} else {
-		$(board).bind("mousemove.drag",drag_function);
-		$(board).bind("mouseup.drag",stop_drag_function);
-	}
-	if (piece.lock){
-		// If locked, let the event propogate
-		return(true);
-	} else {
-		// We do not want regular event processing
-		event.preventDefault();
-		// Make the piece transparent to note we are dragging or clicking on it
-		$(piece).css("opacity",0.5);
+	// If a piece is not locked, start a move, calling the click function if no movement made
+	if (! piece.lock){
+		piece_start_move(piece, event, 0, click_function);
+		event.preventDefault(); 
 		return(false);
 	}
+	// At this point, we know we're dealing with a locked piece.  
+	// If the piece is locked and we are a mouse event, start a multi-select drag event
+	if (!util_is_touch_event(event)){
+		board_start_multi_select(event, click_function);
+		event.preventDefault();
+		return(false);
+	}
+	// At this point, we know we are dealing with a locked piece and we are a touch event.
+	var touch_moved = 0;
+	// For touch move events, note if we have moved
+	var touch_move_callback = function (event) {
+		touch_moved = 1;
+		return(true); // Let the event propogate
+	};
+	// For touch stop events - check to see if we have moved and display the piece menu if not
+	var touch_stop_callback = function (event) {
+		// We are done, so unregister listeners
+		document.removeEventListener("touchmove", touch_stop_callback, false);
+		document.removeEventListener("touchend", touch_stop_callback, false);
+		document.removeEventListener("touchcancel", touch_stop_callback, false);
+		if (!touch_moved){
+			click_function();
+			event.preventDefault(); 
+			return(false);
+		} else {
+			return(true); // Let the event propogate
+		}
+	};
+	// Notice that we let touchmove events propogate so the user can pan
+	document.addEventListener("touchmove",touch_move_callback,false);
+	document.addEventListener("touchend",touch_stop_callback,false);
+	document.addEventListener("touchcancel",touch_stop_callback,false);
+	return(true); // Let the touchstart event propogate
 }
 
 /*
@@ -536,7 +487,7 @@ function piece_start_rotate(piece, event){
 		};
 		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
 			piece.orientation = start_orientation
-				+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
+			+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
 		}
 		piece.orientation = ((Math.round(piece.orientation / 5) * 5) + 360) % 360;
@@ -571,6 +522,115 @@ function piece_start_rotate(piece, event){
 }
 
 /**
+ * piece_start_move - Initiate the moving of a piece.  We treat mouse slightly differently
+ * than touch, in that for mouse we can sense mouse movements without them pressing the button,
+ * so we base the original orientation from the menu click.  For touch, we reset the start
+ * orientation when they touch the screen.
+ * 
+ * We assume the piece is not locked or we some permission to move it.
+ * TODO: LOW See if having the case of no overlay really speeds things up
+ * 
+ * @param piece The piece object to be moved
+ * @param event The initiating event
+ * @param use_overlay Set to true if we want to use an overlay to capture a new touch start event
+ * @param no_move_callback A callback if the piece was not moved
+ */
+function piece_start_move(piece, event, use_overlay, no_move_callback){
+	// Check if mouse is moved while dragging
+	var mouse_moved = 0;
+	// Highlight the piece
+	$(piece).css("opacity",0.5);
+	// Store where on the piece we clicked (for use with dragging)
+	var start_click = util_get_event_coordinates(event);
+	var piece_offset = $(piece).offset();
+	var position_on_piece = {
+		x: (start_click.x - piece_offset.left),
+		y: (start_click.y - piece_offset.top)
+	};
+	var overlay = 0;
+	// If we started out mouse up (say after a menu) add an overlay for events
+	if (use_overlay){
+		overlay = util_create_ui_overlay();
+	}
+	// Handle start drag events by resetting location for rotation calculations
+	var start_drag_function = function (event){
+		start_click = util_get_event_coordinates(event);
+		position_on_piece = {
+			x: (start_click.x - piece_offset.left),
+			y: (start_click.y - piece_offset.top)
+		};
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
+	}
+	// Handle drag events by calculating and executing new piece orientation
+	var drag_function = function (event) {
+		var click = util_get_event_coordinates(event);
+		var new_offset = {
+			left: click.x - position_on_piece.x,
+			top: click.y - position_on_piece.y
+		}
+		var current_piece_offset = $(piece).offset();
+		if ((current_piece_offset.left != new_offset.left) || 
+			(current_piece_offset.top != new_offset.top)){
+			if (!mouse_moved){
+				mouse_moved = 1; // We moved, so this is a drag, not a click
+				// If we started dragging the piece, move it to the top
+				move_piece_to_front(piece);
+			}
+			// Set the piece location
+			set_piece_location(piece,new_offset);
+		}
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
+	}
+	// Handle the end of dragging by removing events, and calling no_move_callback if needed
+	var stop_drag_function = function (event) {
+		// Remove Highlight
+		$(piece).css("opacity",1);
+		if (use_overlay){
+			// Click on the overlay to destroy it (and remove listeners)
+			$(overlay).trigger('click');
+		} else {
+			// Remove the document event listeners
+			if (document.removeEventListener){
+				document.removeEventListener("touchmove",drag_function,false);
+				document.removeEventListener("touchend",stop_drag_function,false);
+				document.removeEventListener("touchcancel",stop_drag_function,false);
+			}
+			$(document).unbind("mousemove",drag_function);
+			$(document).unbind("mouseup",stop_drag_function);
+		}
+		if ((!mouse_moved) && (no_move_callback)){
+			no_move_callback();
+		}
+		// We do not want regular event processing
+		event.preventDefault(); 
+		return(false);
+	};
+	if (overlay){
+		if (overlay.addEventListener){
+			overlay.addEventListener("touchstart",start_drag_function,false);
+			overlay.addEventListener("touchmove",drag_function,false);
+			overlay.addEventListener("touchend",stop_drag_function,false);
+			overlay.addEventListener("touchcancel",stop_drag_function,false);
+		}
+		$(overlay).bind("mousedown",util_ignore_event); // For mouse ignore down click
+		$(overlay).bind("mousemove",drag_function);
+		$(overlay).bind("mouseup",stop_drag_function);
+	} else {
+		if (document.addEventListener){
+			document.addEventListener("touchmove",drag_function,false);
+			document.addEventListener("touchend",stop_drag_function,false);
+			document.addEventListener("touchcancel",stop_drag_function,false);
+		}
+		$(document).bind("mousemove",drag_function);
+		$(document).bind("mouseup",stop_drag_function);
+	}
+}
+
+/**
  * board_start_area_highlight - Initiate highlight of a region of the desktop
  * Like the other drag events, for mouse we ignore additional mouse-down, while for
  * touch, we reset the location of the highlight area on a touch start.
@@ -580,8 +640,14 @@ function piece_start_rotate(piece, event){
  */
 function board_start_area_highlight(event, area_select_callback){
 	var start_click = util_get_event_coordinates(event);
-	var highlight_offset = {left: start_click.x, top: start_click.y};
-	var highlight_dimensions = {width: 0, height: 0};
+	var highlight_offset = {
+		left: start_click.x, 
+		top: start_click.y
+		};
+	var highlight_dimensions = {
+		width: 0, 
+		height: 0
+	};
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
 	// Add a highlight div
@@ -597,8 +663,14 @@ function board_start_area_highlight(event, area_select_callback){
 	// Handle a starting touch by restarting the highlight area there
 	var start_drag_function = function (event){
 		start_click = util_get_event_coordinates(event);
-		highlight_offset = {left: start_click.x, top: start_click.y};
-		highlight_dimensions = {width: 0, height: 0};
+		highlight_offset = {
+			left: start_click.x, 
+			top: start_click.y
+			};
+		highlight_dimensions = {
+			width: 0, 
+			height: 0
+		};
 		jq_highlight.offset(highlight_offset);
 		jq_highlight.width(highlight_dimensions.width);
 		jq_highlight.height(highlight_dimensions.height);	
@@ -609,10 +681,14 @@ function board_start_area_highlight(event, area_select_callback){
 	// Handle a drag by highlighting the area
 	var drag_function = function (event) {
 		var click = util_get_event_coordinates(event);
-		highlight_offset = {left: Math.min(click.x, start_click.x),
-							top: Math.min(click.y, start_click.y)};
-		highlight_dimensions = {width: Math.abs(click.x - start_click.x),
-								height: Math.abs(click.y - start_click.y)};		
+		highlight_offset = {
+			left: Math.min(click.x, start_click.x),
+			top: Math.min(click.y, start_click.y)
+			};
+		highlight_dimensions = {
+			width: Math.abs(click.x - start_click.x),
+			height: Math.abs(click.y - start_click.y)
+			};		
 		jq_highlight.offset(highlight_offset);
 		jq_highlight.width(highlight_dimensions.width);
 		jq_highlight.height(highlight_dimensions.height);	
@@ -631,7 +707,7 @@ function board_start_area_highlight(event, area_select_callback){
 				y: highlight_offset.top,
 				width: highlight_dimensions.width,
 				height: highlight_dimensions.height
-				},event);
+			},event);
 		}
 		// We do not want regular event processing
 		event.preventDefault(); 
@@ -643,9 +719,9 @@ function board_start_area_highlight(event, area_select_callback){
 		overlay.addEventListener("touchend",stop_drag_function,false);
 		overlay.addEventListener("touchcancel",stop_drag_function,false);
 	}
-	$(overlay).bind("mousedown.rotatedrag",util_ignore_event);
-	$(overlay).bind("mousemove.rotatedrag",drag_function);
-	$(overlay).bind("mouseup.rotatedrag",stop_drag_function);
+	$(overlay).bind("mousedown",util_ignore_event);
+	$(overlay).bind("mousemove",drag_function);
+	$(overlay).bind("mouseup",stop_drag_function);
 }
 
 /*
@@ -657,7 +733,7 @@ function board_start_area_highlight(event, area_select_callback){
 function piece_in_rect(piece, rect){
 	var center = get_piece_center(piece);
 	return ((center.left >= rect.x) && (center.left <= (rect.x + rect.width))
-	&& (center.top >= rect.y) && ((center.top <= (rect.y + rect.height))));
+		&& (center.top >= rect.y) && ((center.top <= (rect.y + rect.height))));
 }
 
 /*
@@ -679,7 +755,9 @@ function show_multiselect_popup_menu(pieces, position){
 		}
 	});
 	// Highlight the unlocked pieces
-	$.each(unlocked_pieces, function (index,piece){$(piece).css("opacity",0.5);});
+	$.each(unlocked_pieces, function (index,piece){
+		$(piece).css("opacity",0.5);
+	});
 	if (unlocked_pieces.length > 0){
 		menu_items.push({
 			label: "Move", 
@@ -709,7 +787,9 @@ function show_multiselect_popup_menu(pieces, position){
 		});
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(){
-		$.each(unlocked_pieces, function (index,piece){$(piece).css("opacity",1);});
+		$.each(unlocked_pieces, function (index,piece){
+			$(piece).css("opacity",1);
+		});
 	});
 }
 
