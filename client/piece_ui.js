@@ -358,7 +358,7 @@ function on_piece_touch_start(event){
 	}
 	// If a piece is not locked, start a move, calling the click function if no movement made
 	if (! piece.lock){
-		piece_start_move(piece, event, 0, click_function);
+		piece_start_move(piece, event, false, click_function);
 		event.preventDefault(); 
 		return(false);
 	}
@@ -547,11 +547,10 @@ function piece_start_rotate(piece, event){
  * orientation when they touch the screen.
  * 
  * We assume the piece is not locked or we some permission to move it.
- * TODO: LOW See if having the case of no overlay really speeds things up
  * 
  * @param piece The piece object to be moved
  * @param event The initiating event
- * @param use_overlay Set to true if we want to use an overlay to capture a new touch start event
+ * @param use_overlay Create an overlay to capture new mouse event
  * @param no_move_callback A callback if the piece was not moved
  */
 function piece_start_move(piece, event, use_overlay, no_move_callback){
@@ -561,23 +560,15 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 	piece_highlight(piece);
 	// Store where on the piece we clicked (for use with dragging)
 	var start_click = util_get_event_coordinates(event);
-	var piece_offset = $(piece).offset();
-	var position_on_piece = {
-		x: (start_click.x - piece_offset.left),
-		y: (start_click.y - piece_offset.top)
-	};
+	var start_offset = $(piece).offset();
 	var overlay = 0;
-	// If we started out mouse up (say after a menu) add an overlay for events
 	if (use_overlay){
+		// Add an overlay to capture a new mouse/touch down event (in case we started touch up)
 		overlay = util_create_ui_overlay();
 	}
 	// Handle start drag events by resetting location for rotation calculations
 	var start_drag_function = function (event){
 		start_click = util_get_event_coordinates(event);
-		position_on_piece = {
-			x: (start_click.x - piece_offset.left),
-			y: (start_click.y - piece_offset.top)
-		};
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
@@ -586,8 +577,8 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 	var drag_function = function (event) {
 		var click = util_get_event_coordinates(event);
 		var new_offset = {
-			left: click.x - position_on_piece.x,
-			top: click.y - position_on_piece.y
+			left: start_offset.left - start_click.x + click.x,
+			top: start_offset.top - start_click.y + click.y
 		}
 		var current_piece_offset = $(piece).offset();
 		if ((current_piece_offset.left != new_offset.left) || 
@@ -611,16 +602,15 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 		if (use_overlay){
 			// Click on the overlay to destroy it (and remove listeners)
 			$(overlay).trigger('click');
-		} else {
-			// Remove the document event listeners
-			if (document.removeEventListener){
-				document.removeEventListener("touchmove",drag_function,false);
-				document.removeEventListener("touchend",stop_drag_function,false);
-				document.removeEventListener("touchcancel",stop_drag_function,false);
-			}
-			$(document).unbind("mousemove",drag_function);
-			$(document).unbind("mouseup",stop_drag_function);
 		}
+		// Remove the document event listeners
+		if (document.removeEventListener){
+			document.removeEventListener("touchmove",drag_function,false);
+			document.removeEventListener("touchend",stop_drag_function,false);
+			document.removeEventListener("touchcancel",stop_drag_function,false);
+		}
+		$(document).unbind("mousemove",drag_function);
+		$(document).unbind("mouseup",stop_drag_function);
 		if ((!mouse_moved) && (no_move_callback)){
 			no_move_callback();
 		}
@@ -628,25 +618,16 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 		event.preventDefault(); 
 		return(false);
 	};
-	if (overlay){
-		if (overlay.addEventListener){
+	if (document.addEventListener){
+		if (use_overlay){
 			overlay.addEventListener("touchstart",start_drag_function,false);
-			overlay.addEventListener("touchmove",drag_function,false);
-			overlay.addEventListener("touchend",stop_drag_function,false);
-			overlay.addEventListener("touchcancel",stop_drag_function,false);
 		}
-		$(overlay).bind("mousedown",util_ignore_event); // For mouse ignore down click
-		$(overlay).bind("mousemove",drag_function);
-		$(overlay).bind("mouseup",stop_drag_function);
-	} else {
-		if (document.addEventListener){
-			document.addEventListener("touchmove",drag_function,false);
-			document.addEventListener("touchend",stop_drag_function,false);
-			document.addEventListener("touchcancel",stop_drag_function,false);
-		}
-		$(document).bind("mousemove",drag_function);
-		$(document).bind("mouseup",stop_drag_function);
+		document.addEventListener("touchmove",drag_function,false);
+		document.addEventListener("touchend",stop_drag_function,false);
+		document.addEventListener("touchcancel",stop_drag_function,false);
 	}
+	$(document).bind("mousemove",drag_function);
+	$(document).bind("mouseup",stop_drag_function);
 }
 
 /**
