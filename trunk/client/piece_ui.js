@@ -167,6 +167,25 @@ function correct_piece_z_indices(){
 }
 
 /*
+ * piece_highlight - Highlights a piece for movement, multi-select, etc.
+ * 
+ * @param piece The piece to highlight
+ */
+function piece_highlight(piece){
+	$(piece).css("opacity",0.75);
+}
+
+/*
+ * piece_unhighlight - Restores a piece from being highlighted
+ * 
+ * @param piece The piece to restore
+ */
+function piece_unhighlight(piece){
+	$(piece).css("opacity",1);
+}
+
+
+/*
  * move_piece_to_front - moves the piece to the top, and updates the
  * z-indices for all pieces
  * 
@@ -539,7 +558,7 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 	// Check if mouse is moved while dragging
 	var mouse_moved = 0;
 	// Highlight the piece
-	$(piece).css("opacity",0.5);
+	piece_highlight(piece);
 	// Store where on the piece we clicked (for use with dragging)
 	var start_click = util_get_event_coordinates(event);
 	var piece_offset = $(piece).offset();
@@ -588,7 +607,7 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 	// Handle the end of dragging by removing events, and calling no_move_callback if needed
 	var stop_drag_function = function (event) {
 		// Remove Highlight
-		$(piece).css("opacity",1);
+		piece_unhighlight(piece);
 		if (use_overlay){
 			// Click on the overlay to destroy it (and remove listeners)
 			$(overlay).trigger('click');
@@ -756,7 +775,7 @@ function show_multiselect_popup_menu(pieces, position){
 	});
 	// Highlight the unlocked pieces
 	$.each(unlocked_pieces, function (index,piece){
-		$(piece).css("opacity",0.5);
+		piece_highlight(piece);
 	});
 	if (unlocked_pieces.length > 0){
 		menu_items.push({
@@ -788,7 +807,7 @@ function show_multiselect_popup_menu(pieces, position){
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(){
 		$.each(unlocked_pieces, function (index,piece){
-			$(piece).css("opacity",1);
+			piece_unhighlight(piece);
 		});
 	});
 }
