@@ -167,21 +167,21 @@ function correct_piece_z_indices(){
 }
 
 /*
- * piece_highlight - Highlights a piece for movement, multi-select, etc.
+ * pieces_highlight - Highlights pieces for movement, multi-select, etc.
  * 
- * @param piece The piece to highlight
+ * @param pieces Array of pieces to highlight
  */
-function piece_highlight(piece){
-	$(piece).css("opacity",0.75);
+function pieces_highlight(pieces){
+	$(pieces).css("opacity",0.5);
 }
 
 /*
- * piece_unhighlight - Restores a piece from being highlighted
+ * pieces_unhighlight - Restores pieces from being highlighted
  * 
- * @param piece The piece to restore
+ * @param pieces Array of pieces to restore
  */
-function piece_unhighlight(piece){
-	$(piece).css("opacity",1);
+function pieces_unhighlight(pieces){
+	$(pieces).css("opacity",1);
 }
 
 
@@ -257,6 +257,13 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 	} else {
+		menu_items.push({
+			label: "Move", 
+			callback: function(event){
+				piece_start_move(piece, event, 1);
+			}, 
+			args: null
+		});
 		menu_items.push({
 			label: "Rotate", 
 			callback: function(event){
@@ -557,7 +564,7 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 	// Check if mouse is moved while dragging
 	var mouse_moved = 0;
 	// Highlight the piece
-	piece_highlight(piece);
+	pieces_highlight([piece]);
 	// Store where on the piece we clicked (for use with dragging)
 	var start_click = util_get_event_coordinates(event);
 	var start_offset = $(piece).offset();
@@ -598,7 +605,7 @@ function piece_start_move(piece, event, use_overlay, no_move_callback){
 	// Handle the end of dragging by removing events, and calling no_move_callback if needed
 	var stop_drag_function = function (event) {
 		// Remove Highlight
-		piece_unhighlight(piece);
+		pieces_unhighlight([piece]);
 		if (use_overlay){
 			// Click on the overlay to destroy it (and remove listeners)
 			$(overlay).trigger('click');
@@ -755,10 +762,9 @@ function show_multiselect_popup_menu(pieces, position){
 		}
 	});
 	// Highlight the unlocked pieces
-	$.each(unlocked_pieces, function (index,piece){
-		piece_highlight(piece);
-	});
+	pieces_highlight(unlocked_pieces);
 	if (unlocked_pieces.length > 0){
+		/*
 		menu_items.push({
 			label: "Move", 
 			callback: function(event){
@@ -771,9 +777,18 @@ function show_multiselect_popup_menu(pieces, position){
 			}, 
 			args: null
 		});
+		*/
 		menu_items.push({
 			label: "Lock", 
-			callback: function(event){
+			callback: function(){
+				$.each(unlocked_pieces,function(i,piece){
+					world_update_piece_accumulate(piece.world_piece_index,{
+						"lock": 1
+					});
+					piece.lock = 1;
+				});
+				world_update_piece_accumulate_flush();
+				pieces_unhighlight(unlocked_pieces);
 			}, 
 			args: null
 		});
@@ -781,15 +796,21 @@ function show_multiselect_popup_menu(pieces, position){
 	if (locked_pieces.length > 0){
 		menu_items.push({
 			label: "Unlock", 
-			callback: function(event){
+			callback: function(){
+				$.each(locked_pieces,function(i,piece){
+					world_update_piece_accumulate(piece.world_piece_index,{
+						"lock": 0
+					});
+					piece.lock = 0;
+				});
+				world_update_piece_accumulate_flush();
+				pieces_unhighlight(unlocked_pieces);
 			}, 
 			args: null
 		});
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(){
-		$.each(unlocked_pieces, function (index,piece){
-			piece_unhighlight(piece);
-		});
+		pieces_unhighlight(unlocked_pieces);
 	});
 }
 
