@@ -184,6 +184,88 @@ function pieces_unhighlight(pieces){
 	$(pieces).css("opacity",1);
 }
 
+/*
+ * pieces_roll - Flips each piece to a random side
+ * 
+ * @param pieces Array of pieces to roll
+ */
+function pieces_roll(pieces){
+	// For each piece update the face showing to a random face
+	$.each(pieces,function(i,piece){
+		piece.face_showing = Math.floor(Math.random() * piece.faces.length);
+		set_piece_face_showing(piece,piece.face_showing);
+		world_update_piece_accumulate(piece.world_piece_index,{
+			"face_showing": piece.face_showing
+		});
+	});
+	// Flush accumulated piece updates
+	world_update_piece_accumulate_flush();
+}
+
+/*
+ * pieces_flip - Flips each piece to the next side in order
+ * 
+ * @param pieces Array of pieces to roll
+ */
+function pieces_flip(pieces){
+	// For each piece update the face showing to a random face
+	$.each(pieces,function(i,piece){
+		piece.face_showing ++;
+		if (piece.face_showing >= piece.faces.length){
+			piece.face_showing = 0;
+		}
+		set_piece_face_showing(piece,piece.face_showing);
+		world_update_piece_accumulate(piece.world_piece_index,{
+			"face_showing": piece.face_showing
+		});
+	});
+	// Flush accumulated piece updates
+	world_update_piece_accumulate_flush();
+}
+
+/*
+ * pieces_flip_to_first_side - Flips each piece to the first side
+ * 
+ * @param pieces Array of pieces to roll
+ */
+function pieces_flip_to_first_side(pieces){
+	// For each piece update the face showing to a random face
+	$.each(pieces,function(i,piece){
+		piece.face_showing = 0;
+		set_piece_face_showing(piece,piece.face_showing);
+		world_update_piece_accumulate(piece.world_piece_index,{
+			"face_showing": piece.face_showing
+		});
+	});
+	// Flush accumulated piece updates
+	world_update_piece_accumulate_flush();
+}
+
+/*
+ * pieces_stack - Stacks the pieces at a point and sets the orientation to 0
+ * 
+ * @param pieces Array of pieces to roll
+ * @param event The event with the coordinates at which to stack
+ */
+function pieces_stack(pieces, event){
+	var coord = util_get_event_coordinates(event);
+	$.each(pieces,function(i,piece){
+		set_piece_orientation(piece,0);
+		$(piece).offset({
+			left: coord.x, 
+			top: coord.y
+			});
+		world_update_piece_accumulate(piece.world_piece_index,{
+			"client": g_client_id,
+			"x": coord.x,
+			"y": coord.y,
+			"orientation": 0
+		});
+	});
+	// Flush accumulated piece updates
+	world_update_piece_accumulate_flush();
+}
+
 
 /*
  * move_pieces_to_front - moves an array of pieces to the top, and then updates the
@@ -269,6 +351,24 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 	} else {
+		if (piece.faces.length > 2){
+			menu_items.push({
+				label: "Roll", 
+				callback: function(){
+					pieces_roll([piece]);
+				}, 
+				args: null
+			});
+		}
+		if (piece.faces.length > 1){
+			menu_items.push({
+				label: "Flip", 
+				callback: function(){
+					pieces_flip([piece]);
+				}, 
+				args: null
+			});
+		}
 		menu_items.push({
 			label: "Move", 
 			callback: function(event){
@@ -283,35 +383,6 @@ function show_piece_popup_menu(piece, position){
 			}, 
 			args: null
 		});
-		if (piece.faces.length > 2){
-			menu_items.push({
-				label: "Roll", 
-				callback: function(){
-					piece.face_showing = Math.floor(Math.random() * piece.faces.length);
-					set_piece_face_showing(piece,piece.face_showing);
-					world_update_piece(piece.world_piece_index,{
-						"face_showing": piece.face_showing
-					});
-				}, 
-				args: null
-			});
-		}
-		if (piece.faces.length > 1){
-			menu_items.push({
-				label: "Flip", 
-				callback: function(){
-					piece.face_showing ++;
-					if (piece.face_showing >= piece.faces.length){
-						piece.face_showing = 0;
-					}
-					set_piece_face_showing(piece,piece.face_showing);
-					world_update_piece(piece.world_piece_index,{
-						"face_showing": piece.face_showing
-					});
-				}, 
-				args: null
-			});
-		}
 		menu_items.push({
 			label: "Send to back", 
 			callback: function(){
@@ -357,9 +428,10 @@ function show_piece_popup_menu(piece, position){
  * depending upon if the user presses and drags or presses and releases (single click)
  * 
  * If a user presses and drags, we move the piece
- * If a user presses and releases without moving (a click), we display a context menu
+ * If a user presses and releases without moving (a click):
  *
  * For touch support, we treat single touch events almost exactly like mouse events.
+ * TODO: MEDIUM - Consider using middle or right mouse for flip and rotate
  * 
  * @param event The mouse down or touch start event
  */
@@ -786,9 +858,56 @@ function show_multiselect_popup_menu(pieces, position){
 			unlocked_pieces.push(piece);
 		}
 	});
-	// Highlight the unlocked pieces
-	pieces_highlight(unlocked_pieces);
 	if (unlocked_pieces.length > 0){
+		// Highlight the unlocked pieces
+		pieces_highlight(unlocked_pieces);
+		// Calculate the max sides for the unlocked pieces
+		var max_sides = 1;
+		$.each(unlocked_pieces, function (i,piece){
+			if (piece.faces.length > max_sides) {
+				max_sides = piece.faces.length;
+			}
+		});
+		if (max_sides > 2){
+			menu_items.push({
+				label: "Roll", 
+				callback: function(event){
+					pieces_roll(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
+		if (max_sides > 1){
+			menu_items.push({
+				label: "Flip", 
+				callback: function(event){
+					pieces_flip(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
+		if (max_sides > 1){
+			menu_items.push({
+				label: "Flip to first side", 
+				callback: function(event){
+					pieces_flip_to_first_side(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
+		if (unlocked_pieces.length > 1){
+			menu_items.push({
+				label: "Stack", 
+				callback: function(event){
+					pieces_stack(unlocked_pieces, event);
+					pieces_start_move(unlocked_pieces, event, 1);
+				}, 
+				args: null
+			});
+		}
 		menu_items.push({
 			label: "Move", 
 			callback: function(event){
@@ -830,7 +949,7 @@ function show_multiselect_popup_menu(pieces, position){
 			label: "Clone", 
 			callback: function(event){
 				// Copy all the pieces and start a move on the original copies
-				$.each(unlocked_pieces,function(i,piece){ piece_clone(piece); });
+				$.each(unlocked_pieces,function(i,piece){piece_clone(piece);});
 				pieces_start_move(unlocked_pieces, event, 1);
 			}, 
 			args: null
