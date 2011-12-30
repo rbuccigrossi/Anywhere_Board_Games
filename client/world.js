@@ -100,10 +100,38 @@ function world_update_piece(piece_index, piece_update){
 	var update = {
 		"pieces": new Object()
 	};
-	update.pieces[piece_index] =  piece_update;
+	update.pieces[piece_index] = piece_update;
 	world_update(update);
 }
 
+/*
+ * world_update_piece_accumulate - Accumulates piece updates until
+ * world_update_piece_accumulate_flush is called.  This is useful for easily
+ * updating many pieces at once.  Changes to the same piece will
+ * completely overwrite old ones.
+ * 
+ * @param piece_index Index of the peice to update
+ * @param piece_update Object containing the attributes to update 
+ */
+function world_update_piece_accumulate(piece_index, piece_update){
+	if (!("update" in world_update_piece_accumulate)){
+		world_update_piece_accumulate.update = {
+			"pieces": new Object()
+		};
+	}
+	world_update_piece_accumulate.update.pieces[piece_index] = piece_update;
+}
+
+/*
+ * world_update_piece_accumulate_flush - Sends any accumulated piece updates
+ * gathered in world_update_piece_accumulate() to the server.
+ */
+function world_update_piece_accumulate_flush(){
+	if ("update" in world_update_piece_accumulate) {
+		world_update(world_update_piece_accumulate.update);
+		delete world_update_piece_accumulate.update;
+	}
+}
 
 /*
  * world_on_new_piece_handler - This is a handler function(piece_index, piece_data)
