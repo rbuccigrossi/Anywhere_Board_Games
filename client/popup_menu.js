@@ -51,7 +51,7 @@ function create_popup_menu(menu_items_config, parent, position, cancel_callback)
 		$('.popup .ui-dialog-titlebar').hide();
 		$('.ui-widget-overlay').unbind('click');
 		$('.ui-widget-overlay').css('opacity',0);
-		$('.ui-widget-overlay').bind('mousedown',function(event) {
+		$('.ui-widget-overlay').bind('mousedown touchstart',function(event) {
 			menu.dialog('close');
 			menu.remove();
 			if (cancel_callback){
