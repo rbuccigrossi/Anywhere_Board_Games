@@ -1,5 +1,12 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+12/29/2011 (abg_v0.111229.tar.gz)
+ - Got first multi-select methods working (move, lock, and unlock)
+ - You can initiate multi-select with mouse through click/drag on the background or 
+   a locked piece
+ - You can initiate multi-select with touch through a menu on the background or 
+   a locked piece
+
 12/25/2011 (abg_v0.111225.tar.gz)
  - Now pieces can have multiple sides!
  - Added flip (for > 1 side) and roll (for > 2 sides)
