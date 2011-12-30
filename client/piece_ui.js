@@ -331,7 +331,10 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Clone", 
 			callback: function(){
-				piece_clone(piece);
+				// Clone the piece
+				piece_clone(piece,10);
+				// Start a move on the old clone
+				pieces_start_move([piece], event, 1);
 			}, 
 			args: null
 		});
@@ -426,10 +429,13 @@ function on_piece_touch_start(event){
 function piece_clone(piece){
 	var offset = $(piece).offset();
 	world_add_piece({
-		"faces": piece.faces, 
-		"x": (offset.left + 10), 
-		"y": (offset.top + 10),
-		"z": g_pieces.length
+		"faces": piece.faces,
+		"x": (offset.left), 
+		"y": (offset.top),
+		"z": piece.z,
+		"lock": piece.lock,
+		"orientation": piece.orientation,
+		"face_showing": piece.face_showing
 	});
 }
 
@@ -817,6 +823,26 @@ function show_multiselect_popup_menu(pieces, position){
 				});
 				world_update_piece_accumulate_flush();
 				pieces_unhighlight(unlocked_pieces);
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Clone", 
+			callback: function(event){
+				// Copy all the pieces and start a move on the original copies
+				$.each(unlocked_pieces,function(i,piece){ piece_clone(piece); });
+				pieces_start_move(unlocked_pieces, event, 1);
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Delete", 
+			callback: function(){
+				// Set the piece to null to delete it
+				$.each(unlocked_pieces,function(i,piece){ 
+					world_update_piece_accumulate(piece.world_piece_index, null);
+				});
+				world_update_piece_accumulate_flush();
 			}, 
 			args: null
 		});
