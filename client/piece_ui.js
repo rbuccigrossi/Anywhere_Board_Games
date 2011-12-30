@@ -386,6 +386,7 @@ function on_piece_touch_start(event){
 	// For touch stop events - check to see if we have moved and display the piece menu if not
 	var touch_stop_callback = function (event) {
 		// We are done, so unregister listeners
+		// TODO IMMEDIATE - Switch to jQuery bind for touch events
 		document.removeEventListener("touchmove", touch_stop_callback, false);
 		document.removeEventListener("touchend", touch_stop_callback, false);
 		document.removeEventListener("touchcancel", touch_stop_callback, false);
@@ -594,6 +595,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 			if (!mouse_moved){
 				mouse_moved = 1; // We moved, so this is a drag, not a click
 				// If we started dragging the piece, move it to the top
+				// TODO IMMEDIATE - maintain order of pieces when moved to front (sort by z first)
 				// TODO MEDIUM - define move_pieces_to_front
 				$.each(pieces, function(i,piece){move_piece_to_front(piece);});
 			}
@@ -818,7 +820,8 @@ function show_multiselect_popup_menu(pieces, position){
 		});
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(){
-		pieces_unhighlight(unlocked_pieces);
+		// For mouse, we can allow click-drag anywhere on the board to move the pieces
+		pieces_start_move(unlocked_pieces, event, 0);
 	});
 }
 
@@ -848,6 +851,7 @@ function board_start_multi_select(event, click_callback){
 			});
 			if (highlighted_pieces.length > 0){
 				var coord = util_get_event_coordinates(e);
+				// TODO HIGH: On menu close by clicking outside the menu, start move
 				show_multiselect_popup_menu(highlighted_pieces, util_page_to_client_coord({
 					left: coord.x-10,
 					top: coord.y-10
