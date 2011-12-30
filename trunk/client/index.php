@@ -54,6 +54,8 @@
 					}
 					return true;
 				})
+				// Ignore Context Menu
+				$(document).bind("contextmenu",util_ignore_event);
 			});
 	
 
