@@ -327,6 +327,7 @@ function set_piece_location(piece, position){
  * show_piece_popup_menu - Generates the pop-up menu for the given piece at the given
  * coordinates.  The contents of the pop-up menu are based upon the state of the piece.
  * TODO: MEDIUM - Combine background and locked piece menus
+ * TODO: MEDIUM - Combine single and multiselect popup menus
  * 
  * @param piece The piece DOM object
  * @param position (left, top) position for the piece
@@ -351,20 +352,18 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 	} else {
-		if (piece.faces.length > 2){
-			menu_items.push({
-				label: "Roll", 
-				callback: function(){
-					pieces_roll([piece]);
-				}, 
-				args: null
-			});
-		}
 		if (piece.faces.length > 1){
 			menu_items.push({
 				label: "Flip", 
 				callback: function(){
 					pieces_flip([piece]);
+				}, 
+				args: null
+			});
+			menu_items.push({
+				label: "Random Flip (Roll)", 
+				callback: function(){
+					pieces_roll([piece]);
 				}, 
 				args: null
 			});
@@ -868,21 +867,19 @@ function show_multiselect_popup_menu(pieces, position){
 				max_sides = piece.faces.length;
 			}
 		});
-		if (max_sides > 2){
-			menu_items.push({
-				label: "Roll", 
-				callback: function(event){
-					pieces_roll(unlocked_pieces);
-					pieces_unhighlight(unlocked_pieces);
-				}, 
-				args: null
-			});
-		}
 		if (max_sides > 1){
 			menu_items.push({
 				label: "Flip", 
 				callback: function(event){
 					pieces_flip(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+			menu_items.push({
+				label: "Random Flip (Roll)", 
+				callback: function(event){
+					pieces_roll(unlocked_pieces);
 					pieces_unhighlight(unlocked_pieces);
 				}, 
 				args: null
