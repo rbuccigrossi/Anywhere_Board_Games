@@ -60,6 +60,14 @@ function util_get_event_coordinates(event){
 }
 
 /*
+ * util_clone - Does a shallow clone of an object
+ * 
+ * @param orig Original object
+ */
+function util_clone(orig){
+	 return ($.extend({},orig));
+}
+/*
  * util_create_ui_overlay - Generates a ui-widget-overlay, sets the window resize
  * callback to manipulate it, and returns the DOM object
  *
