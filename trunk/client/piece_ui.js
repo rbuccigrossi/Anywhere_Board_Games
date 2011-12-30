@@ -186,24 +186,36 @@ function pieces_unhighlight(pieces){
 
 
 /*
- * move_piece_to_front - moves the piece to the top, and updates the
- * z-indices for all pieces
+ * move_pieces_to_front - moves an array of pieces to the top, and then updates the
+ * z-indices for all pieces to fill gaps
  * 
- * @param piece The piece DOM object
+ * @param pieces The array of pieces
  */
-function move_piece_to_front(piece){
-	piece.z = 100000; // Assume we don't have that many pieces
+function move_pieces_to_front(pieces){
+	var arr = util_clone(pieces); // Copy the array so we don't mess up the order'
+	arr.sort(compare_piece_z_indices);
+	var new_z = 100000; // Start at a really high index
+	$.each(arr,function(i,p){ // Move each piece to the top and increase the z index
+		p.z = new_z;
+		new_z ++;
+	});
 	correct_piece_z_indices();
 }
 
 /*
- * move_piece_to_back - moves the piece to the back, and updates the
- * z-indices for all pieces
+ * move_pieces_to_back - moves an array of piece to the back, and updates the
+ * z-indices for all pieces to fill gapes
  * 
- * @param piece The piece DOM object
+ * @param pieces The piece DOM object
  */
-function move_piece_to_back(piece){
-	piece.z = -1; // Assume we don't have any negative z indices
+function move_pieces_to_back(pieces){
+	var arr = util_clone(pieces); // Copy the array so we don't mess up the order'
+	arr.sort(compare_piece_z_indices);
+	var new_z = 0 - arr.length; // Start at a big enough negative index
+	$.each(arr,function(i,p){ // Move each piece to the top and increase the z index
+		p.z = new_z;
+		new_z ++;
+	});
 	correct_piece_z_indices();
 }
 
@@ -303,7 +315,7 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Send to back", 
 			callback: function(){
-				move_piece_to_back(piece);
+				move_pieces_to_back([piece]);
 			}, 
 			args: null
 		});
@@ -594,10 +606,8 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		if ((coord.x != last_coord.x) || (coord.y != last_coord.y)){
 			if (!mouse_moved){
 				mouse_moved = 1; // We moved, so this is a drag, not a click
-				// If we started dragging the piece, move it to the top
-				// TODO IMMEDIATE - maintain order of pieces when moved to front (sort by z first)
-				// TODO MEDIUM - define move_pieces_to_front
-				$.each(pieces, function(i,piece){move_piece_to_front(piece);});
+				// If we started dragging the pieces, move them to the top
+				move_pieces_to_front(pieces);
 			}
 		}
 		$.each(pieces, function(i, piece){ 
@@ -788,6 +798,14 @@ function show_multiselect_popup_menu(pieces, position){
 			args: null
 		});
 		*/
+		menu_items.push({
+			label: "Send to back", 
+			callback: function(event){
+				move_pieces_to_back(unlocked_pieces);
+				pieces_unhighlight(unlocked_pieces);
+			}, 
+			args: null
+		});
 		menu_items.push({
 			label: "Lock", 
 			callback: function(){

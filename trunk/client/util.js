@@ -60,12 +60,16 @@ function util_get_event_coordinates(event){
 }
 
 /*
- * util_clone - Does a shallow clone of an object
+ * util_clone - Does a shallow clone of an object or array
  * 
- * @param orig Original object
+ * @param orig Original object or array
  */
 function util_clone(orig){
-	 return ($.extend({},orig));
+	if (orig instanceof Array){
+		return orig.slice(0);
+	} else {
+		return ($.extend({},orig));
+	}
 }
 /*
  * util_create_ui_overlay - Generates a ui-widget-overlay, sets the window resize
