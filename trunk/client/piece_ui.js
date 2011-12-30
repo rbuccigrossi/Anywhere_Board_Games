@@ -15,6 +15,8 @@
  *	to occur when the background or locked pieces are clicked and dragged.
  */
 
+// TODO HIGH - Try click buster code at: http://code.google.com/mobile/articles/fast_buttons.html
+
 /*
  * g_pieces - This array holds all of the pieces on the board.  This is useful
  * for multi-select collision determiniation and z-index maintenance (to avoid
@@ -29,6 +31,12 @@ var g_pieces = [];
  * TODO: LOW - Make the client ID truly unique (currently low probability of hitting another client)
  */
 var g_client_id = (""+Math.random()).split(".").pop();
+
+/*
+ * g_is_touch_device - if we encounter a touch device, we know to ignore some
+ * keey events.  This is set when we encounter a touch event
+ */
+var g_is_touch_device = 0;
 
 /**
  * on_new_piece_handler - Callback for when a new piece is added to the world
@@ -435,8 +443,10 @@ function show_piece_popup_menu(piece, position){
  * @param event The mouse down or touch start event
  */
 function on_piece_touch_start(event){
+	// Is this a touch event?
+	var is_touch_event = util_is_touch_event(event);
 	// Ignore multi-touch or no-touch
-	if (util_is_touch_event(event) && (event.touches.length != 1)){
+	if (is_touch_event && (event.touches.length != 1)){
 		return(true); // Allow event to propogate
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
@@ -457,38 +467,14 @@ function on_piece_touch_start(event){
 	}
 	// At this point, we know we're dealing with a locked piece.  
 	// If the piece is locked and we are a mouse event, start a multi-select drag event
-	if (!util_is_touch_event(event)){
+	if (!is_touch_event){
 		board_start_multi_select(event, click_function);
-		event.preventDefault();
+		event.preventDefault(); 
 		return(false);
+	} else {
+		// We are a touch event on a locked piece, so let it through
+		return(true);
 	}
-	// At this point, we know we are dealing with a locked piece and we are a touch event.
-	var touch_moved = 0;
-	// For touch move events, note if we have moved
-	var touch_move_callback = function (event) {
-		touch_moved = 1;
-		return(true); // Let the event propogate
-	};
-	// For touch stop events - check to see if we have moved and display the piece menu if not
-	var touch_stop_callback = function (event) {
-		// We are done, so unregister listeners
-		// TODO IMMEDIATE - Switch to jQuery bind for touch events
-		document.removeEventListener("touchmove", touch_stop_callback, false);
-		document.removeEventListener("touchend", touch_stop_callback, false);
-		document.removeEventListener("touchcancel", touch_stop_callback, false);
-		if (!touch_moved){
-			click_function();
-			event.preventDefault(); 
-			return(false);
-		} else {
-			return(true); // Let the event propogate
-		}
-	};
-	// Notice that we let touchmove events propogate so the user can pan
-	document.addEventListener("touchmove",touch_move_callback,false);
-	document.addEventListener("touchend",touch_stop_callback,false);
-	document.addEventListener("touchcancel",touch_stop_callback,false);
-	return(true); // Let the touchstart event propogate
 }
 
 /*
@@ -1093,45 +1079,32 @@ function on_board_click(event){
 			left: event.pageX-10,
 			top: event.pageY-10
 		}));
-		event.preventDefault();
+		event.preventDefault(); 
 		return false;
 	}
 	return true;
 }
 
 /*
- * on_board_touch_event - event handler for mouse or touch events on the board
- *  - If we are a touch device, then we ignore touches and make sure that click events
- *    are appropriately registered.
- *  - If we are a mouse device, then we initiate a multi-select drag event and call our
- *    click handler the mouse wasn't dragged before mouse-up.
+ * on_board_mouse_down - event handler for mouse on the board
+ *  - This will kick off a multi-select which if empty will result in on_board_click
+ *    to be called
  *
  * @param event
  */
-function on_board_touch_start(event){
+function on_board_mouse_down(event){
 	if (event.target.nodeName == "HTML"){
-		if (util_is_touch_event(event)){
-			// If we're a touch device, ignore the touch and register the click event
-			if (!("registered" in on_board_click)){
-				on_board_click.registered = true;
-				$(document).bind("click", on_board_click);
-			}
-			return true; // Let the event propogate
-		} else {
-			// We are a mouse device, so initiate a multi-select highlight
-			board_start_multi_select(event, on_board_click);
-			event.preventDefault();
-			return false;
-		}
-		return true;
+		// For touch devices, this will always be empty and call on_board_click
+		board_start_multi_select(event, on_board_click);
+		event.preventDefault(); 
+		return (false);
 	}
 	return (true);
 }
 
 // Register popup menu on board click
 $(document).ready(function(){
-	// For mouse-driven browsers, make mousedown do multi-select
-	$(document).bind("mousedown", on_board_touch_start);
+	$(document).bind("mousedown", on_board_mouse_down);
 });
 
 /*
