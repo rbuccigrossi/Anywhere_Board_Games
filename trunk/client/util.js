@@ -28,6 +28,25 @@ function util_is_touch_event(event){
 }
 
 /*
+ * util_ignore_click_from_touch - An implementation of the Google "clickbuster"
+ * to ignore clicks that result from touch events we have already handled
+ * see http://code.google.com/mobile/articles/fast_buttons.html
+ * 
+ * Here we try a simpler implementation that ignores clicks for the next 0.5 seconds.
+ */
+function util_ignore_click_from_touch(){
+	var ignore_callback = function(event){
+		event.stopPropagation();
+		event.preventDefault();
+	};
+	var remove_callback = function(){
+		document.removeEventListener('click',ignore_callback,true);
+	}
+	document.addEventListener('click',ignore_callback,true);
+	setTimeout(remove_callback, 500);
+}
+
+/*
  * util_get_event_coordinates - Helper function to get the event coordinates for either a 
  * mouse or touch event
  * 
