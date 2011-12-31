@@ -112,6 +112,11 @@ function on_new_piece_handler(piece_idx, piece_data){
 			if ("z" in piece_data){
 				set_piece_z_index(piece, piece_data.z);
 			}
+			// Updated the faces
+			if ("faces" in piece_data){
+				piece.faces = piece_data.faces;
+				set_piece_face_showing(piece,piece.face_showing);
+			}
 			// Set the face that's showing
 			if ("face_showing" in piece_data){
 				set_piece_face_showing(piece,piece_data.face_showing);
@@ -407,6 +412,13 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 		menu_items.push({
+			label: "Edit...", 
+			callback: function(){
+				open_add_edit_piece_dialog(piece);
+			}, 
+			args: null
+		});
+		menu_items.push({
 			label: "Clone", 
 			callback: function(){
 				// Clone the piece
@@ -482,7 +494,6 @@ function on_piece_touch_start(event){
 		if (!touch_moved){
 			util_ignore_click_from_touch();
 			click_function();
-		
 			event.preventDefault(); 
 			return(false);
 		} else {
@@ -1070,7 +1081,7 @@ function show_board_popup_menu(position){
 	menu_items.push({
 		label: "Add Piece...", 
 		callback: function(){
-			open_new_piece_dialog();
+			open_add_edit_piece_dialog();
 		}, 
 		args: null
 	});
@@ -1139,15 +1150,28 @@ $(document).ready(function(){
 });
 
 /*
- * open_new_piece_dialog - Creates a jquery dialog to get the data necessary
- * to add a new piece to the board.  This includes the ability to add a dynamic
+ * open_add_edit_piece_dialog - Creates a jquery dialog to get the data necessary
+ * to add or edit a piece on the board.  This includes the ability to add a dynamic
  * number of faces (image URLs).
+ *
+ * @param piece If specified, the existing piece will be modified
  */
-function open_new_piece_dialog(){
+function open_add_edit_piece_dialog(piece){
 	var dialog = $('<div title="Add a New Piece"><form><fieldset>' +
-		'<label style="width: 20%;">Face URL: </label>' +
-		'<input style="width: 75%;" type="text" name="face_url[]" id="create_piece_url" class="text ui-widget-content ui-corner-all" />' +
 		'</fieldset></form></div>');
+	if (piece){
+		$.each(piece.faces,function(i,face){
+				var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
+								'<input style="width: 75%;" type="text" name="face_url[]" ' +
+								'class="text ui-widget-content ui-corner-all" value="' + face + '"/>');
+				dialog.find("fieldset").append(new_url);
+			});
+	} else {
+		var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
+						'<input style="width: 75%;" type="text" name="face_url[]" ' +
+						'class="text ui-widget-content ui-corner-all" />');
+		dialog.find("fieldset").append(new_url);
+	}
 	// Add to the board
 	$("#board").append(dialog);
 	dialog.dialog({
@@ -1159,7 +1183,8 @@ function open_new_piece_dialog(){
 		buttons: {
 			"Add a face": function() {
 				var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
-					'<input style="width: 75%;" type="text" name="face_url[]" class="text ui-widget-content ui-corner-all" />');
+								'<input style="width: 75%;" type="text" name="face_url[]" ' +
+								'class="text ui-widget-content ui-corner-all" />');
 				dialog.find("fieldset").append(new_url);
 			},
 			"OK": function() {
@@ -1173,7 +1198,13 @@ function open_new_piece_dialog(){
 				if (faces.length == 0){
 					alert("Please enter an image URL");
 				} else {
-					board_add_piece(faces);
+					if (piece){
+						world_update_piece(piece.world_piece_index,{
+							"faces": faces
+						});
+					} else {
+						board_add_piece(faces);
+					}
 					$(this).dialog( "close" );
 					$(this).remove();
 				}
@@ -1188,7 +1219,7 @@ function open_new_piece_dialog(){
 	dialog.bind("keydown", function(e){
 		if (e.keyCode == 13){
 			e.preventDefault();
-			$(':button:contains("OK")').click();
+			$(dialog).parent().find(':button:contains("OK")').click();
 			return false;
 		}
 		return true;

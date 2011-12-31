@@ -49,7 +49,7 @@
 				$( "#upload_board_dialog" ).bind("keydown", function(e){
 					if (e.keyCode == 13){
 						e.preventDefault();
-						$(':button:contains("OK")').click();
+						$( "#upload_board_dialog" ).parent().find(':button:contains("OK")').click();
 						return false;
 					}
 					return true;
