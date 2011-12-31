@@ -465,6 +465,36 @@ function on_piece_touch_start(event){
 		event.preventDefault(); 
 		return(false);
 	}
+	// At this point, we know we are dealing with a locked piece and we are a touch event.
+	var touch_moved = 0;
+	// For touch move events, note if we have moved
+	var touch_move_callback = function (event) {
+		touch_moved = 1;
+		return(true); // Let the event propogate
+	};
+	// For touch stop events - check to see if we have moved and display the piece menu if not
+	var touch_stop_callback = function (event) {
+		// We are done, so unregister listeners
+		// TODO IMMEDIATE - Switch to jQuery bind for touch events
+		document.removeEventListener("touchmove", touch_move_callback, false);
+		document.removeEventListener("touchend", touch_stop_callback, false);
+		document.removeEventListener("touchcancel", touch_stop_callback, false);
+		if (!touch_moved){
+			util_ignore_click_from_touch();
+			click_function();
+		
+			event.preventDefault(); 
+			return(false);
+		} else {
+			return(true); // Let the event propogate
+		}
+	};
+	// Notice that we let touchmove events propogate so the user can pan
+	document.addEventListener("touchmove",touch_move_callback,false);
+	document.addEventListener("touchend",touch_stop_callback,false);
+	document.addEventListener("touchcancel",touch_stop_callback,false);
+	return(true); // Let the touchstart event propogate
+/*
 	// At this point, we know we're dealing with a locked piece.  
 	// If the piece is locked and we are a mouse event, start a multi-select drag event
 	if (!is_touch_event){
@@ -475,6 +505,7 @@ function on_piece_touch_start(event){
 		// We are a touch event on a locked piece, so let it through
 		return(true);
 	}
+*/
 }
 
 /*
