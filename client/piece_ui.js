@@ -65,6 +65,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.world_piece_index = piece_idx;
 	// Record the lock state into the piece object
 	piece.lock = piece_data.lock ? piece_data.lock : 0;
+	// Record if the piece is a shield
+	piece.shield = piece_data.shield ? piece_data.shield : 0;
 	// Record the faces
 	piece.faces = piece_data.faces;
 	// Initialize the z index
@@ -105,6 +107,10 @@ function on_new_piece_handler(piece_idx, piece_data){
 					piece.orientation = piece_data.orientation;
 					set_piece_orientation(piece,piece.orientation);
 				}
+			}
+			// Set the shield status
+			if ("shield" in piece_data){
+				piece.shield = piece_data.shield;
 			}
 			// Set z index
 			if ("z" in piece_data){
@@ -156,20 +162,21 @@ function compare_piece_z_indices(a,b){
 function correct_piece_z_indices(){
 	// First, sort the pieces by the z-index
 	g_pieces.sort(compare_piece_z_indices);
-	var z = 0;
+	var z = 1; 	// Start at 1 to let shields be in the back
 	var i;
 	var piece_updates = {};
 	var piece;
-	for (i in g_pieces){
-		piece = g_pieces[i];
-		if (piece.z != z){
-			piece_updates[piece.world_piece_index] = {
-				"z": z
-			};
-			set_piece_z_index(piece, z);
+	$.each(g_pieces, function (i,piece){
+		if (!piece.shield){ // Don't reorder shields
+			if (piece.z != z){
+				piece_updates[piece.world_piece_index] = {
+					"z": z
+				};
+				set_piece_z_index(piece, z);
+			}
+			z++;
 		}
-		z++;
-	}
+	});
 	if (piece_updates){
 		world_update({
 			"pieces": piece_updates
@@ -384,6 +391,7 @@ function set_piece_location(piece, position){
 /*
  * show_piece_popup_menu - Generates the pop-up menu for the given piece at the given
  * coordinates.  The contents of the pop-up menu are based upon the state of the piece.
+ * TODO: MEDIUM - General organization of menu (maybe board edit mode?)
  * TODO: MEDIUM - Combine background and locked piece menus
  * TODO: MEDIUM - Combine single and multiselect popup menus
  * 
@@ -441,13 +449,6 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 		menu_items.push({
-			label: "Send to back", 
-			callback: function(){
-				move_pieces_to_back([piece]);
-			}, 
-			args: null
-		});
-		menu_items.push({
 			label: "Lock", 
 			callback: function(){
 				world_update_piece(piece.world_piece_index,{
@@ -481,6 +482,66 @@ function show_piece_popup_menu(piece, position){
 			}, 
 			args: null
 		});
+	}
+	if (!piece.shield){
+		menu_items.push({
+			label: "Turn into hand shield", 
+			callback: function(){
+				// Turn into a shield and bring to front
+				world_update_piece(piece.world_piece_index,{
+					"shield": 1,
+					"lock": 1,
+					"z": 980
+				});
+				set_piece_z_index(piece, 980);
+				piece.shield = 1;
+				piece.lock = 1;
+			}, 
+			args: null
+		});
+	} else {
+		menu_items.push({
+			label: "Turn off shield", 
+			callback: function(){
+				// Turn off the shield and push to back
+				world_update_piece(piece.world_piece_index,{
+					"shield": 0,
+					"lock": 0,
+					"z": 0
+				});
+				set_piece_z_index(piece, 0);
+				piece.shield = 0;
+				piece.lock = 0;
+			}, 
+			args: null
+		});
+	}
+	if (!piece.shield){
+		menu_items.push({
+			label: "Send to back", 
+			callback: function(){
+				move_pieces_to_back([piece]);
+			}, 
+			args: null
+		});
+	} else {
+		if (piece.z == 0){
+			menu_items.push({
+				label: "Send shield to front locally", 
+				callback: function(){
+					set_piece_z_index(piece, 980);
+				}, 
+				args: null
+			});
+		} else {
+			menu_items.push({
+				label: "Send shield to back locally", 
+				callback: function(){
+					set_piece_z_index(piece, 0);
+				}, 
+				args: null
+			});
+		}
 	}
 	create_popup_menu(menu_items, $('#board'),position);
 }
@@ -585,6 +646,7 @@ function piece_clone(piece){
 		"y": (offset.top),
 		"z": piece.z,
 		"lock": piece.lock,
+		"shield": piece.shield,
 		"orientation": piece.orientation,
 		"face_showing": piece.face_showing
 	});
@@ -615,7 +677,6 @@ function set_piece_z_index(piece, z_index){
 
 /*
  * set_piece_orientation - Sets the piece orientation through CSS
- * TODO: HIGH - Move setting object member "orientation" here as well
  *
  * @param piece The piece to update
  * @param orientation The orientation in degrees
