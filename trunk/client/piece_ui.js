@@ -15,7 +15,9 @@
  *	to occur when the background or locked pieces are clicked and dragged.
  */
 
-// TODO HIGH - Try click buster code at: http://code.google.com/mobile/articles/fast_buttons.html
+// TODO BUG - Chrome - if scrollbar, highlight overlay does not stretch to edge of window (check absolute)
+// TODO BUG - Chrome - if scrollbar, you can't press scrollbar!
+// TODO BUG - Chrome - if resize, highlight rectangle in wrong place - correct back to "offset" from css
 
 /*
  * g_pieces - This array holds all of the pieces on the board.  This is useful
@@ -438,7 +440,7 @@ function show_piece_popup_menu(piece, position){
 		menu_items.push({
 			label: "Rotate", 
 			callback: function(event){
-				piece_start_rotate(piece, event);
+				pieces_start_rotate([piece], event);
 			}, 
 			args: null
 		});
@@ -631,9 +633,9 @@ function set_piece_orientation(piece, orientation){
 	$(piece_face).css("-moz-transform",r);
 	$(piece_face).css("-ms-transform",r);
 }
+
 /*
  * get_piece_center(piece) - returns the center coordinates (left, top) of the piece.
- * It relies on finding "piece_face" for now.
  * 
  * @param piece The piece object
  */
@@ -644,26 +646,55 @@ function get_piece_center(piece){
 	});
 }
 
+/*
+ * get_pieces_center(piece) - returns the center coordinates (left, top) of a group of
+ * pieces.
+ * 
+ * @param pieces The array of pieces
+ */
+function get_pieces_center(pieces){
+	var left_min = 0, left_max = 0, top_min = 0, top_max = 0;
+	var center;
+	$.each(pieces, function(i,piece){
+		center = get_piece_center(piece);
+		if (i == 0) {
+			left_min = center.left; left_max = center.left; top_min = center.top; top_max = center.top;
+		}
+		if (left_min > center.left) { left_min = center.left; }
+		if (left_max < center.left) { left_max = center.left; }
+		if (top_min > center.top) { top_min = center.top; }
+		if (top_max < center.top) { top_max = center.top; }
+	});
+	return ({
+		left: Math.floor((left_min + left_max)/2),
+		top: Math.floor((top_min + top_max)/2)
+	});
+}
+
 /**
- * piece_start_rotate - Initiate the rotation of a piece.  We treat mouse slightly differently
+ * pieces_start_rotate - Rotates a set of pieces around its global center.
+ * We treat mouse slightly differently
  * than touch, in that for mouse we can sense mouse movements without them pressing the button,
  * so we base the original orientation from the menu click.  For touch, we reset the start
  * orientation when they touch the screen.
  * 
- * @param piece The piece object to be rotated
+ * @param pieces The set of pieces to be rotated
  * @param event The initiating event
  */
-function piece_start_rotate(piece, event){
-	// Initialize the object orientation if not set
-	if (!piece.orientation){
-		piece.orientation = 0;
-	}
+function pieces_start_rotate(pieces, event){
 	var start_click = util_get_event_coordinates(event);
-	var start_orientation = piece.orientation;
-	var piece_center = get_piece_center(piece);
+	// Find the center of the group of pieces
+	var pieces_center = get_pieces_center(pieces);
+	// Get the starting orientation of the pieces
+	var start_orientations = [];
+	$.each(pieces, function(i,piece){
+		start_orientations.push(piece.orientation);
+	});
+	// Remeber the move angle so we update only when the angle changes
+	var move_angle = 0;
 	var original_position_from_center = {
-		x: (start_click.x - piece_center.left),
-		y: (start_click.y - piece_center.top)
+		x: (start_click.x - pieces_center.left),
+		y: (start_click.y - pieces_center.top)
 	};
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
@@ -671,8 +702,8 @@ function piece_start_rotate(piece, event){
 	var start_drag_function = function (event){
 		start_click = util_get_event_coordinates(event);
 		original_position_from_center = {
-			x: (start_click.x - piece_center.left),
-			y: (start_click.y - piece_center.top)
+			x: (start_click.x - pieces_center.left),
+			y: (start_click.y - pieces_center.top)
 		};
 		event.preventDefault(); 
 		return(false);
@@ -681,22 +712,29 @@ function piece_start_rotate(piece, event){
 	var drag_function = function (event) {
 		var click = util_get_event_coordinates(event);
 		var new_position_from_center = {
-			x: (click.x - piece_center.left),
-			y: (click.y - piece_center.top)
+			x: (click.x - pieces_center.left),
+			y: (click.y - pieces_center.top)
 		};
+		var new_move_angle = move_angle;
 		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
-			piece.orientation = start_orientation
-			+ 360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
+			new_move_angle = 
+				360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
+			new_move_angle = ((Math.round(new_move_angle / 5) * 5) + 360) % 360;
 		}
-		piece.orientation = ((Math.round(piece.orientation / 5) * 5) + 360) % 360;
-		// Update the world, setting the client so we can ignore the events
-		world_update_piece(piece.world_piece_index,{
-			"client": g_client_id,
-			"orientation": piece.orientation
-		})
-		// Update locally
-		set_piece_orientation(piece,piece.orientation);
+		if (new_move_angle != move_angle){
+			move_angle = new_move_angle;
+			$.each(pieces, function (i,piece){
+				piece.orientation = start_orientations[i] + move_angle;
+				// Update the world, setting the client so we can ignore the events
+				world_update_piece(piece.world_piece_index,{
+					"client": g_client_id,
+					"orientation": piece.orientation
+				});
+				// Update locally
+				set_piece_orientation(piece,piece.orientation);
+			});
+		}
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
@@ -841,9 +879,10 @@ function board_start_area_highlight(event, area_select_callback){
 	$('#board').append(jq_highlight);
 	jq_highlight.css('background-color','#0000FF');
 	jq_highlight.css('opacity',0.5);
+	jq_highlight.css('position','absolute');
 	jq_highlight.css('z-index','999'); // Below overlay but above pieces
 	jq_highlight.css('border','1px dashed #A0A0FF');
-	jq_highlight.offset(highlight_offset);
+	jq_highlight.css('left',highlight_offset.left).css('top',highlight_offset.top);
 	jq_highlight.width(highlight_dimensions.width);
 	jq_highlight.height(highlight_dimensions.height);	
 	// Handle a starting touch by restarting the highlight area there
@@ -857,7 +896,7 @@ function board_start_area_highlight(event, area_select_callback){
 			width: 0, 
 			height: 0
 		};
-		jq_highlight.offset(highlight_offset);
+		jq_highlight.css('left',highlight_offset.left).css('top',highlight_offset.top);
 		jq_highlight.width(highlight_dimensions.width);
 		jq_highlight.height(highlight_dimensions.height);	
 		// We do not want regular event processing
@@ -874,8 +913,8 @@ function board_start_area_highlight(event, area_select_callback){
 		highlight_dimensions = {
 			width: Math.abs(click.x - start_click.x),
 			height: Math.abs(click.y - start_click.y)
-			};		
-		jq_highlight.offset(highlight_offset);
+			};
+		jq_highlight.css('left',highlight_offset.left).css('top',highlight_offset.top);
 		jq_highlight.width(highlight_dimensions.width);
 		jq_highlight.height(highlight_dimensions.height);	
 		// We do not want regular event processing
@@ -1005,14 +1044,14 @@ function show_multiselect_popup_menu(pieces, position){
 			}, 
 			args: null
 		});
-		/*
 		menu_items.push({
 			label: "Rotate", 
 			callback: function(event){
+				pieces_start_rotate(pieces, event);
+				pieces_unhighlight(unlocked_pieces);
 			}, 
 			args: null
 		});
-		*/
 		menu_items.push({
 			label: "Send to back", 
 			callback: function(event){
