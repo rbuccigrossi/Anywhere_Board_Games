@@ -477,6 +477,13 @@ function on_piece_touch_start(event){
 		event.preventDefault(); 
 		return(false);
 	}
+	// At this point, we know we're dealing with a locked piece.  
+	// If the piece is locked and we are a mouse event, start a multi-select drag event
+	if (!util_is_touch_event(event)){
+		board_start_multi_select(event, click_function);
+		event.preventDefault();
+		return(false);
+	}
 	// At this point, we know we are dealing with a locked piece and we are a touch event.
 	var touch_moved = 0;
 	// For touch move events, note if we have moved
