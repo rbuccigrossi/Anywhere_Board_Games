@@ -15,10 +15,6 @@
  *	to occur when the background or locked pieces are clicked and dragged.
  */
 
-// TODO BUG - Chrome - if scrollbar, highlight overlay does not stretch to edge of window (check absolute)
-// TODO BUG - Chrome - if scrollbar, you can't press scrollbar!
-// TODO BUG - Chrome - if resize, highlight rectangle in wrong place - correct back to "offset" from css
-
 /*
  * g_pieces - This array holds all of the pieces on the board.  This is useful
  * for multi-select collision determiniation and z-index maintenance (to avoid
@@ -1235,6 +1231,7 @@ function on_board_click(event){
  * on_board_mouse_down - event handler for mouse on the board
  *  - This will kick off a multi-select which if empty will result in on_board_click
  *    to be called
+ * TODO: BUG - Can't click Chrome scollbar - need a hack to permit scroll bar clicks
  *
  * @param event
  */
