@@ -281,6 +281,53 @@ function pieces_stack(pieces, event){
 
 
 /*
+ * pieces_shuffle - Shuffles a stack of pieces, by switching the location and orientation
+ * of the pieces randomly
+ * 
+ * @param pieces Array of pieces to shuffle
+ */
+function pieces_shuffle(pieces){
+	var o = util_clone(pieces);
+	/* Fisher-Yates-like shuffle the copy of pieces */
+	var j;
+	var num_pieces = pieces.length;
+	var temp = {};
+	// Iterate over every piece in order (i=0,...,length-1)
+	$.each(pieces,function(i,piece){
+		// Randomly choose an index from i to pieces.length to swap
+		j = Math.floor(Math.random() * (num_pieces - i)) + i;
+		// Swap the offset
+		temp.offset = util_clone($(piece).offset());
+		$(piece).offset($(pieces[j]).offset());
+		$(pieces[j]).offset(temp.offset);
+		// Swap the orientation
+		temp.orientation = piece.orientation;
+		piece.orientation = pieces[j].orientation;
+		pieces[j].orientation = temp.orientation;
+		// Swap the z-index
+		temp.z = piece.z;
+		piece.z = pieces[j].z;
+		pieces[j].z = temp.z;
+	});
+	// Now do the update on the server
+	$.each(pieces,function(i,piece){
+		set_piece_orientation(piece,piece.orientation);
+		set_piece_z_index(piece, piece.z);
+		var offset = $(piece).offset();
+		world_update_piece_accumulate(piece.world_piece_index,{
+			"client": g_client_id,
+			"x": offset.left,
+			"y": offset.top,
+			"z": piece.z,
+			"orientation": piece.orientation
+		});
+	});
+	// Flush accumulated piece updates
+	world_update_piece_accumulate_flush();
+}
+
+
+/*
  * move_pieces_to_front - moves an array of pieces to the top, and then updates the
  * z-indices for all pieces to fill gaps
  * 
@@ -578,6 +625,7 @@ function set_piece_z_index(piece, z_index){
 function set_piece_orientation(piece, orientation){
 	var r = "rotate(" + orientation + "deg)";
 	var piece_face = $(piece).find(".piece_face");
+	piece.orientation = orientation;
 	$(piece_face).css("transform",r);
 	$(piece_face).css("-webkit-transform",r);
 	$(piece_face).css("-moz-transform",r);
@@ -925,6 +973,16 @@ function show_multiselect_popup_menu(pieces, position){
 				label: "Flip to first side", 
 				callback: function(event){
 					pieces_flip_to_first_side(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
+		if (unlocked_pieces.length > 1){
+			menu_items.push({
+				label: "Shuffle", 
+				callback: function(event){
+					pieces_shuffle(unlocked_pieces, event);
 					pieces_unhighlight(unlocked_pieces);
 				}, 
 				args: null
