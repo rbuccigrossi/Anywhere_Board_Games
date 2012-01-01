@@ -99,7 +99,10 @@ function util_clone(orig){
  */
 function util_create_ui_overlay(click_callback){
 	var js_overlay = $('<div class="ui-widget-overlay"></div>').css('opacity',0).appendTo('body');
+	js_overlay.css('position','absolute');
 	js_overlay.css('z-index',1002);
+	js_overlay.width($(document).width());
+	js_overlay.height($(document).height());
 	var set_overlay_dimension = function (){
 		js_overlay.width($(document).width());
 		js_overlay.height($(document).height());
