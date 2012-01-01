@@ -681,10 +681,12 @@ function pieces_start_rotate(pieces, event){
 	var start_click = util_get_event_coordinates(event);
 	// Find the center of the group of pieces
 	var pieces_center = get_pieces_center(pieces);
-	// Get the starting orientation of the pieces
+	// Get the starting orientation and centers of the pieces
 	var start_orientations = [];
+	var start_centers = [];
 	$.each(pieces, function(i,piece){
 		start_orientations.push(piece.orientation);
+		start_centers.push(get_piece_center(piece));
 	});
 	// Remeber the move angle so we update only when the angle changes
 	var move_angle = 0;
@@ -720,7 +722,10 @@ function pieces_start_rotate(pieces, event){
 		}
 		if (new_move_angle != move_angle){
 			move_angle = new_move_angle;
+			var cos_a = Math.cos(move_angle * 2 * Math.PI / 360);
+			var sin_a = Math.sin(move_angle * 2 * Math.PI / 360);
 			$.each(pieces, function (i,piece){
+				// First update the orientation, then update location
 				piece.orientation = start_orientations[i] + move_angle;
 				// Update the world, setting the client so we can ignore the events
 				world_update_piece(piece.world_piece_index,{
@@ -729,6 +734,13 @@ function pieces_start_rotate(pieces, event){
 				});
 				// Update locally
 				set_piece_orientation(piece,piece.orientation);
+				// Now calculate and update location (once piece is turned to avoid location issues)
+				var new_center_left = ((start_centers[i].left - pieces_center.left) * cos_a -
+									   (start_centers[i].top - pieces_center.top) * sin_a) + pieces_center.left;
+				var new_center_top = ((start_centers[i].left - pieces_center.left) * sin_a +
+									  (start_centers[i].top - pieces_center.top) * cos_a) + pieces_center.top;
+				set_piece_location(piece,{left: new_center_left - $(piece).width()/2,
+										  top: new_center_top - $(piece).height()/2});
 			});
 		}
 		// We do not want regular event processing
@@ -737,6 +749,8 @@ function pieces_start_rotate(pieces, event){
 	}
 	// Handle the end of dragging by removing the overlay (deleting events)
 	var stop_drag_function = function (event) {
+		// Unhlight pieces
+		pieces_unhighlight(pieces);
 		// Click on the overlay to destroy it (and remove listeners)
 		$(overlay).trigger('click');
 		// We do not want regular event processing
@@ -1043,8 +1057,7 @@ function show_multiselect_popup_menu(pieces, position){
 		menu_items.push({
 			label: "Rotate", 
 			callback: function(event){
-				pieces_start_rotate(pieces, event);
-				pieces_unhighlight(unlocked_pieces);
+				pieces_start_rotate(unlocked_pieces, event);
 			}, 
 			args: null
 		});
