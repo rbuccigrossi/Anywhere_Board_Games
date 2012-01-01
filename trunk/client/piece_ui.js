@@ -343,8 +343,10 @@ function move_pieces_to_front(pieces){
 	arr.sort(compare_piece_z_indices);
 	var new_z = 100000; // Start at a really high index
 	$.each(arr,function(i,p){ // Move each piece to the top and increase the z index
-		p.z = new_z;
-		new_z ++;
+			if (!p.shield){ // Ignore shields
+			p.z = new_z;
+			new_z ++;
+		}
 	});
 	correct_piece_z_indices();
 }
