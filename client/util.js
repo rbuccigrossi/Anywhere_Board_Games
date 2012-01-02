@@ -59,7 +59,7 @@ function util_ignore_click_from_touch(){
 		document.removeEventListener('click',ignore_callback,true);
 	}
 	document.addEventListener('click',ignore_callback,true);
-	setTimeout(remove_callback, 500);
+	setTimeout(remove_callback, 1000);
 }
 
 /*
