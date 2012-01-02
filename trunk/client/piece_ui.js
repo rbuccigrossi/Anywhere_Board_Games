@@ -565,6 +565,8 @@ function show_piece_popup_menu(piece, position){
  * @param event The mouse down or touch start event
  */
 function on_piece_touch_start(event){
+	// Bug fix for chrome scroll bar
+	if (util_is_in_chrome_scrollbar()) return (true);
 	// Is this a touch event?
 	var is_touch_event = util_is_touch_event(event);
 	// Ignore multi-touch or no-touch
@@ -604,7 +606,7 @@ function on_piece_touch_start(event){
 	// For touch stop events - check to see if we have moved and display the piece menu if not
 	var touch_stop_callback = function (event) {
 		// We are done, so unregister listeners
-		// TODO IMMEDIATE - Switch to jQuery bind for touch events
+		// TODO MEDIUM - Switch to jQuery bind for touch events
 		document.removeEventListener("touchmove", touch_move_callback, false);
 		document.removeEventListener("touchend", touch_stop_callback, false);
 		document.removeEventListener("touchcancel", touch_stop_callback, false);
@@ -720,12 +722,12 @@ function get_pieces_center(pieces){
 	$.each(pieces, function(i,piece){
 		center = get_piece_center(piece);
 		if (i == 0) {
-			left_min = center.left; left_max = center.left; top_min = center.top; top_max = center.top;
+			left_min = center.left;left_max = center.left;top_min = center.top;top_max = center.top;
 		}
-		if (left_min > center.left) { left_min = center.left; }
-		if (left_max < center.left) { left_max = center.left; }
-		if (top_min > center.top) { top_min = center.top; }
-		if (top_max < center.top) { top_max = center.top; }
+		if (left_min > center.left) {left_min = center.left;}
+		if (left_max < center.left) {left_max = center.left;}
+		if (top_min > center.top) {top_min = center.top;}
+		if (top_max < center.top) {top_max = center.top;}
 	});
 	return ({
 		left: Math.floor((left_min + left_max)/2),
@@ -1197,7 +1199,6 @@ function show_multiselect_popup_menu(pieces, position){
  * depicts a pop-up menu for multi-selected items.  If the highlighted region
  * is zero size, the user did a click without a drag, so we allow the caller
  * to specify a click callback to handle that event.
- * TODO: IMMEDIATE - Handle successful highlight and create highlight menu
  * 
  * @param event The event that initiated the multi-select
  * @param click_callback A callback in case the user did not drag
@@ -1218,7 +1219,6 @@ function board_start_multi_select(event, click_callback){
 			});
 			if (highlighted_pieces.length > 0){
 				var coord = util_get_event_coordinates(e);
-				// TODO HIGH: On menu close by clicking outside the menu, start move
 				show_multiselect_popup_menu(highlighted_pieces, util_page_to_client_coord({
 					left: coord.x-10,
 					top: coord.y-10
@@ -1310,12 +1310,12 @@ function on_board_click(event){
  * on_board_mouse_down - event handler for mouse on the board
  *  - This will kick off a multi-select which if empty will result in on_board_click
  *    to be called
- * TODO: BUG - Can't click Chrome scollbar - need a hack to permit scroll bar clicks
  *
  * @param event
  */
 function on_board_mouse_down(event){
 	if (event.target.nodeName == "HTML"){
+		if (util_is_in_chrome_scrollbar()) return (true); // Bug fix for chrome scroll bar
 		// For touch devices, this will always be empty and call on_board_click
 		board_start_multi_select(event, on_board_click);
 		event.preventDefault(); 

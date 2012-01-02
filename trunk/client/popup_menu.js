@@ -40,10 +40,10 @@ function create_popup_menu(menu_items_config, parent, position, cancel_callback)
 		autoOpen: false,
 		modal: true,
 		resizable: false,
-		width: 'auto',
+		width: '150',
 		height: 'auto',
 		minHeight: 'auto',
-		minWidth: 'auto'
+		minWidth: '150'
 	});
 	menu.dialog('option','position',[position.left, position.top]);
 	// When the dialog opens, set the overlay to close the dialog if you click elsewhere
