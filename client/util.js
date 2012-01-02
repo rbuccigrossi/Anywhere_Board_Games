@@ -1,3 +1,21 @@
+
+// Detection used for Chrome-specific bug fixes
+var util_is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
+
+// Bug fix for chrome to allow scroll bars to work on mouse down events:
+function util_is_in_chrome_scrollbar(){
+	if (util_is_chrome){ // Don't allow clicks near scroll bars
+		console.log("" + event.clientX + " " + $(document).width() + " " + $(window).width());
+		console.log("" + event.clientY + " " + $(document).height() + " " + $(window).height());
+		if ((event.clientX > ($(window).width()-17)) ||
+			(event.clientY > ($(window).height()-17))){
+			return (true);
+		}
+	}
+	return (false);
+}
+
+
 /*
  * util_page_to_client_coord - converts page to client coordinates based upon 
  * the current scrollbar location
