@@ -692,6 +692,7 @@ function set_piece_orientation(piece, orientation){
 	$(piece_face).css("transform",r);
 	$(piece_face).css("-webkit-transform",r);
 	$(piece_face).css("-moz-transform",r);
+	$(piece_face).css("-o-transform",r);
 	$(piece_face).css("-ms-transform",r);
 }
 
