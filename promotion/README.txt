@@ -1,5 +1,12 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+1/1/2012 (abg_v0.120101.tar.gz)
+ - Multi-select rotate and shuffle work
+ - You can desginate pieces to be "Player Hand Shields", which moves them
+   up to the top to hide hands.  A player then can move them locally to the
+   back so they can view their hand.
+ - Pieces can be edited
+
 12/29/2011 (abg_v0.111229.tar.gz)
  - Got first multi-select methods working (move, lock, and unlock)
  - You can initiate multi-select with mouse through click/drag on the background or 
