@@ -12,6 +12,8 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
 		<style type="text/css">
 			#draggable { width: 100px; height: 70px; background: silver; }
+			.ui-widget-overlay {opacity: 0;}
+			.popup .ui-dialog-titlebar {display: none; visibility: hidden;}
 		</style>
 		<script src="util.js" type="text/javascript"></script>
 		<script src="popup_menu.js" type="text/javascript"></script>

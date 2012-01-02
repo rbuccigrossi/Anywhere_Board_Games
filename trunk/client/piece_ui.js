@@ -561,6 +561,7 @@ function show_piece_popup_menu(piece, position){
  *
  * For touch support, we treat single touch events almost exactly like mouse events.
  * TODO: MEDIUM - Consider using middle or right mouse for flip and rotate
+ * TODO: MEDIUM - Consider separating touch and mouse event handlers
  * 
  * @param event The mouse down or touch start event
  */
