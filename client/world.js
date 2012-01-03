@@ -203,7 +203,7 @@ function execute_world_update(update){
  */
 function world_listener_start(){
 	// Holds the transaction stamp of the latest update
-	var world_last_ts = 0;
+	world_listener_start.world_last_ts = 0;
 	// When the Ajax call is successful, this handles the update data and 
 	// then calls the listener again
 	var world_update_handler = function(data){
@@ -211,7 +211,7 @@ function world_listener_start(){
 		data = JSON.parse(data);
 		var update = data["update"];
 		execute_world_update(update);
-		world_last_ts = data["last_modify"];
+		world_listener_start.world_last_ts = data["last_modify"];
 		world_listener();
 	}
 	// If the Ajax failed, let's dislplay an error and exit
@@ -225,7 +225,7 @@ function world_listener_start(){
 			url: world_server_url, 
 			data: {
 				action: "read", 
-				last_modify: JSON.stringify(world_last_ts)
+				last_modify: JSON.stringify(world_listener_start.world_last_ts)
 				}, 
 			success: world_update_handler, 
 			failure: world_update_failure, 

@@ -37,6 +37,8 @@
 								alert("Please enter a file name");
 							} else {
 								$("#upload_board_form").get(0).action = world_server_url;
+								// Reset the last timestamp of the world
+								world_listener_start.world_last_ts = 0;
 								IFrameSubmit.submit($("#upload_board_form").get(0),{onComplete: function(a){alert(a);}});
 								$("#upload_board_form").get(0).submit();
 								$( this ).dialog( "close" );
