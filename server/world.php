@@ -57,6 +57,7 @@ if ($action === "read") {
 	header('Content-Disposition: attachment; filename="board_game.abg"');
 	$world = &read_world($filename);
 	$update = &get_world_update($world, 0);
+	remove_null_entries($update);
 	echo json_encode($update);
 	exit();
 } else if ($action === "upload") {
@@ -92,6 +93,23 @@ function &read_world($filename) {
 		fclose($file);
 	}
 	return ($world);
+}
+
+function is_not_null($var){
+	return (!is_null($var));
+}
+
+function remove_null_entries(&$update){
+	if (is_array($update)){
+		$update = array_filter($update, is_not_null);
+		foreach ($update as $key => &$value){
+			remove_null_entries($value);
+		}
+		// Reindex numeric arrays
+		if (count(array_filter(array_keys($update),'is_string')) == 0){
+			$update = array_values($update);
+		}
+	}
 }
 
 function update_world($filename, &$update){
