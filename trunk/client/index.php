@@ -3,10 +3,12 @@
 	<head>
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<link rel="icon" type="image/png" href="../images/ABGLogo48x48.png" />
+		<link rel="apple-touch-icon" type="image/png" href="../images/ABGLogo48x48.png" />
 		<!--
 		<meta name="viewport" content="minimum-scale=0.0001, maximum-scale=10.0">
 		-->
-		<title>Board Game Arena</title>
+		<title>Anywhere Board Games</title>
 		<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
