@@ -1,5 +1,12 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+1/18/2012 (abg_v0.120118.tar.gz)
+ - Added checkers and deck images and "abg" files that
+   can be used with "Upload Board" to kick-off a game
+ - Fixed the ABG icon for favicon and Apple icon usage
+ - Cleans up the board when downloaded (removing null entries)
+ - Allows users to click on the scrollbar in Chrome
+
 1/1/2012 (abg_v0.120101.tar.gz)
  - Multi-select rotate and shuffle work
  - You can desginate pieces to be "Player Hand Shields", which moves them
