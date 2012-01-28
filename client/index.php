@@ -9,13 +9,19 @@
 		<meta name="viewport" content="minimum-scale=0.0001, maximum-scale=10.0">
 		-->
 		<title>Anywhere Board Games</title>
+	<!--
 		<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" type="text/javascript"></script>
+ -->
+		<link href="../css/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+		<script src="../js/jquery.min.js" type="text/javascript"></script>
+		<script src="../js/jquery-ui.min.js" type="text/javascript"></script>
 		<style type="text/css">
 			#draggable { width: 100px; height: 70px; background: silver; }
 			.ui-widget-overlay {opacity: 0;}
 			.popup .ui-dialog-titlebar {display: none; visibility: hidden;}
+			.ui-dialog-content label {width: 20%; display: inline-block; text-align: right;}
 		</style>
 		<script src="util.js" type="text/javascript"></script>
 		<script src="popup_menu.js" type="text/javascript"></script>

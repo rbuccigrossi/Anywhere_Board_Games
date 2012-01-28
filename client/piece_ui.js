@@ -69,6 +69,12 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.shield = piece_data.shield ? piece_data.shield : 0;
 	// Record the faces
 	piece.faces = piece_data.faces;
+	// Set the piece face's width
+	piece.face_width = "";
+	if ("face_width" in piece_data){
+		piece.face_width = piece_data.face_width;
+		$(piece).find('img').attr('width',piece.face_width);
+	}
 	// Initialize the z index
 	set_piece_z_index(piece, piece_data.z);
 	// Set the face
@@ -116,10 +122,15 @@ function on_new_piece_handler(piece_idx, piece_data){
 			if ("z" in piece_data){
 				set_piece_z_index(piece, piece_data.z);
 			}
-			// Updated the faces
+			// Update the faces
 			if ("faces" in piece_data){
 				piece.faces = piece_data.faces;
 				set_piece_face_showing(piece,piece.face_showing);
+			}
+			// Update he image width
+			if ("face_width" in piece_data){
+				piece.face_width = piece_data.face_width;
+				$(piece).find('img').attr('width',piece.face_width);
 			}
 			// Set the face that's showing
 			if ("face_showing" in piece_data){
@@ -272,7 +283,7 @@ function pieces_stack(pieces, event){
 		$(piece).offset({
 			left: coord.x, 
 			top: coord.y
-			});
+		});
 		world_update_piece_accumulate(piece.world_piece_index,{
 			"client": g_client_id,
 			"x": coord.x,
@@ -649,6 +660,7 @@ function piece_clone(piece){
 	var offset = $(piece).offset();
 	world_add_piece({
 		"faces": piece.faces,
+		"face_width": piece.face_width,
 		"x": (offset.left), 
 		"y": (offset.top),
 		"z": piece.z,
@@ -723,12 +735,23 @@ function get_pieces_center(pieces){
 	$.each(pieces, function(i,piece){
 		center = get_piece_center(piece);
 		if (i == 0) {
-			left_min = center.left;left_max = center.left;top_min = center.top;top_max = center.top;
+			left_min = center.left;
+			left_max = center.left;
+			top_min = center.top;
+			top_max = center.top;
 		}
-		if (left_min > center.left) {left_min = center.left;}
-		if (left_max < center.left) {left_max = center.left;}
-		if (top_min > center.top) {top_min = center.top;}
-		if (top_max < center.top) {top_max = center.top;}
+		if (left_min > center.left) {
+			left_min = center.left;
+		}
+		if (left_max < center.left) {
+			left_max = center.left;
+		}
+		if (top_min > center.top) {
+			top_min = center.top;
+		}
+		if (top_max < center.top) {
+			top_max = center.top;
+		}
 	});
 	return ({
 		left: Math.floor((left_min + left_max)/2),
@@ -785,7 +808,7 @@ function pieces_start_rotate(pieces, event){
 		var new_move_angle = move_angle;
 		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
 			new_move_angle = 
-				360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
+			360.0 * (Math.atan2(new_position_from_center.x,-new_position_from_center.y)
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
 			new_move_angle = ((Math.round(new_move_angle / 5) * 5) + 360) % 360;
 		}
@@ -805,11 +828,13 @@ function pieces_start_rotate(pieces, event){
 				set_piece_orientation(piece,piece.orientation);
 				// Now calculate and update location (once piece is turned to avoid location issues)
 				var new_center_left = ((start_centers[i].left - pieces_center.left) * cos_a -
-									   (start_centers[i].top - pieces_center.top) * sin_a) + pieces_center.left;
+					(start_centers[i].top - pieces_center.top) * sin_a) + pieces_center.left;
 				var new_center_top = ((start_centers[i].left - pieces_center.left) * sin_a +
-									  (start_centers[i].top - pieces_center.top) * cos_a) + pieces_center.top;
-				set_piece_location(piece,{left: new_center_left - $(piece).width()/2,
-										  top: new_center_top - $(piece).height()/2});
+					(start_centers[i].top - pieces_center.top) * cos_a) + pieces_center.top;
+				set_piece_location(piece,{
+					left: new_center_left - $(piece).width()/2,
+					top: new_center_top - $(piece).height()/2
+					});
 			});
 		}
 		// We do not want regular event processing
@@ -863,7 +888,9 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 	var start_coord = util_get_event_coordinates(event);
 	var last_coord = util_clone(start_coord);
 	var start_offsets = [];
-	$.each(pieces, function (i,p){start_offsets[i] = $(p).offset();});
+	$.each(pieces, function (i,p){
+		start_offsets[i] = $(p).offset();
+	});
 	var overlay = 0;
 	if (use_overlay){
 		// Add an overlay to capture a new mouse/touch down event (in case we started touch up)
@@ -946,7 +973,7 @@ function board_start_area_highlight(event, area_select_callback){
 	var highlight_offset = {
 		left: start_click.x, 
 		top: start_click.y
-		};
+	};
 	var highlight_dimensions = {
 		width: 0, 
 		height: 0
@@ -970,7 +997,7 @@ function board_start_area_highlight(event, area_select_callback){
 		highlight_offset = {
 			left: start_click.x, 
 			top: start_click.y
-			};
+		};
 		highlight_dimensions = {
 			width: 0, 
 			height: 0
@@ -988,11 +1015,11 @@ function board_start_area_highlight(event, area_select_callback){
 		highlight_offset = {
 			left: Math.min(click.x, start_click.x),
 			top: Math.min(click.y, start_click.y)
-			};
+		};
 		highlight_dimensions = {
 			width: Math.abs(click.x - start_click.x),
 			height: Math.abs(click.y - start_click.y)
-			};
+		};
 		jq_highlight.css('left',highlight_offset.left).css('top',highlight_offset.top);
 		jq_highlight.width(highlight_dimensions.width);
 		jq_highlight.height(highlight_dimensions.height);	
@@ -1156,7 +1183,9 @@ function show_multiselect_popup_menu(pieces, position){
 			label: "Clone", 
 			callback: function(event){
 				// Copy all the pieces and start a move on the original copies
-				$.each(unlocked_pieces,function(i,piece){piece_clone(piece);});
+				$.each(unlocked_pieces,function(i,piece){
+					piece_clone(piece);
+				});
 				pieces_start_move(unlocked_pieces, event, 1);
 			}, 
 			args: null
@@ -1338,21 +1367,27 @@ $(document).ready(function(){
  * @param piece If specified, the existing piece will be modified
  */
 function open_add_edit_piece_dialog(piece){
-	var dialog = $('<div title="Add a New Piece"><form><fieldset>' +
-		'</fieldset></form></div>');
+	var dialog = $('<div title="Add a New Piece"><form><fieldset id="faces_fields">' +
+		'</fieldset><fieldset id="other_fields"></fieldset></form></div>');
 	if (piece){
 		$.each(piece.faces,function(i,face){
-				var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
-								'<input style="width: 75%;" type="text" name="face_url[]" ' +
-								'class="text ui-widget-content ui-corner-all" value="' + face + '"/>');
-				dialog.find("fieldset").append(new_url);
-			});
+			var new_url = $('<br/><label>Face URL:</label> ' +
+				'<input style="width: 75%;" type="text" name="face_url[]" ' +
+				'class="text ui-widget-content ui-corner-all" value="' + face + '"/>');
+			dialog.find("#faces_fields").append(new_url);
+		});
 	} else {
-		var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
-						'<input style="width: 75%;" type="text" name="face_url[]" ' +
-						'class="text ui-widget-content ui-corner-all" />');
-		dialog.find("fieldset").append(new_url);
+		var new_url = $('<br/><label>Face URL:</label> ' +
+			'<input style="width: 75%;" type="text" name="face_url[]" ' +
+			'class="text ui-widget-content ui-corner-all" />');
+		dialog.find("#faces_fields").append(new_url);
 	}
+	// Add width
+	dialog.find("#other_fields").append(
+		$('<br/><label>Width:</label> ' +
+			'<input style="width: 75%;" type="text" name="face_width" ' +
+			((piece && piece.face_width)?('value="'+piece.face_width+'"'):"") +
+			'class="text ui-widget-content ui-corner-all" />'));
 	// Add to the board
 	$("#board").append(dialog);
 	dialog.dialog({
@@ -1363,12 +1398,14 @@ function open_add_edit_piece_dialog(piece){
 		modal: true,
 		buttons: {
 			"Add a face": function() {
-				var new_url = $('<br/><label style="width: 20%;">Face URL:</label> ' +
-								'<input style="width: 75%;" type="text" name="face_url[]" ' +
-								'class="text ui-widget-content ui-corner-all" />');
-				dialog.find("fieldset").append(new_url);
+				var new_url = $('<br/><label>Face URL:</label> ' +
+					'<input style="width: 75%;" type="text" name="face_url[]" ' +
+					'class="text ui-widget-content ui-corner-all" />');
+				dialog.find("#faces_fields").append(new_url);
 			},
 			"OK": function() {
+				// Get dialog values
+				var face_width = dialog.find('input[name="face_width"]').val();
 				// Accumulate the face URLs
 				var faces = [];
 				dialog.find('input[name="face_url[]"]').each(function(idx,item){
@@ -1381,7 +1418,8 @@ function open_add_edit_piece_dialog(piece){
 				} else {
 					if (piece){
 						world_update_piece(piece.world_piece_index,{
-							"faces": faces
+							"faces": faces,
+							"face_width": face_width
 						});
 					} else {
 						board_add_piece(faces);
