@@ -450,16 +450,23 @@ function show_piece_popup_menu(piece, position){
 			});
 		}
 		menu_items.push({
-			label: "Move", 
+			label: "Rotate", 
 			callback: function(event){
-				pieces_start_move([piece], event, 1);
+				pieces_start_rotate([piece], event);
 			}, 
 			args: null
 		});
 		menu_items.push({
-			label: "Rotate", 
+			label: "View Detail", 
 			callback: function(event){
-				pieces_start_rotate([piece], event);
+				piece_see_detail(piece, event);
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Move", 
+			callback: function(event){
+				pieces_start_move([piece], event, 1);
 			}, 
 			args: null
 		});
@@ -758,6 +765,24 @@ function get_pieces_center(pieces){
 		top: Math.floor((top_min + top_max)/2)
 	});
 }
+
+/**
+ * piece_see_detil - Zooms into a piece so that we can see the detail.
+ * It uses an overlay, centering the current image and scaling to cover
+ * the full window.
+ * 
+ * @param piece The piece of which we wish to see the detail
+ */
+function piece_see_detail(piece){
+	// Add an overlay we'll use for down, move, and up events
+	var overlay = util_create_ui_overlay();
+	var img_url = $(piece).find('img').attr('src');
+	$(overlay).css("opacity",0.9);
+	$(overlay).css('background','#000 url('+img_url+') center center fixed no-repeat');
+	$(overlay).css('-moz-background-size','contain');
+	$(overlay).css('background-size','contain');
+}
+
 
 /**
  * pieces_start_rotate - Rotates a set of pieces around its global center.
