@@ -1,5 +1,13 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+2/8/2012 (abg_v0.120208.tar.gz)
+ - Moved back to local jquery and jquery-ui to allow offline play
+ - Allows pieces to be resized (you can specify a
+   width in pixels for the piece in the edit box)
+ - Users can now select "View Detail" for a piece (to make a piece
+   fill up the screen so that you can read text or other details 
+   on the piece)
+
 1/18/2012 (abg_v0.120118.tar.gz)
  - Added checkers and deck images and "abg" files that
    can be used with "Upload Board" to kick-off a game
