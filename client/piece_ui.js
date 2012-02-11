@@ -433,6 +433,15 @@ function show_piece_popup_menu(piece, position){
 			args: null
 		});
 	} else {
+		if (piece.faces.length > 2){
+			menu_items.push({
+				label: "Roll", 
+				callback: function(){
+					pieces_roll([piece]);
+				}, 
+				args: null
+			});
+		}
 		if (piece.faces.length > 1){
 			menu_items.push({
 				label: "Flip", 
@@ -441,8 +450,10 @@ function show_piece_popup_menu(piece, position){
 				}, 
 				args: null
 			});
+		}
+		if (piece.faces.length == 2){
 			menu_items.push({
-				label: "Random Flip (Roll)", 
+				label: "Random Flip", 
 				callback: function(){
 					pieces_roll([piece]);
 				}, 
@@ -778,7 +789,7 @@ function piece_see_detail(piece){
 	var overlay = util_create_ui_overlay();
 	var img_url = $(piece).find('img').attr('src');
 	$(overlay).css("opacity",0.9);
-	$(overlay).css('background','#000 url('+img_url+') center center fixed no-repeat');
+	$(overlay).css('background','#000 url('+escape(img_url)+') center center fixed no-repeat');
 	$(overlay).css('-moz-background-size','contain');
 	$(overlay).css('background-size','contain');
 }
@@ -1120,6 +1131,16 @@ function show_multiselect_popup_menu(pieces, position){
 				max_sides = piece.faces.length;
 			}
 		});
+		if (max_sides > 2){
+			menu_items.push({
+				label: "Roll", 
+				callback: function(event){
+					pieces_roll(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
 		if (max_sides > 1){
 			menu_items.push({
 				label: "Flip", 
@@ -1129,8 +1150,10 @@ function show_multiselect_popup_menu(pieces, position){
 				}, 
 				args: null
 			});
+		}
+		if (max_sides == 2){
 			menu_items.push({
-				label: "Random Flip (Roll)", 
+				label: "Random Flip", 
 				callback: function(event){
 					pieces_roll(unlocked_pieces);
 					pieces_unhighlight(unlocked_pieces);
