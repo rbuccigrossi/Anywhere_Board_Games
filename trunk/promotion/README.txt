@@ -1,5 +1,11 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+2/11/2012 (abg_v0.120211.tar.gz)
+ - Added rolling animation
+ - Improved menu for multi-sided pieces (to make rolling easier)
+ - Fixed viewing dietails for pictures with spaces in their
+   filenames
+
 2/8/2012 (abg_v0.120208.tar.gz)
  - Moved back to local jquery and jquery-ui to allow offline play
  - Allows pieces to be resized (you can specify a
