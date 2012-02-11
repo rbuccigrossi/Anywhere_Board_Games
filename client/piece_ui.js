@@ -217,8 +217,9 @@ function pieces_unhighlight(pieces){
  * pieces_roll - Flips each piece to a random side
  * 
  * @param pieces Array of pieces to roll
+ * @param count Number of times to roll
  */
-function pieces_roll(pieces){
+function pieces_roll(pieces, count){
 	// For each piece update the face showing to a random face
 	$.each(pieces,function(i,piece){
 		piece.face_showing = Math.floor(Math.random() * piece.faces.length);
@@ -229,6 +230,9 @@ function pieces_roll(pieces){
 	});
 	// Flush accumulated piece updates
 	world_update_piece_accumulate_flush();
+	if (count > 0){
+		setTimeout(function(){ pieces_roll(pieces,count-1)},100)
+	}
 }
 
 /*
@@ -437,7 +441,7 @@ function show_piece_popup_menu(piece, position){
 			menu_items.push({
 				label: "Roll", 
 				callback: function(){
-					pieces_roll([piece]);
+					pieces_roll([piece],5);
 				}, 
 				args: null
 			});
@@ -455,7 +459,7 @@ function show_piece_popup_menu(piece, position){
 			menu_items.push({
 				label: "Random Flip", 
 				callback: function(){
-					pieces_roll([piece]);
+					pieces_roll([piece],5);
 				}, 
 				args: null
 			});
@@ -1135,7 +1139,7 @@ function show_multiselect_popup_menu(pieces, position){
 			menu_items.push({
 				label: "Roll", 
 				callback: function(event){
-					pieces_roll(unlocked_pieces);
+					pieces_roll(unlocked_pieces,5);
 					pieces_unhighlight(unlocked_pieces);
 				}, 
 				args: null
@@ -1155,7 +1159,7 @@ function show_multiselect_popup_menu(pieces, position){
 			menu_items.push({
 				label: "Random Flip", 
 				callback: function(event){
-					pieces_roll(unlocked_pieces);
+					pieces_roll(unlocked_pieces,5);
 					pieces_unhighlight(unlocked_pieces);
 				}, 
 				args: null
