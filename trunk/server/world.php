@@ -8,7 +8,7 @@
  *  - An assignment stamp: when it was last directly assigned to (or new)
  *  - A max child assignment stamp: when it or its children were updated
  */
-$filename = sys_get_temp_dir() . DIRECTORY_SEPARATOR . "bgaworld.json";
+$filename = getcwd() . DIRECTORY_SEPARATOR . "data" . DIRECTORY_SEPARATOR . "bgaworld.json";
 $action = isset($_REQUEST["action"]) ? $_REQUEST["action"] : "read";
 $max_wait_time = 20; // Max time we'll wait for an update
 $wait_increment = 0.1; // wait in increments of 50th of a second
@@ -42,7 +42,7 @@ if ($action === "read") {
 		exit_json_error("Error parsing update value");
 	}
 	if (!update_world($filename,$update)){
-		exit_json_error("Unable to open $filename");
+		exit_json_error("Unable to open $filename . Please make sure it is writable by the web server.");
 	}
 	echo json_encode(array('success' => 'true'));
 	exit();
@@ -66,7 +66,7 @@ if ($action === "read") {
 		if (update_world($filename,$new_data)){
 			echo "\n\nWorld uploaded";		
 		} else {
-			echo "\n\nError updating world";
+			echo "\n\nError updating world.  Please make sure $filename is writable by the web server.";
 		}
 	} else {
 		echo "\n\nError parsing uploaded file";
@@ -117,6 +117,9 @@ function update_world($filename, &$update){
 	$file = @fopen($filename, "c+");
 	if (!$file) {
 		return (0);
+	}
+	if (!is_writable($filename)){
+		return(0);
 	}
 	flock($file, LOCK_EX);
 	$world = read_world_file($filename);
