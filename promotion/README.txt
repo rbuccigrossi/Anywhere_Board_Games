@@ -1,5 +1,11 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+2/13/2012 (abg_v0.120213.tar.gz)
+ - Added intro page for first-time installation
+ - Moved the data file into server/data so that multiple installations
+   can be done on a single web server
+ - Improved error reporting for server-side errors
+
 2/11/2012 (abg_v0.120211.tar.gz)
  - Added rolling animation
  - Improved menu for multi-sided pieces (to make rolling easier)
