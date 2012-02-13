@@ -60,7 +60,15 @@ function world_update(update){
 	// If we aren't running, start our ajax loop
 	if (!("ajax_loop_running" in world_update)){
 		world_update.ajax_loop_running = true;
-		var call_next_update = function () {
+		var call_next_update = function (data) {
+			if (data){
+				// Check for an error in the data
+				var response = $.parseJSON(data);
+				if ((response instanceof Object) && ("error" in response)){
+					alert(response.error);
+					return;
+				}
+			}
 			// Check if there is a move request pending
 			if ("pending_update" in world_update) {
 				// Copy the update and clear the pending one (so that
@@ -76,6 +84,7 @@ function world_update(update){
 						update: JSON.stringify(update)
 					}, 
 					success: call_next_update, 
+					error: call_next_update, 
 					dataType: "text"
 				});
 			} else {
@@ -216,7 +225,7 @@ function world_listener_start(){
 	}
 	// If the Ajax failed, let's dislplay an error and exit
 	var world_update_failure = function(data){
-		alert("Error updating the World.  Please check your connection and press reload.");
+//		alert("Error updating the World.  Please check your connection and press reload.");
 	}
 	// Make the ajax call for new data with our latest transaction stamp
 	var world_listener = function() {
@@ -228,7 +237,7 @@ function world_listener_start(){
 				last_modify: JSON.stringify(world_listener_start.world_last_ts)
 				}, 
 			success: world_update_handler, 
-			failure: world_update_failure, 
+			error: world_update_failure, 
 			dataType: "text"
 		});
 	}
