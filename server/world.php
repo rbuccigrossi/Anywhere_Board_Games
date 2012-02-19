@@ -10,7 +10,7 @@
  */
 $filename = getcwd() . DIRECTORY_SEPARATOR . "data" . DIRECTORY_SEPARATOR . "bgaworld.json";
 $action = isset($_REQUEST["action"]) ? $_REQUEST["action"] : "read";
-$max_wait_time = 20; // Max time we'll wait for an update
+$max_wait_time = 5; // Max time we'll wait for an update
 $wait_increment = 0.1; // wait in increments of 50th of a second
 
 if ($action === "read") {
@@ -87,7 +87,7 @@ function &read_world($filename) {
 	if ($file) {
 		flock($file, LOCK_SH);
 	}
-	$world = read_world_file($filename);
+	$world = read_world_file($file);
 	if ($file) {
 		flock($file, LOCK_UN);
 		fclose($file);
@@ -122,8 +122,9 @@ function update_world($filename, &$update){
 		return(0);
 	}
 	flock($file, LOCK_EX);
-	$world = read_world_file($filename);
+	$world = read_world_file($file);
 	world_node_update($world, $update, $world["max_assigned"] + 1);
+	rewind($file);
 	ftruncate($file, 0);
 	fwrite($file, json_encode($world));
 	flock($file, LOCK_UN);
@@ -142,8 +143,9 @@ function assign_world_node(&$world_node, $value, $assign_stamp) {
 	$world_node["max_assigned"] = $assign_stamp;
 }
 
-function read_world_file($filename) {
-	$file_data = @file_get_contents($filename);
+function read_world_file($file) {
+	rewind($file);
+	$file_data = @stream_get_contents($file);
 	if (!empty($file_data)) {
 		$world = json_decode($file_data, true);
 	} else {
