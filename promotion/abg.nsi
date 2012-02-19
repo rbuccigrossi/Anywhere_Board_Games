@@ -37,14 +37,14 @@ Section "ABG Server (required)"
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
   
-  ; Put file there
-  File "abg.nsi"
+  ; Copy full c:\ABG directory
+  File /r c:\ABG
   
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\ABGames "Install_Dir" "$INSTDIR"
   
   ; Write the uninstall keys for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ABGames" "DisplayName" "NSIS ABGames"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ABGames" "DisplayName" "Anywhere Board Games"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ABGames" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ABGames" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ABGames" "NoRepair" 1
@@ -56,8 +56,9 @@ SectionEnd
 Section "Start Menu Shortcuts"
 
   CreateDirectory "$SMPROGRAMS\ABGames"
+  CreateShortCut "$SMPROGRAMS\ABGames\Start ABG Server (Mongoose).lnk" "$INSTDIR\ABGLogo48x48.ico" "" "$INSTDIR\mongoose-3.0.exe" 0
+  CreateShortCut "$SMPROGRAMS\ABGames\Connect to Local ABG.lnk" "$INSTDIR\ABGLogo48x48.ico" "" "http://localhost:8080/" 0
   CreateShortCut "$SMPROGRAMS\ABGames\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\ABGames\ABGames (MakeNSISW).lnk" "$INSTDIR\abg.nsi" "" "$INSTDIR\abg.nsi" 0
   
 SectionEnd
 
