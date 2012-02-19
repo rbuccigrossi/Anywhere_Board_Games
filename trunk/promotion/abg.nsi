@@ -3,6 +3,9 @@
 ; The name of the installer
 Name "Anywhere Board Games"
 
+; Icon
+Icon c:\ABG\www\images\ABGLogo48x48.ico
+
 ; The file to write
 OutFile "abg.exe"
 
@@ -38,7 +41,7 @@ Section "ABG Server (required)"
   SetOutPath $INSTDIR
   
   ; Copy full c:\ABG directory
-  File /r c:\ABG
+  File /r c:\ABG\*.*
   
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\ABGames "Install_Dir" "$INSTDIR"
@@ -56,10 +59,12 @@ SectionEnd
 Section "Start Menu Shortcuts"
 
   CreateDirectory "$SMPROGRAMS\ABGames"
-  CreateShortCut "$SMPROGRAMS\ABGames\Start ABG Server (Mongoose).lnk" "$INSTDIR\ABGLogo48x48.ico" "" "$INSTDIR\mongoose-3.0.exe" 0
-  CreateShortCut "$SMPROGRAMS\ABGames\Connect to Local ABG.lnk" "$INSTDIR\ABGLogo48x48.ico" "" "http://localhost:8080/" 0
+  CreateShortCut "$SMPROGRAMS\ABGames\Start ABG Server (Mongoose).lnk" "$INSTDIR\mongoose-3.0.exe" "" "$INSTDIR\www\images\ABGLogo48x48.ico" 0
+  nsisStartMenu::RegenerateFolder "ABGames"
+  CreateShortCut "$SMPROGRAMS\ABGames\Connect to Local ABG.lnk" "http://localhost:8080/" "" "$INSTDIR\www\images\ABGLogo48x48.ico" 0
+  nsisStartMenu::RegenerateFolder "ABGames"
   CreateShortCut "$SMPROGRAMS\ABGames\Uninstall.lnk" "$INSTDIR\uninstall.exe" "" "$INSTDIR\uninstall.exe" 0
-  
+
 SectionEnd
 
 ;--------------------------------
@@ -73,14 +78,14 @@ Section "Uninstall"
   DeleteRegKey HKLM SOFTWARE\NSIS_ABGames
 
   ; Remove files and uninstaller
-  Delete $INSTDIR\abg.nsi
-  Delete $INSTDIR\uninstall.exe
+  RMDir "$INSTDIR\*.*"
+  Delete "$INSTDIR\uninstall.exe"
 
   ; Remove shortcuts, if any
   Delete "$SMPROGRAMS\ABGames\*.*"
 
   ; Remove directories used
   RMDir "$SMPROGRAMS\ABGames"
-  RMDir "$INSTDIR"
+  RMDir /r "$INSTDIR"
 
 SectionEnd
