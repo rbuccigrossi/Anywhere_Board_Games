@@ -1,5 +1,11 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+
+2/19/2012 (abg_v0.120213.exe and abg_v0.120213.tar.gz)
+ - New Windows installer with Mongoose and PHP!
+ - Fixed an issue with file locking on Windows
+ - Reduced the server timeout for Mongoose to avoid client errors
+
 2/13/2012 (abg_v0.120213.tar.gz)
  - Added intro page for first-time installation
  - Moved the data file into server/data so that multiple installations
