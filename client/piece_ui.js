@@ -222,7 +222,12 @@ function pieces_unhighlight(pieces){
 function pieces_roll(pieces, count){
 	// For each piece update the face showing to a random face
 	$.each(pieces,function(i,piece){
-		piece.face_showing = Math.floor(Math.random() * piece.faces.length);
+		if ((count > 0) && (piece.faces.length == 2)){
+			// For a 2 sided piece, simply flip it until the last count
+			piece.face_showing = (piece.face_showing + 1) % 2;
+		} else {
+			piece.face_showing = Math.floor(Math.random() * piece.faces.length);
+		}
 		set_piece_face_showing(piece,piece.face_showing);
 		world_update_piece_accumulate(piece.world_piece_index,{
 			"face_showing": piece.face_showing
@@ -231,7 +236,7 @@ function pieces_roll(pieces, count){
 	// Flush accumulated piece updates
 	world_update_piece_accumulate_flush();
 	if (count > 0){
-		setTimeout(function(){ pieces_roll(pieces,count-1)},100)
+		setTimeout(function(){ pieces_roll(pieces,count-1)},200)
 	}
 }
 
