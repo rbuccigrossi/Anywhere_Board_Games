@@ -21,6 +21,7 @@
 			#draggable { width: 100px; height: 70px; background: silver; }
 			.ui-widget-overlay {opacity: 0;}
 			.popup .ui-dialog-titlebar {display: none; visibility: hidden;}
+			.popup .ui-button { text-align: left;}
 			.ui-dialog-content label {width: 20%; display: inline-block; text-align: right;}
 		</style>
 		<script src="util.js" type="text/javascript"></script>
