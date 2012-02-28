@@ -39,12 +39,19 @@
 					height: 300,
 					width: 350,
 					modal: true,
+					open: function(event, ui) {
+						$("#upload_board_form").get(0).reset();
+					},
 					buttons: {
 						"OK": function() {
 							var file = $("#upload_board_file").val();
 							var url = $("#upload_board_url").val();
+							var url_select = $("#upload_board_select").val();
+							if(url_select){
+								url = url_select;
+							}
 							if (!file && !url){
-								alert("Please enter an ABG file name or URL");
+								alert("Please enter or select an ABG file");
 							} else {
 								$("#upload_board_form").get(0).action = world_server_url;
 								// Reset the last timestamp of the world
@@ -82,18 +89,26 @@
 	<body id="board" style="background-color: #001000;">
 		<!-- scrolling="no" -->
 		<div id="info"></div>
-		<div id="upload_board_dialog" title="Upload a Board">
+		<div id="upload_board_dialog" title="Open a Board">
 			<form enctype="multipart/form-data" id="upload_board_form" method="POST">
 				<fieldset>
 					<P>
-					<span>Please upload an ABG file, enter a URL to an ABG file, or select from one of the server-side packages:</span>
+					<span>Please upload an ABG file, enter a URL to an ABG file, or select one of the standard boards:</span>
 					</P>
 					<input type="hidden" name="action" value="upload" />
-					<label for="upload_board_file">Board File</label>
+					<label for="upload_board_file">Board File:</label>
 					<input type="file" name="file" id="upload_board_file" class="text ui-widget-content ui-corner-all" />
 					<BR/>
-					<label for="upload_board_url">URL</label>
+					<label for="upload_board_url">URL:</label>
 					<input type="text" style="width: 75%;" name="url" id="upload_board_url" class="text ui-widget-content ui-corner-all" />
+					<BR/>
+					<label for="upload_board_select">Board:</label>
+					<select style="width: 75%;" name="url" id="upload_board_select" class="ui-widget-content ui-corner-all">
+						<option value="">-</option>
+						<option value="../games/deck/deck.abg">A blue deck of cards</option>
+						<option value="../games/checkers/checkers.abg">Checkers</option>
+						<option value="../games/intro.abg">Introduction</option>
+					</select>
 				</fieldset>
 			</form>
 		</div>

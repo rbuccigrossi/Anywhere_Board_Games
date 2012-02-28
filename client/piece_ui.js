@@ -1176,14 +1176,14 @@ function show_board_popup_menu(pieces, position){
 			args: null
 		});
 		menu_items.push({
-			label: "Upload Board...", 
+			label: "Open Board...", 
 			callback: function(){
 				$( '#upload_board_dialog' ).dialog('open');
 			}, 
 			args: null
 		});
 		menu_items.push({
-			label: "Download Board...", 
+			label: "Save Board...", 
 			callback: function(){
 				window.open(world_server_url + "?action=download");
 			}, 
