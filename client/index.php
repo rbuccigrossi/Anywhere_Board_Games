@@ -42,8 +42,9 @@
 					buttons: {
 						"OK": function() {
 							var file = $("#upload_board_file").val();
-							if (!file){
-								alert("Please enter a file name");
+							var url = $("#upload_board_url").val();
+							if (!file && !url){
+								alert("Please enter an ABG file name or URL");
 							} else {
 								$("#upload_board_form").get(0).action = world_server_url;
 								// Reset the last timestamp of the world
@@ -84,9 +85,15 @@
 		<div id="upload_board_dialog" title="Upload a Board">
 			<form enctype="multipart/form-data" id="upload_board_form" method="POST">
 				<fieldset>
-					<label for="upload_board_file">Board File</label>
+					<P>
+					<span>Please upload an ABG file, enter a URL to an ABG file, or select from one of the server-side packages:</span>
+					</P>
 					<input type="hidden" name="action" value="upload" />
+					<label for="upload_board_file">Board File</label>
 					<input type="file" name="file" id="upload_board_file" class="text ui-widget-content ui-corner-all" />
+					<BR/>
+					<label for="upload_board_url">URL</label>
+					<input type="text" style="width: 75%;" name="url" id="upload_board_url" class="text ui-widget-content ui-corner-all" />
 				</fieldset>
 			</form>
 		</div>
