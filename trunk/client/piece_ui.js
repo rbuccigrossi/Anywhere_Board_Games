@@ -236,7 +236,7 @@ function pieces_roll(pieces, count){
 	// Flush accumulated piece updates
 	world_update_piece_accumulate_flush();
 	if (count > 0){
-		setTimeout(function(){ pieces_roll(pieces,count-1)},200)
+		setTimeout(function(){pieces_roll(pieces,count-1)},200)
 	}
 }
 
@@ -413,182 +413,6 @@ function set_piece_location(piece, position){
 }
 
 /*
- * show_piece_popup_menu - Generates the pop-up menu for the given piece at the given
- * coordinates.  The contents of the pop-up menu are based upon the state of the piece.
- * TODO: MEDIUM - General organization of menu (maybe board edit mode?)
- * TODO: MEDIUM - Combine background and locked piece menus
- * TODO: MEDIUM - Combine single and multiselect popup menus
- * 
- * @param piece The piece DOM object
- * @param position (left, top) position for the piece
- */
-function show_piece_popup_menu(piece, position){
-	var menu_items = [];
-	if (piece.lock){
-		menu_items.push({
-			label: "Multi-select", 
-			callback: function(event){
-				board_start_multi_select(event);
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "Unlock", 
-			callback: function(){
-				world_update_piece(piece.world_piece_index,{
-					"lock": 0
-				});
-			}, 
-			args: null
-		});
-	} else {
-		if (piece.faces.length > 2){
-			menu_items.push({
-				label: "Roll", 
-				callback: function(){
-					pieces_roll([piece],5);
-				}, 
-				args: null
-			});
-		}
-		if (piece.faces.length > 1){
-			menu_items.push({
-				label: "Flip", 
-				callback: function(){
-					pieces_flip([piece]);
-				}, 
-				args: null
-			});
-		}
-		if (piece.faces.length == 2){
-			menu_items.push({
-				label: "Random Flip", 
-				callback: function(){
-					pieces_roll([piece],5);
-				}, 
-				args: null
-			});
-		}
-		menu_items.push({
-			label: "Rotate", 
-			callback: function(event){
-				pieces_start_rotate([piece], event);
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "View Detail", 
-			callback: function(event){
-				piece_see_detail(piece, event);
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "Move", 
-			callback: function(event){
-				pieces_start_move([piece], event, 1);
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "Lock", 
-			callback: function(){
-				world_update_piece(piece.world_piece_index,{
-					"lock": 1
-				});
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "Edit...", 
-			callback: function(){
-				open_add_edit_piece_dialog(piece);
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "Clone", 
-			callback: function(){
-				// Clone the piece
-				piece_clone(piece,10);
-				// Start a move on the old clone
-				pieces_start_move([piece], event, 1);
-			}, 
-			args: null
-		});
-		menu_items.push({
-			label: "Delete", 
-			callback: function(){
-				// Setting the piece to null deletes it
-				world_update_piece(piece.world_piece_index,null); 
-			}, 
-			args: null
-		});
-	}
-	if (!piece.shield){
-		menu_items.push({
-			label: "Turn into hand shield", 
-			callback: function(){
-				// Turn into a shield and bring to front
-				world_update_piece(piece.world_piece_index,{
-					"shield": 1,
-					"lock": 1,
-					"z": 980
-				});
-				set_piece_z_index(piece, 980);
-				piece.shield = 1;
-				piece.lock = 1;
-			}, 
-			args: null
-		});
-	} else {
-		menu_items.push({
-			label: "Turn off shield", 
-			callback: function(){
-				// Turn off the shield and push to back
-				world_update_piece(piece.world_piece_index,{
-					"shield": 0,
-					"lock": 0,
-					"z": 0
-				});
-				set_piece_z_index(piece, 0);
-				piece.shield = 0;
-				piece.lock = 0;
-			}, 
-			args: null
-		});
-	}
-	if (!piece.shield){
-		menu_items.push({
-			label: "Send to back", 
-			callback: function(){
-				move_pieces_to_back([piece]);
-			}, 
-			args: null
-		});
-	} else {
-		if (piece.z == 0){
-			menu_items.push({
-				label: "Send shield to front locally", 
-				callback: function(){
-					set_piece_z_index(piece, 980);
-				}, 
-				args: null
-			});
-		} else {
-			menu_items.push({
-				label: "Send shield to back locally", 
-				callback: function(){
-					set_piece_z_index(piece, 0);
-				}, 
-				args: null
-			});
-		}
-	}
-	create_popup_menu(menu_items, $('#board'),position);
-}
-
-/*
  * on_piece_touch_start - Handles a mouse down or touch event upon a piece
  * 
  * If a user clicks down upon a piece, we want to be able to do different things
@@ -617,7 +441,7 @@ function on_piece_touch_start(event){
 	var start_click = util_get_event_coordinates(event);
 	// Handle a click (no drag movement), by showing the piece menu
 	var click_function = function () {
-		show_piece_popup_menu(piece,util_page_to_client_coord({
+		show_board_popup_menu([piece],util_page_to_client_coord({
 			left: start_click.x-10,
 			top: start_click.y-10
 		}));
@@ -1113,15 +937,20 @@ function piece_in_rect(piece, rect){
 }
 
 /*
- * show_multiselect_popup_menu - Generates the pop-up menu for the given pieces.
+ * show_board_popup_menu - Generates the pop-up menu for the given pieces.
  * 
- * @param pieces The selected pieces
+ * @param pieces The selected pieces (potentially empty)
  * @param position (left, top) position for the pop-up
  */
-function show_multiselect_popup_menu(pieces, position){
+function show_board_popup_menu(pieces, position){
 	var menu_items = [];
 	var locked_pieces = [];
 	var unlocked_pieces = [];
+	var piece = null;
+	var max_sides = 1;
+	if (pieces.length == 1){
+		piece = pieces[0];
+	}
 	// Figure out which pieces are locked, and which are unlocked
 	$.each(pieces, function (index,piece){
 		if (piece.lock){
@@ -1130,16 +959,32 @@ function show_multiselect_popup_menu(pieces, position){
 			unlocked_pieces.push(piece);
 		}
 	});
+	// If we have unlocked pieces, highlight them and calculate the max sides
 	if (unlocked_pieces.length > 0){
 		// Highlight the unlocked pieces
 		pieces_highlight(unlocked_pieces);
 		// Calculate the max sides for the unlocked pieces
-		var max_sides = 1;
+		max_sides = 1;
 		$.each(unlocked_pieces, function (i,piece){
 			if (piece.faces.length > max_sides) {
 				max_sides = piece.faces.length;
 			}
 		});
+	}
+	// Now add the menu items
+	// ----- Multi-Select (only if no items are actually listed)
+	if (unlocked_pieces.length == 0) {
+		menu_items.push({
+			label: "Multi-select", 
+			callback: function(event){
+				board_start_multi_select(event);
+				pieces_unhighlight(unlocked_pieces);
+			}, 
+			args: null
+		});
+	}
+	// ----- Piece manipulation for unlocked pieces
+	if (unlocked_pieces.length > 0){
 		if (max_sides > 2){
 			menu_items.push({
 				label: "Roll", 
@@ -1201,13 +1046,6 @@ function show_multiselect_popup_menu(pieces, position){
 			});
 		}
 		menu_items.push({
-			label: "Move", 
-			callback: function(event){
-				pieces_start_move(unlocked_pieces, event, 1);
-			}, 
-			args: null
-		});
-		menu_items.push({
 			label: "Rotate", 
 			callback: function(event){
 				pieces_start_rotate(unlocked_pieces, event);
@@ -1215,13 +1053,42 @@ function show_multiselect_popup_menu(pieces, position){
 			args: null
 		});
 		menu_items.push({
-			label: "Send to back", 
+			label: "Move", 
 			callback: function(event){
-				move_pieces_to_back(unlocked_pieces);
-				pieces_unhighlight(unlocked_pieces);
+				pieces_start_move(unlocked_pieces, event, 1);
 			}, 
 			args: null
 		});
+		// Allow multiple pieces or non shields to be sent to the back
+		if (!piece || !piece.shield){ 
+			menu_items.push({
+				label: "Send to back", 
+				callback: function(event){
+					move_pieces_to_back(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
+		// Menu items for a single-selected unlocked piece
+		if (piece){
+			menu_items.push({
+				label: "View Detail", 
+				callback: function(event){
+					piece_see_detail(piece, event);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+			menu_items.push({
+				label: "Edit...", 
+				callback: function(){
+					open_add_edit_piece_dialog(piece);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
 		menu_items.push({
 			label: "Lock", 
 			callback: function(){
@@ -1259,6 +1126,30 @@ function show_multiselect_popup_menu(pieces, position){
 			args: null
 		});
 	}
+	// ----- Piece manipulation for shields
+	// If we selected one piece and it is a shield, allow the user to manipulate it
+	if (piece && piece.shield){
+		if (piece.z == 0){
+			menu_items.push({
+				label: "Let another player use this shield", 
+				callback: function(){
+					set_piece_z_index(piece, 980);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		} else {
+			menu_items.push({
+				label: "Use this shield for your hand", 
+				callback: function(){
+					set_piece_z_index(piece, 0);
+					pieces_unhighlight(unlocked_pieces);
+				}, 
+				args: null
+			});
+		}
+	}
+	// ----- Piece manipulation for locked pieces
 	if (locked_pieces.length > 0){
 		menu_items.push({
 			label: "Unlock", 
@@ -1275,7 +1166,38 @@ function show_multiselect_popup_menu(pieces, position){
 			args: null
 		});
 	}
-	create_popup_menu(menu_items, $('#board'), position, function(){
+	// ----- Board menu items
+	if (unlocked_pieces.length == 0) {
+		menu_items.push({
+			label: "Add Piece...", 
+			callback: function(){
+				open_add_edit_piece_dialog();
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Upload Board...", 
+			callback: function(){
+				$( '#upload_board_dialog' ).dialog('open');
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Download Board...", 
+			callback: function(){
+				window.open(world_server_url + "?action=download");
+			}, 
+			args: null
+		});
+		menu_items.push({
+			label: "Clear Board", 
+			callback: function(){
+				world_update(0); // Updating the world to 0 clears it
+			}, 
+			args: null
+		});
+	}
+	create_popup_menu(menu_items, $('#board'), position, function(event){
 		// For mouse, we can allow click-drag anywhere on the board to move the pieces
 		pieces_start_move(unlocked_pieces, event, 0);
 	});
@@ -1306,7 +1228,7 @@ function board_start_multi_select(event, click_callback){
 			});
 			if (highlighted_pieces.length > 0){
 				var coord = util_get_event_coordinates(e);
-				show_multiselect_popup_menu(highlighted_pieces, util_page_to_client_coord({
+				show_board_popup_menu(highlighted_pieces, util_page_to_client_coord({
 					left: coord.x-10,
 					top: coord.y-10
 				}));
@@ -1320,59 +1242,24 @@ function board_start_multi_select(event, click_callback){
  * image urls.
  * 
  * @param faces Array of image URLs
+ * @param face_width The width of the face ("" if not defined)
+ * @param shield If the piece is a shield (boolean)
  */
-function board_add_piece(faces){
+function board_add_piece(faces, face_width, shield){
+	var z = g_pieces.length;
+	if (shield) { // Shields appear in the front
+		z = 980;
+	} else {
+		shield = 0;
+	}
 	world_add_piece({
 		"faces": faces,
+		"face_width": face_width,
+		"shield": shield,
 		"x": 50,
 		"y": 50,
-		"z": g_pieces.length
+		"z": z
 	});
-}
-
-/*
- * show_board_popup_menu - Generates the pop-up menu for the board.
- * 
- * @param position (left, top) position for the piece
- */
-function show_board_popup_menu(position){
-	var menu_items = [];
-	menu_items.push({
-		label: "Multi-select", 
-		callback: function(event){
-			board_start_multi_select(event);
-		}, 
-		args: null
-	});
-	menu_items.push({
-		label: "Add Piece...", 
-		callback: function(){
-			open_add_edit_piece_dialog();
-		}, 
-		args: null
-	});
-	menu_items.push({
-		label: "Download Board", 
-		callback: function(){
-			window.open(world_server_url + "?action=download");
-		}, 
-		args: null
-	});
-	menu_items.push({
-		label: "Upload Board", 
-		callback: function(){
-			$( '#upload_board_dialog' ).dialog('open');
-		}, 
-		args: null
-	});
-	menu_items.push({
-		label: "Clear Board", 
-		callback: function(){
-			world_update(0); // Updating the world to 0 clears it
-		}, 
-		args: null
-	});
-	create_popup_menu(menu_items, $('#board'),position);
 }
 
 /*
@@ -1383,7 +1270,7 @@ function show_board_popup_menu(position){
  */
 function on_board_click(event){
 	if (event.target.nodeName == "HTML"){
-		show_board_popup_menu(util_page_to_client_coord({
+		show_board_popup_menu([],util_page_to_client_coord({
 			left: event.pageX-10,
 			top: event.pageY-10
 		}));
@@ -1445,8 +1332,14 @@ function open_add_edit_piece_dialog(piece){
 			'<input style="width: 75%;" type="text" name="face_width" ' +
 			((piece && piece.face_width)?('value="'+piece.face_width+'"'):"") +
 			'class="text ui-widget-content ui-corner-all" />'));
+	// Add shield checkbox
+	dialog.find("#other_fields").append(
+		$('<br/><label> </label><input type="checkbox" name="shield" value="1" ' + 
+			((piece && piece.shield)?('checked="true"'):"") +
+			"/><span> Use piece as a player's hand shield</span>"));
 	// Add to the board
 	$("#board").append(dialog);
+	// Open the dialog
 	dialog.dialog({
 		dialogClass: 'bga_dialog bga_small_text_dialog',
 		autoOpen: false,
@@ -1463,6 +1356,7 @@ function open_add_edit_piece_dialog(piece){
 			"OK": function() {
 				// Get dialog values
 				var face_width = dialog.find('input[name="face_width"]').val();
+				var shield = dialog.find('input[name="shield"]').get(0).checked;
 				// Accumulate the face URLs
 				var faces = [];
 				dialog.find('input[name="face_url[]"]').each(function(idx,item){
@@ -1478,8 +1372,29 @@ function open_add_edit_piece_dialog(piece){
 							"faces": faces,
 							"face_width": face_width
 						});
+						// Update shield state
+						if (shield != piece.shield){
+							if (shield){
+								// Turn into a shield and bring to front
+								world_update_piece(piece.world_piece_index,{
+									"shield": 1,
+									"z": 980
+								});
+								set_piece_z_index(piece, 980);
+								piece.shield = 1;
+							} else {
+								// Turn off the shield and push to back
+								world_update_piece(piece.world_piece_index,{
+									"shield": 0,
+									"z": 0
+								});
+								set_piece_z_index(piece, 0);
+								piece.shield = 0;
+							}
+						}
 					} else {
-						board_add_piece(faces);
+						// TODO: IMMEIDATE add face_width and shield
+						board_add_piece(faces, face_width, shield);
 					}
 					$(this).dialog( "close" );
 					$(this).remove();
