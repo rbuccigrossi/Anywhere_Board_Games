@@ -61,7 +61,15 @@ if ($action === "read") {
 	echo json_encode($update);
 	exit();
 } else if ($action === "upload") {
-	$new_data = read_world($_FILES['file']['tmp_name']);
+	$new_data = "";
+	if ($_FILES['file']['tmp_name']){
+		$new_data = read_world($_FILES['file']['tmp_name']);
+	} else {
+		$file_data = @file_get_contents($_REQUEST["url"]);
+		if ($file_data){
+			$new_data = json_decode($file_data, true);
+		}
+	}
 	if ($new_data){
 		if (update_world($filename,$new_data)){
 			echo "\n\nWorld uploaded";		
