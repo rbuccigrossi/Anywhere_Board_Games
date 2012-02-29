@@ -59,7 +59,7 @@ SectionEnd
 Section "Start Menu Shortcuts"
 
   CreateDirectory "$SMPROGRAMS\ABGames"
-  CreateShortCut "$SMPROGRAMS\ABGames\Start ABG Server (Mongoose).lnk" "$INSTDIR\mongoose-3.0.exe" "" "$INSTDIR\www\images\ABGLogo48x48.ico" 0
+  CreateShortCut "$SMPROGRAMS\ABGames\Start ABG Server (Apache).lnk" "$INSTDIR\Apache2.2\bin\httpd.exe" "" "$INSTDIR\www\images\ABGLogo48x48.ico" 0
   nsisStartMenu::RegenerateFolder "ABGames"
   CreateShortCut "$SMPROGRAMS\ABGames\Connect to Local ABG.lnk" "http://localhost:8080/" "" "$INSTDIR\www\images\ABGLogo48x48.ico" 0
   nsisStartMenu::RegenerateFolder "ABGames"
