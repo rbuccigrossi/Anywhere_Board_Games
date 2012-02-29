@@ -93,25 +93,27 @@
 		<div id="upload_board_dialog" title="Open a Board">
 			<form enctype="multipart/form-data" id="upload_board_form" method="POST">
 				<fieldset>
-					<P>
-					<span>Please upload an ABG file, enter a URL to an ABG file, or select one of the standard boards:</span>
-					</P>
+					<span><B>Please select a pre-created board or set of pieces:</B></span>
+					<BR/>
+					<label>Select one:</label>
+					<select style="width: 75%;" name="url_select" id="upload_board_select" class="ui-widget-content ui-corner-all">
+						<option value="">-</option>
+						<option value="../games/checkers/checkers.abg">Games: Checkers</option>
+						<option value="../games/deck/deck.abg">Pieces: Blue deck of cards</option>
+						<option value="../games/game_pieces/dice.abg">Pieces: 6-sided Dice</option>
+						<option value="../games/game_pieces/quarter.abg">Pieces: A flipping coin</option>
+						<option value="../games/intro.abg">Introduction</option>
+					</select>
+					<P></P>
+					<span><B>Or upload your own ABG file or URL:</B></span>
+					<BR/>
 					<input type="hidden" name="action" value="upload" />
 					<label for="upload_board_file">Board File:</label>
 					<input type="file" name="file" id="upload_board_file" class="text ui-widget-content ui-corner-all" />
 					<BR/>
 					<label for="upload_board_url">URL:</label>
 					<input type="text" style="width: 75%;" name="url" id="upload_board_url" class="text ui-widget-content ui-corner-all" />
-					<BR/>
-					<label for="upload_board_select">Board:</label>
-					<select style="width: 75%;" name="url_select" id="upload_board_select" class="ui-widget-content ui-corner-all">
-						<option value="">-</option>
-						<option value="../games/deck/deck.abg">A blue deck of cards</option>
-						<option value="../games/checkers/checkers.abg">Checkers</option>
-						<option value="../games/intro.abg">Introduction</option>
-					</select>
-					<BR/>
-					<label></label>
+					<P></P>
 					<span>
 						<input type="checkbox" name="clear_world" checked="checked" value="1">
 						Clear the current board
