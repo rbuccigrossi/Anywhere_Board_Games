@@ -1,7 +1,20 @@
 Anywhere Board Games Release Notes
 ----------------------------------
 
-2/19/2012 (abg_v0.120213.exe and abg_v0.120213.tar.gz)
+2/29/2012 (abg_v0.120229.exe and abg_v0.120229.tar.gz)
+ - Added a Words (with friends or whomever) game!
+ - "Open Board" now provides a select list of built-in boards
+   from which to choose
+ - You can now open a board from a URL (to promote sharing of boards)
+ - Added board pieces including dice, a flipping coin, and player
+   shields
+ - Windows installer now uses Apache (which provides much faster
+   update performance with multiple clients)
+
+2/19/2012 (abg_v0.120219.exe and abg_v0.120219.tar.gz)
+ - New Windows installer with Mongoose and PHP!
+ - Fixed an issue with file locking on Windows
+ - Reduced the server timeout for Mongoose to avoid client errors
  - New Windows installer with Mongoose and PHP!
  - Fixed an issue with file locking on Windows
  - Reduced the server timeout for Mongoose to avoid client errors
