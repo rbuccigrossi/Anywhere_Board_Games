@@ -1393,7 +1393,6 @@ function open_add_edit_piece_dialog(piece){
 							}
 						}
 					} else {
-						// TODO: IMMEIDATE add face_width and shield
 						board_add_piece(faces, face_width, shield);
 					}
 					$(this).dialog( "close" );
