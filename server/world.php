@@ -71,9 +71,13 @@ if ($action === "read") {
 		}
 	}
 	if ($new_data){
-		if (update_world($filename,$new_data)){
-			echo "\n\nWorld uploaded";		
-		} else {
+		if (!$_REQUEST["clear_world"]){
+			// If we aren't going to clear the world, then merge the contents of the new data to the world
+			$new_data["__new"] = 1;
+			$new_data = append_to_world($filename,$new_data);
+		}
+		// Now that we've loaded the data, now blast away the current world
+		if (!update_world($filename,$new_data)){
 			echo "\n\nError updating world.  Please make sure $filename is writable by the web server.";
 		}
 	} else {
@@ -83,6 +87,28 @@ if ($action === "read") {
 } else {
 	exit_json_error("Unknown action");
 	exit();
+}
+
+// Here we don't merge elements, but append new arrays to old ones
+function &append_to_world($filename,$update){
+	// Extract an object form of the current world
+	$world = &read_world($filename);
+	$world = &get_world_update($world, 0);
+	remove_null_entries($world);
+	if (!$world){
+		$world = array();
+	}
+	// Go through the updates and merge any arrays
+	foreach ($update as $key => $child){
+		if (is_array($child)){
+			if (array_key_exists($key,$world) && is_array($world[$key])){
+				$world[$key] = array_merge($world[$key],$child);
+			} else {
+				$world[$key] = $child;
+			}
+		}
+	}
+	return ($world);
 }
 
 
