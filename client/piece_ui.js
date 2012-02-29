@@ -1198,8 +1198,8 @@ function show_board_popup_menu(pieces, position){
 		});
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(event){
-		// For mouse, we can allow click-drag anywhere on the board to move the pieces
-		pieces_start_move(unlocked_pieces, event, 0);
+		pieces_unhighlight(unlocked_pieces);
+		//		pieces_start_move(unlocked_pieces, event, 0);
 	});
 }
 
