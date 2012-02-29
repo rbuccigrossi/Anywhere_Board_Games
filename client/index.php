@@ -47,16 +47,17 @@
 							var file = $("#upload_board_file").val();
 							var url = $("#upload_board_url").val();
 							var url_select = $("#upload_board_select").val();
-							if(url_select){
-								url = url_select;
+							// If a URL is selected copy it over
+							if (url_select){
+								$("#upload_board_url").val(url_select);
 							}
-							if (!file && !url){
+							if (!file && !url && !url_select){
 								alert("Please enter or select an ABG file");
 							} else {
 								$("#upload_board_form").get(0).action = world_server_url;
 								// Reset the last timestamp of the world
 								world_listener_start.world_last_ts = 0;
-								IFrameSubmit.submit($("#upload_board_form").get(0),{onComplete: function(a){alert(a);}});
+								IFrameSubmit.submit($("#upload_board_form").get(0),{onComplete: function(a){if(a){alert(a);}}});
 								$("#upload_board_form").get(0).submit();
 								$( this ).dialog( "close" );
 							}
@@ -103,12 +104,18 @@
 					<input type="text" style="width: 75%;" name="url" id="upload_board_url" class="text ui-widget-content ui-corner-all" />
 					<BR/>
 					<label for="upload_board_select">Board:</label>
-					<select style="width: 75%;" name="url" id="upload_board_select" class="ui-widget-content ui-corner-all">
+					<select style="width: 75%;" name="url_select" id="upload_board_select" class="ui-widget-content ui-corner-all">
 						<option value="">-</option>
 						<option value="../games/deck/deck.abg">A blue deck of cards</option>
 						<option value="../games/checkers/checkers.abg">Checkers</option>
 						<option value="../games/intro.abg">Introduction</option>
 					</select>
+					<BR/>
+					<label></label>
+					<span>
+						<input type="checkbox" name="clear_world" checked="checked" value="1">
+						Clear the current board
+					</span>
 				</fieldset>
 			</form>
 		</div>
