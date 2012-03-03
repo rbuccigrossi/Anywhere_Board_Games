@@ -224,8 +224,10 @@ function world_listener_start(){
 		world_listener();
 	}
 	// If the Ajax failed, let's dislplay an error and exit
-	var world_update_failure = function(data){
-//		alert("Error updating the World.  Please check your connection and press reload.");
+    var world_update_failure = function(data, textStatus, errorThrown){
+// Don't alert the user since this seems to occur if the user leaves the page
+//		alert("There was an error getting an update.  Please check your connection and press 'OK'.");
+		setTimeout(world_listener,100);
 	}
 	// Make the ajax call for new data with our latest transaction stamp
 	var world_listener = function() {
