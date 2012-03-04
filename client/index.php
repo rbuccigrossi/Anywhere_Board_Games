@@ -100,6 +100,8 @@
 						<option value="">-</option>
 						<option value="../games/checkers/checkers.abg">Games: Checkers</option>
 						<option value="../games/chess/chess.abg">Games: Chess</option>
+						<option value="../games/go/go.abg">Games: Go</option>
+						<option value="../games/reversi/reversi.abg">Games: Reversi</option>
 						<option value="../games/words_con_amigos/words.abg">Games: Words</option>
 						<option value="../games/deck/deck.abg">Pieces: Blue deck of cards</option>
 						<option value="../games/game_pieces/dice.abg">Pieces: 6-sided Dice</option>
