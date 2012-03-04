@@ -99,6 +99,7 @@
 					<select style="width: 75%;" name="url_select" id="upload_board_select" class="ui-widget-content ui-corner-all">
 						<option value="">-</option>
 						<option value="../games/checkers/checkers.abg">Games: Checkers</option>
+						<option value="../games/chess/chess.abg">Games: Chess</option>
 						<option value="../games/words_con_amigos/words.abg">Games: Words</option>
 						<option value="../games/deck/deck.abg">Pieces: Blue deck of cards</option>
 						<option value="../games/game_pieces/dice.abg">Pieces: 6-sided Dice</option>
