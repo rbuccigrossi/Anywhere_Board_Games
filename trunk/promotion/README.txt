@@ -1,6 +1,10 @@
 Anywhere Board Games Release Notes
 ----------------------------------
 
+3/05/2012 (abg_v0.120305.exe and abg_v0.120305.tar.gz)
+ - Added Go, Chess, and Reversi (Othello) games (more examples of 
+   board and card games you can create yourself)
+
 2/29/2012 (abg_v0.120229.exe and abg_v0.120229.tar.gz)
  - Added a Words (with friends or whomever) game!
  - "Open Board" now provides a select list of built-in boards
