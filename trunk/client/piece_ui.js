@@ -54,7 +54,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	var jq_piece = $('<span class="piece" id="piece_' + piece_idx + 
 		'" style="position: absolute; left: ' + piece_data.x + 'px; top: ' + piece_data.y + 'px;">' +
 		'<img class="piece_face" src="' + piece_data.faces[piece_data.face_showing] + '">' +
-		'</span>');
+		'<div class="custom_html"></div></span>');
 	// Add to the board
 	$("#board").append(jq_piece);
 	// Get the object for the piece itself
@@ -73,7 +73,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.face_width = "";
 	if ("face_width" in piece_data){
 		piece.face_width = piece_data.face_width;
-		$(piece).find('img').attr('width',piece.face_width);
+		$(piece).find('.piece_face').attr('width',piece.face_width);
 	}
 	// Initialize the z index
 	set_piece_z_index(piece, piece_data.z);
@@ -89,6 +89,12 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Add mouse touch event (for mobile devices)
 	if (piece.addEventListener){
 		piece.addEventListener("touchstart",on_piece_touch_start,false);
+	}
+	// Set up custom HTML
+	piece.custom_html = "";
+	if ("custom_html" in piece_data){
+		piece.custom_html = unescape(piece_data.custom_html);
+		$(piece).find('.custom_html').html(piece.custom_html);
 	}
 	// Set up change handler for piece
 	world_on_piece_change_handlers[piece_idx] = function(piece_data){
@@ -130,7 +136,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 			// Update he image width
 			if ("face_width" in piece_data){
 				piece.face_width = piece_data.face_width;
-				$(piece).find('img').attr('width',piece.face_width);
+				$(piece).find('.piece_face').attr('width',piece.face_width);
 			}
 			// Set the face that's showing
 			if ("face_showing" in piece_data){
@@ -139,6 +145,11 @@ function on_new_piece_handler(piece_idx, piece_data){
 			// Set the lock status
 			if ("lock" in piece_data) {
 				piece.lock = piece_data.lock;
+			}
+			// Update the custom HTML
+			if ("custom_html" in piece_data){
+				piece.custom_html = unescape(piece_data.custom_html);
+				$(piece).find('.custom_html').html(piece.custom_html);
 			}
 		}
 	}
@@ -430,6 +441,8 @@ function set_piece_location(piece, position){
 function on_piece_touch_start(event){
 	// Bug fix for chrome scroll bar
 	if (util_is_in_chrome_scrollbar()) return (true);
+	// For custom HTML, make sure the target does not have its own events
+	if ($(event.target).hasClass('own_events')) return (true);
 	// Is this a touch event?
 	var is_touch_event = util_is_touch_event(event);
 	// Ignore multi-touch or no-touch
@@ -518,7 +531,8 @@ function piece_clone(piece){
 		"lock": piece.lock,
 		"shield": piece.shield,
 		"orientation": piece.orientation,
-		"face_showing": piece.face_showing
+		"face_showing": piece.face_showing,
+		"custom_html": escape(piece.custom_html)
 	});
 }
 
@@ -531,7 +545,7 @@ function piece_clone(piece){
  */
 function set_piece_face_showing(piece, face_showing){
 	piece.face_showing = face_showing;
-	$(piece).find('img').attr('src',piece.faces[piece.face_showing]);
+	$(piece).find('.piece_face').attr('src',piece.faces[piece.face_showing]);
 }
 
 /*
@@ -620,7 +634,7 @@ function get_pieces_center(pieces){
 function piece_see_detail(piece){
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
-	var img_url = $(piece).find('img').attr('src');
+	var img_url = $(piece).find('.piece_face').attr('src');
 	$(overlay).css("opacity",0.9);
 	$(overlay).css('background','#000 url('+escape(img_url)+') center center fixed no-repeat');
 	$(overlay).css('-moz-background-size','contain');
@@ -1337,6 +1351,12 @@ function open_add_edit_piece_dialog(piece){
 		$('<br/><label> </label><input type="checkbox" name="shield" value="1" ' + 
 			((piece && piece.shield)?('checked="true"'):"") +
 			"/><span> Use piece as a player's hand shield</span>"));
+	// Add shield checkbox
+	dialog.find("#other_fields").append(
+		$('<br/><span><label style="vertical-align: top; margin-top: 10px;">Custom HTML:</label> ' +
+			'<textarea rows="3" style="width: 75%;" name="custom_html">' + 
+			((piece)?(piece.custom_html):"") +
+			"</textarea></span>"));
 	// Add to the board
 	$("#board").append(dialog);
 	// Open the dialog
@@ -1357,6 +1377,7 @@ function open_add_edit_piece_dialog(piece){
 				// Get dialog values
 				var face_width = dialog.find('input[name="face_width"]').val();
 				var shield = dialog.find('input[name="shield"]').get(0).checked;
+				var custom_html = dialog.find('textarea[name="custom_html"]').val();
 				// Accumulate the face URLs
 				var faces = [];
 				dialog.find('input[name="face_url[]"]').each(function(idx,item){
@@ -1370,7 +1391,8 @@ function open_add_edit_piece_dialog(piece){
 					if (piece){
 						world_update_piece(piece.world_piece_index,{
 							"faces": faces,
-							"face_width": face_width
+							"face_width": face_width,
+							"custom_html": escape(custom_html)
 						});
 						// Update shield state
 						if (shield != piece.shield){
