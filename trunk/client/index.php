@@ -98,6 +98,7 @@
 					<label>Select one:</label>
 					<select style="width: 75%;" name="url_select" id="upload_board_select" class="ui-widget-content ui-corner-all">
 						<option value="">-</option>
+						<option value="../games/agricola_express/agricola_express.abg">Games: Agricola Express</option>
 						<option value="../games/checkers/checkers.abg">Games: Checkers</option>
 						<option value="../games/chess/chess.abg">Games: Chess</option>
 						<option value="../games/go/go.abg">Games: Go</option>
