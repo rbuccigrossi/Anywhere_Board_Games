@@ -1,6 +1,11 @@
 Anywhere Board Games Release Notes
 ----------------------------------
 
+3/09/2012 (abg_v0.120309.exe and abg_v0.120309.tar.gz)
+ - Added HTML form elements to Agricola Express scoreboard
+   so players can score their card completely in the
+   browser.
+
 3/07/2012 (abg_v0.120307.exe and abg_v0.120307.tar.gz)
  - Added the game "Agricola Express"
  - Added 3-D rendered dice with POV-Ray source code
