@@ -83,7 +83,7 @@ function world_update(update){
 						action: "update", 
 						update: JSON.stringify(update)
 					}, 
-					timeout: 5000,
+					timeout: 1000,
 					success: call_next_update, 
 					error: function (){
 						// On error, merge our update back into any pending update and retry
@@ -241,7 +241,7 @@ function world_listener_start(){
     var world_update_failure = function(data, textStatus, errorThrown){
 // Don't alert the user since this seems to occur if the user leaves the page
 //		alert("There was an error getting an update.  Please check your connection and press 'OK'.");
-		setTimeout(world_listener,100);
+		setTimeout(world_listener,1000);
 	}
 	// Make the ajax call for new data with our latest transaction stamp
 	var world_listener = function() {
