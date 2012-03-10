@@ -83,6 +83,7 @@ function world_update(update){
 						action: "update", 
 						update: JSON.stringify(update)
 					}, 
+					timeout: 5000,
 					success: call_next_update, 
 					error: function (){
 						// On error, merge our update back into any pending update and retry
@@ -251,6 +252,7 @@ function world_listener_start(){
 				action: "read", 
 				last_modify: JSON.stringify(world_listener_start.world_last_ts)
 				}, 
+			timeout: 5000,
 			success: world_update_handler, 
 			error: world_update_failure, 
 			dataType: "text"
