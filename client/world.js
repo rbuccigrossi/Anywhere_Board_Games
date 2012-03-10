@@ -84,7 +84,20 @@ function world_update(update){
 						update: JSON.stringify(update)
 					}, 
 					success: call_next_update, 
-					error: call_next_update, 
+					error: function (){
+						// On error, merge our update back into any pending update and retry
+						if ("pending_update" in world_update){
+							// Merge the update into the existing pending update
+							var temp_update = world_update.pending_update;
+							world_update.pending_update = update;
+							update = temp_update;
+							$.extend(true,world_update.pending_update, update);
+						} else {
+							// We don't have a pending update, so simply set it
+							world_update.pending_update = update;
+						}
+						setTimeout(call_next_update,100);
+					},
 					dataType: "text"
 				});
 			} else {
