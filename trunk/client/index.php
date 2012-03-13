@@ -85,6 +85,7 @@
 		<style>
 			.bga_small_text_dialog { font-size: 67.5%; }
 			.bga_dialog fieldset { padding:0; border:0; }
+			#board img, #board div, #board span { -webkit-tap-highlight-color:rgba(0,0,0,0);
 		</style>
 	</head>
 	<body id="board" style="background-color: #001000;">
