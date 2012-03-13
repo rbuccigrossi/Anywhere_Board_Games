@@ -1,6 +1,9 @@
 Anywhere Board Games Release Notes
 ----------------------------------
 
+NEXT RELEASE
+ - Fixed issue with piece highlight on standard Android Browser
+
 3/13/2012 (abg_v0.120313.exe and abg_v0.120313.tar.gz)
  - Work to create a consistent feel and better stability
    on touch devices
