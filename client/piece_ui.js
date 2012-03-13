@@ -247,7 +247,9 @@ function pieces_roll(pieces, count){
 	// Flush accumulated piece updates
 	world_update_piece_accumulate_flush();
 	if (count > 0){
-		setTimeout(function(){pieces_roll(pieces,count-1)},200)
+		setTimeout(function(){
+			pieces_roll(pieces,count-1)
+			},200)
 	}
 }
 
@@ -439,6 +441,8 @@ function set_piece_location(piece, position){
  * @param event The mouse down or touch start event
  */
 function on_piece_touch_start(event){
+	// TODO IMMEDIATE - Get multi-select working on locked pieces again
+	// TODO IMMEDIATE - Empty multi-select on background should pop-up menu (that way we can get rid of click event completely!)
 	// Bug fix for chrome scroll bar
 	if (util_is_in_chrome_scrollbar()) return (true);
 	// For custom HTML, make sure the target does not have its own events
@@ -465,53 +469,8 @@ function on_piece_touch_start(event){
 		event.preventDefault(); 
 		return(false);
 	}
-	// At this point, we know we're dealing with a locked piece.  
-	// If the piece is locked and we are a mouse event, start a multi-select drag event
-	if (!util_is_touch_event(event)){
-		board_start_multi_select(event, click_function);
-		event.preventDefault();
-		return(false);
-	}
-	// At this point, we know we are dealing with a locked piece and we are a touch event.
-	var touch_moved = 0;
-	// For touch move events, note if we have moved
-	var touch_move_callback = function (event) {
-		touch_moved = 1;
-		return(true); // Let the event propogate
-	};
-	// For touch stop events - check to see if we have moved and display the piece menu if not
-	var touch_stop_callback = function (event) {
-		// We are done, so unregister listeners
-		// TODO MEDIUM - Switch to jQuery bind for touch events
-		document.removeEventListener("touchmove", touch_move_callback, false);
-		document.removeEventListener("touchend", touch_stop_callback, false);
-		document.removeEventListener("touchcancel", touch_stop_callback, false);
-		if (!touch_moved){
-			util_ignore_click_from_touch();
-			click_function();
-			event.preventDefault(); 
-			return(false);
-		} else {
-			return(true); // Let the event propogate
-		}
-	};
-	// Notice that we let touchmove events propogate so the user can pan
-	document.addEventListener("touchmove",touch_move_callback,false);
-	document.addEventListener("touchend",touch_stop_callback,false);
-	document.addEventListener("touchcancel",touch_stop_callback,false);
-	return(true); // Let the touchstart event propogate
-/*
-	// At this point, we know we're dealing with a locked piece.  
-	// If the piece is locked and we are a mouse event, start a multi-select drag event
-	if (!is_touch_event){
-		board_start_multi_select(event, click_function);
-		event.preventDefault(); 
-		return(false);
-	} else {
-		// We are a touch event on a locked piece, so let it through
-		return(true);
-	}
-*/
+	// At this point, we know we're dealing with a locked piece. - start a multi-select event  
+	board_start_multi_select(event, click_function, 0);
 }
 
 /*
@@ -717,7 +676,7 @@ function pieces_start_rotate(pieces, event){
 				set_piece_location(piece,{
 					left: new_center_left - $(piece).width()/2,
 					top: new_center_top - $(piece).height()/2
-					});
+				});
 			});
 		}
 		// We do not want regular event processing
@@ -812,7 +771,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 	var stop_drag_function = function (event) {
 		// Remove Highlight
 		pieces_unhighlight(pieces);
-		if (use_overlay){
+		if (overlay){
 			// Click on the overlay to destroy it (and remove listeners)
 			$(overlay).trigger('click');
 		}
@@ -824,6 +783,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		}
 		$(document).unbind("mousemove",drag_function);
 		$(document).unbind("mouseup",stop_drag_function);
+		// Call our callback
 		if ((!mouse_moved) && (no_move_callback)){
 			no_move_callback();
 		}
@@ -832,7 +792,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		return(false);
 	};
 	if (document.addEventListener){
-		if (use_overlay){
+		if (overlay){
 			overlay.addEventListener("touchstart",start_drag_function,false);
 		}
 		document.addEventListener("touchmove",drag_function,false);
@@ -850,8 +810,9 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
  * 
  * @param event The initiating event
  * @param area_select_callback Callback (rect,event) when area is highlighted 
+ * @param no_move_callback A callback if the piece was not moved
  */
-function board_start_area_highlight(event, area_select_callback){
+function board_start_area_highlight(event, area_select_callback, use_overlay){
 	var start_click = util_get_event_coordinates(event);
 	var highlight_offset = {
 		left: start_click.x, 
@@ -861,8 +822,11 @@ function board_start_area_highlight(event, area_select_callback){
 		width: 0, 
 		height: 0
 	};
-	// Add an overlay we'll use for down, move, and up events
-	var overlay = util_create_ui_overlay();
+	var overlay = 0;
+	if (use_overlay){
+		// Add an overlay we'll use for down, move, and up events
+		overlay = util_create_ui_overlay();
+	}
 	// Add a highlight div
 	var jq_highlight = $('<div class="abg_highlight"></div>');
 	$('#board').append(jq_highlight);
@@ -912,8 +876,18 @@ function board_start_area_highlight(event, area_select_callback){
 	}
 	var stop_drag_function = function (event) {
 		jq_highlight.remove();
-		// Click on the overlay to destroy it (and remove listeners)
-		$(overlay).trigger('click');
+		if (overlay){
+			// Click on the overlay to destroy it (and remove listeners)
+			$(overlay).trigger('click');
+		}
+		// Remove the document event listeners
+		if (document.removeEventListener){
+			document.removeEventListener("touchmove",drag_function,false);
+			document.removeEventListener("touchend",stop_drag_function,false);
+			document.removeEventListener("touchcancel",stop_drag_function,false);
+		}
+		$(document).unbind("mousemove",drag_function);
+		$(document).unbind("mouseup",stop_drag_function);
 		// Call our callback
 		if (area_select_callback){
 			area_select_callback({
@@ -927,15 +901,16 @@ function board_start_area_highlight(event, area_select_callback){
 		event.preventDefault(); 
 		return(false);
 	};
-	if (overlay.addEventListener){
-		overlay.addEventListener("touchstart",start_drag_function,false);
-		overlay.addEventListener("touchmove",drag_function,false);
-		overlay.addEventListener("touchend",stop_drag_function,false);
-		overlay.addEventListener("touchcancel",stop_drag_function,false);
+	if (document.addEventListener){
+		if (overlay){
+			overlay.addEventListener("touchstart",start_drag_function,false);
+		}
+		document.addEventListener("touchmove",drag_function,false);
+		document.addEventListener("touchend",stop_drag_function,false);
+		document.addEventListener("touchcancel",stop_drag_function,false);
 	}
-	$(overlay).bind("mousedown",util_ignore_event);
-	$(overlay).bind("mousemove",drag_function);
-	$(overlay).bind("mouseup",stop_drag_function);
+	$(document).bind("mousemove",drag_function);
+	$(document).bind("mouseup",stop_drag_function);
 }
 
 /*
@@ -991,7 +966,7 @@ function show_board_popup_menu(pieces, position){
 		menu_items.push({
 			label: "Multi-select", 
 			callback: function(event){
-				board_start_multi_select(event);
+				board_start_multi_select(event, 0, 1);
 				pieces_unhighlight(unlocked_pieces);
 			}, 
 			args: null
@@ -1213,7 +1188,7 @@ function show_board_popup_menu(pieces, position){
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(event){
 		pieces_unhighlight(unlocked_pieces);
-		//		pieces_start_move(unlocked_pieces, event, 0);
+	//		pieces_start_move(unlocked_pieces, event, 0);
 	});
 }
 
@@ -1225,30 +1200,29 @@ function show_board_popup_menu(pieces, position){
  * 
  * @param event The event that initiated the multi-select
  * @param click_callback A callback in case the user did not drag
+ * @param use_overlay Create an overlay to capture new mouse event
  */
-function board_start_multi_select(event, click_callback){
+function board_start_multi_select(event, click_callback, use_overlay){
 	board_start_area_highlight(event, function(rect, e){
-		// If rect is empty, do a click event
-		if (rect.width == 0 || rect.height == 0){
-			if (click_callback){
-				click_callback(event);
+		var highlighted_pieces = [];
+		$.each(g_pieces, function (index,value){
+			if (piece_in_rect(value,rect)) {
+				highlighted_pieces.push(value);
 			}
+		});
+		if (highlighted_pieces.length > 0){
+			var coord = util_get_event_coordinates(e);
+			show_board_popup_menu(highlighted_pieces, util_page_to_client_coord({
+				left: coord.x-10,
+				top: coord.y-10
+			}));
 		} else {
-			var highlighted_pieces = [];
-			$.each(g_pieces, function (index,value){
-				if (piece_in_rect(value,rect)) {
-					highlighted_pieces.push(value);
-				}
-			});
-			if (highlighted_pieces.length > 0){
-				var coord = util_get_event_coordinates(e);
-				show_board_popup_menu(highlighted_pieces, util_page_to_client_coord({
-					left: coord.x-10,
-					top: coord.y-10
-				}));
+			// If rect is empty, do a click event
+			if (click_callback){
+				click_callback(e);
 			}
 		}
-	});
+	}, use_overlay);
 }
 
 /*
@@ -1283,14 +1257,17 @@ function board_add_piece(faces, face_width, shield){
  * @param event Click event
  */
 function on_board_click(event){
+	var click = util_get_event_coordinates(event);
+	/*
 	if (event.target.nodeName == "HTML"){
 		show_board_popup_menu([],util_page_to_client_coord({
-			left: event.pageX-10,
-			top: event.pageY-10
+			left: click.x-10,
+			top: click.y-10
 		}));
 		event.preventDefault(); 
 		return false;
 	}
+	*/
 	return true;
 }
 
@@ -1305,16 +1282,29 @@ function on_board_mouse_down(event){
 	if (event.target.nodeName == "HTML"){
 		if (util_is_in_chrome_scrollbar()) return (true); // Bug fix for chrome scroll bar
 		// For touch devices, this will always be empty and call on_board_click
-		board_start_multi_select(event, on_board_click);
+		board_start_multi_select(event, 
+			function(event){
+				var click = util_get_event_coordinates(event);
+				show_board_popup_menu([],util_page_to_client_coord({
+					left: click.x-10,
+					top: click.y-10
+				}));
+				event.preventDefault(); 
+				return false;
+			}, 0);
 		event.preventDefault(); 
 		return (false);
 	}
 	return (true);
 }
 
-// Register popup menu on board click
+// Register multi-select on touch down (empty multi-select brings up pop-up menu)
 $(document).ready(function(){
 	$(document).bind("mousedown", on_board_mouse_down);
+	// Add mouse touch event (for mobile devices)
+	if (document.addEventListener){
+		document.addEventListener("touchstart",on_board_mouse_down);
+	}
 });
 
 /*
