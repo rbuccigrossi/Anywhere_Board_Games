@@ -968,17 +968,6 @@ function show_board_popup_menu(pieces, position){
 		});
 	}
 	// Now add the menu items
-	// ----- Multi-Select (only if no items are actually listed)
-	if (unlocked_pieces.length == 0) {
-		menu_items.push({
-			label: "Multi-select", 
-			callback: function(event){
-				board_start_multi_select(event, 0, 1);
-				pieces_unhighlight(unlocked_pieces);
-			}, 
-			args: null
-		});
-	}
 	// ----- Piece manipulation for unlocked pieces
 	if (unlocked_pieces.length > 0){
 		if (max_sides > 2){
