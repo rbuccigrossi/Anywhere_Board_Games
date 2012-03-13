@@ -471,6 +471,8 @@ function on_piece_touch_start(event){
 	}
 	// At this point, we know we're dealing with a locked piece. - start a multi-select event  
 	board_start_multi_select(event, click_function, 0);
+	event.preventDefault(); 
+	return(false);
 }
 
 /*
@@ -810,7 +812,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
  * 
  * @param event The initiating event
  * @param area_select_callback Callback (rect,event) when area is highlighted 
- * @param no_move_callback A callback if the piece was not moved
+ * @param use_overlay Create an overlay to capture new mouse event
  */
 function board_start_area_highlight(event, area_select_callback, use_overlay){
 	var start_click = util_get_event_coordinates(event);
