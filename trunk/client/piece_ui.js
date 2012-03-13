@@ -293,26 +293,33 @@ function pieces_flip_to_first_side(pieces){
 }
 
 /*
- * pieces_stack - Stacks the pieces at a point and sets the orientation to 0
+ * pieces_stack - Stacks the pieces at the location of the lowest piece
  * 
  * @param pieces Array of pieces to roll
- * @param event The event with the coordinates at which to stack
  */
-function pieces_stack(pieces, event){
-	var coord = util_get_event_coordinates(event);
+function pieces_stack(pieces){
+	var lowest_piece = null;
 	$.each(pieces,function(i,piece){
-		set_piece_orientation(piece,0);
-		$(piece).offset({
-			left: coord.x, 
-			top: coord.y
-		});
-		world_update_piece_accumulate(piece.world_piece_index,{
-			"client": g_client_id,
-			"x": coord.x,
-			"y": coord.y,
-			"orientation": 0
-		});
+		if ((!lowest_piece) || (lowest_piece.z > piece.z)){
+			lowest_piece = piece;
+		}
 	});
+	if (lowest_piece){		
+		$.each(pieces,function(i,piece){
+			set_piece_orientation(piece,0);
+			$(piece).offset({
+				left: lowest_piece.offsetLeft, 
+				top: lowest_piece.offsetTop
+			});
+			world_update_piece_accumulate(piece.world_piece_index,{
+				"client": g_client_id,
+				"x": lowest_piece.offsetLeft,
+				"y": lowest_piece.offsetTop,
+				"orientation": 0
+			});
+		});
+	}
+
 	// Flush accumulated piece updates
 	world_update_piece_accumulate_flush();
 }
@@ -441,8 +448,6 @@ function set_piece_location(piece, position){
  * @param event The mouse down or touch start event
  */
 function on_piece_touch_start(event){
-	// TODO IMMEDIATE - Get multi-select working on locked pieces again
-	// TODO IMMEDIATE - Empty multi-select on background should pop-up menu (that way we can get rid of click event completely!)
 	// Bug fix for chrome scroll bar
 	if (util_is_in_chrome_scrollbar()) return (true);
 	// For custom HTML, make sure the target does not have its own events
@@ -1030,8 +1035,8 @@ function show_board_popup_menu(pieces, position){
 			menu_items.push({
 				label: "Stack", 
 				callback: function(event){
-					pieces_stack(unlocked_pieces, event);
-					pieces_start_move(unlocked_pieces, event, 1);
+					pieces_stack(unlocked_pieces);
+					pieces_unhighlight(unlocked_pieces);
 				}, 
 				args: null
 			});
