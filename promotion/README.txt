@@ -1,6 +1,19 @@
 Anywhere Board Games Release Notes
 ----------------------------------
 
+3/13/2012 (abg_v0.120313.exe and abg_v0.120313.tar.gz)
+ - Work to create a consistent feel and better stability
+   on touch devices
+ - Touch-drag events now initiate multi-select (just like
+   mouse events)
+ - Touch-based pan/zoom is now done by bringing up a pop-up
+   menu and then using touch-drag with the pop-up menu open
+ - Pieces that are stacked are now moved to the location of
+   the lowest piece, which makes manipulating decks a bit easier
+ - Conducted testing on Google Chrome beta for Android (works
+   well!)  So we suggest Google Chrome, Safari (iOS), and 
+   Firefox for use with ABG.
+
 3/09/2012 (abg_v0.120309.exe and abg_v0.120309.tar.gz)
  - Added HTML form elements to Agricola Express scoreboard
    so players can score their card completely in the
