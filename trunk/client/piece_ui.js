@@ -1177,7 +1177,9 @@ function show_board_popup_menu(pieces, position){
 		menu_items.push({
 			label: "Clear Board", 
 			callback: function(){
-				world_update(0); // Updating the world to 0 clears it
+				if (confirm("Are you sure you wish to clear the board?")){
+					world_update(0); // Updating the world to 0 clears it
+				}
 			}, 
 			args: null
 		});
