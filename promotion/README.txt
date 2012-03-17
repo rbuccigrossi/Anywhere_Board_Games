@@ -1,8 +1,11 @@
 Anywhere Board Games Release Notes
 ----------------------------------
 
-NEXT RELEASE
- - Fixed issue with piece highlight on standard Android Browser
+3/17/2012 (abg_v0.120317.exe and abg_v0.120317.tar.gz)
+ - Fixed an issue with pieces being highlighted upon being touched
+   with the standard Android Browser
+ - Added confirmation dialog when clearing the board (my daughter
+   accidentally cleared the board during a game...)
 
 3/13/2012 (abg_v0.120313.exe and abg_v0.120313.tar.gz)
  - Work to create a consistent feel and better stability
