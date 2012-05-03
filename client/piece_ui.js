@@ -468,9 +468,17 @@ function on_piece_touch_start(event){
 			top: start_click.y-10
 		}));
 	}
-	// If a piece is not locked, start a move, calling the click function if no movement made
+	// If a piece is not locked, start a flip, rotate, move or popup depending upon
+	// the button pressed
 	if (! piece.lock){
-		pieces_start_move([piece], event, false, click_function);
+		if (event.which && (event.which == 2)){ // Middle mouse button, flip and start move
+			pieces_flip([piece]);
+			pieces_start_move([piece], event, false, null);
+		} else if (event.which && (event.which == 3)){ // Right mouse button, rotate
+			pieces_start_rotate([piece], event);
+		} else { // Left mouse button or touch, move with possible pop-up menu
+			pieces_start_move([piece], event, false, click_function);
+		}
 		event.preventDefault(); 
 		return(false);
 	}
