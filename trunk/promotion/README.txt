@@ -1,5 +1,10 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+5/02/2012 (abg_v0.120502.exe and abg_v0.120502.tar.gz)
+ - Made manipulating pieces easier with a mouse by having the left
+   mouse button move the piece (or start the pop-up menu if no 
+   movement), the middle mouse button flip and move the piece, and
+   the right mouse button rotate the piece.
 
 3/17/2012 (abg_v0.120317.exe and abg_v0.120317.tar.gz)
  - Fixed an issue with pieces being highlighted upon being touched
