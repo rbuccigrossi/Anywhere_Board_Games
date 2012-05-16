@@ -90,6 +90,13 @@ function on_new_piece_handler(piece_idx, piece_data){
 	if (piece.addEventListener){
 		piece.addEventListener("touchstart",on_piece_touch_start,false);
 	}
+	// Set the piece CSS classes
+	piece.css_class = piece_data.css_class ? piece_data.css_class : "";
+	if (piece.css_class){
+		$(piece).addClass(piece.css_class);
+	}
+	// Set the piece callback
+	piece.event_callback = piece_data.event_callback ? piece_data.event_callback : "";
 	// Set up custom HTML
 	piece.custom_html = "";
 	if ("custom_html" in piece_data){
@@ -145,6 +152,18 @@ function on_new_piece_handler(piece_idx, piece_data){
 			// Set the lock status
 			if ("lock" in piece_data) {
 				piece.lock = piece_data.lock;
+			}
+			// Set the piece CSS classes
+			if ("css_class" in piece_data) {
+				piece.css_class = piece_data.css_class;
+				$(piece).attr('class','piece')
+				if (piece.css_class){
+					$(piece).addClass(piece.css_class);
+				}
+			}
+			// Set the piece callback
+			if ("event_callback" in piece_data) {
+				piece.event_callback = piece_data.event_callback;
 			}
 			// Update the custom HTML
 			if ("custom_html" in piece_data){
@@ -222,6 +241,22 @@ function pieces_highlight(pieces){
  */
 function pieces_unhighlight(pieces){
 	$(pieces).css("opacity",1);
+}
+
+/*
+ * pieces_call_event_callback - Calls the event callback for the pieces
+ * 
+ * @param pieces Array of pieces to execute the callback
+ * @param event_name String name of the event
+ */
+function pieces_call_event_callback(pieces, event_name){
+	var callback = 0;
+	$.each(pieces,function(i,piece){
+		if (piece.event_callback && (piece.event_callback in window)) {
+			callback = window[piece.event_callback];
+			callback(piece, event_name);
+		}
+	});
 }
 
 /*
@@ -491,6 +526,7 @@ function on_piece_touch_start(event){
 /*
  * piece_clone - Creates a new piece in the world that is a copy of the given piece
  * TODO: HIGH - Make sure that new features (like z index) are added to this function
+ * TODO: LOW - Get setting of attributes here the same order as in creating and updating pieces
  * 
  * @param piece The piece to clone
  */
@@ -506,6 +542,8 @@ function piece_clone(piece){
 		"shield": piece.shield,
 		"orientation": piece.orientation,
 		"face_showing": piece.face_showing,
+		"css_class": piece.css_class,
+		"event_callback": piece.event_callback,
 		"custom_html": escape(piece.custom_html)
 	});
 }
@@ -704,6 +742,8 @@ function pieces_start_rotate(pieces, event){
 		pieces_unhighlight(pieces);
 		// Click on the overlay to destroy it (and remove listeners)
 		$(overlay).trigger('click');
+		// Call our piece callbacks
+		pieces_call_event_callback(pieces, "rotate");
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
@@ -801,6 +841,8 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		// Call our callback
 		if ((!mouse_moved) && (no_move_callback)){
 			no_move_callback();
+		} else {
+			pieces_call_event_callback(pieces,"move");
 		}
 		// We do not want regular event processing
 		event.preventDefault(); 
@@ -1232,31 +1274,6 @@ function board_start_multi_select(event, click_callback, use_overlay){
 }
 
 /*
- * board_add_piece - A convenience function to add a piece to the world given an array of
- * image urls.
- * 
- * @param faces Array of image URLs
- * @param face_width The width of the face ("" if not defined)
- * @param shield If the piece is a shield (boolean)
- */
-function board_add_piece(faces, face_width, shield){
-	var z = g_pieces.length;
-	if (shield) { // Shields appear in the front
-		z = 980;
-	} else {
-		shield = 0;
-	}
-	world_add_piece({
-		"faces": faces,
-		"face_width": face_width,
-		"shield": shield,
-		"x": 50,
-		"y": 50,
-		"z": z
-	});
-}
-
-/*
  * on_board_click - handler for board click events. If we are the destination of
  * the click, then pop-up the menu.
  *
@@ -1327,12 +1344,14 @@ function open_add_edit_piece_dialog(piece){
 		$.each(piece.faces,function(i,face){
 			var new_url = $('<br/><label>Face URL:</label> ' +
 				'<input style="width: 75%;" type="text" name="face_url[]" ' +
+				'title="The URL of an image to use as the piece\'s face" ' +
 				'class="text ui-widget-content ui-corner-all" value="' + face + '"/>');
 			dialog.find("#faces_fields").append(new_url);
 		});
 	} else {
 		var new_url = $('<br/><label>Face URL:</label> ' +
 			'<input style="width: 75%;" type="text" name="face_url[]" ' +
+			'title="The URL of an image to use as the piece\'s face" ' +
 			'class="text ui-widget-content ui-corner-all" />');
 		dialog.find("#faces_fields").append(new_url);
 	}
@@ -1340,17 +1359,35 @@ function open_add_edit_piece_dialog(piece){
 	dialog.find("#other_fields").append(
 		$('<br/><label>Width:</label> ' +
 			'<input style="width: 75%;" type="text" name="face_width" ' +
+			'title="The piece will be scaled to this width in pixels." ' +
 			((piece && piece.face_width)?('value="'+piece.face_width+'"'):"") +
 			'class="text ui-widget-content ui-corner-all" />'));
 	// Add shield checkbox
 	dialog.find("#other_fields").append(
 		$('<br/><label> </label><input type="checkbox" name="shield" value="1" ' + 
+			'title="If checked, the piece will stay in front of other pieces, hiding them except for the player who claims the shield." ' +
 			((piece && piece.shield)?('checked="true"'):"") +
 			"/><span> Use piece as a player's hand shield</span>"));
-	// Add shield checkbox
+	// Add CSS Class
+	dialog.find("#other_fields").append(
+		$('<br/><label>CSS Class:</label> ' +
+			'<input style="width: 75%;" type="text" name="css_class" ' +
+			'title="The piece is assigned the given CSS classes, which is useful for styling or JavaScript coding." ' +
+			((piece && piece.css_class)?('value="'+piece.css_class+'"'):"") +
+			'class="text ui-widget-content ui-corner-all" />'));
+	// Add Event Callback
+	dialog.find("#other_fields").append(
+		$('<br/><label>Callback:</label> ' +
+			'<input style="width: 75%;" type="text" name="event_callback" ' +
+			'title="When the piece is moved or rotated this event callback is called: callback(piece_object, event_type)" ' +
+			((piece && piece.event_callback)?('value="'+piece.event_callback+'"'):"") +
+			'class="text ui-widget-content ui-corner-all" />'));
+	// Add Custom HTML textarea
 	dialog.find("#other_fields").append(
 		$('<br/><span><label style="vertical-align: top; margin-top: 10px;">Custom HTML:</label> ' +
-			'<textarea rows="3" style="width: 75%;" name="custom_html">' + 
+			'<textarea rows="3" style="width: 75%;" name="custom_html" ' +
+			'title="This custom HTML is placed in the piece (and can be used to add HTML elements and JavaScript)" ' +
+			'>' + 
 			((piece)?(piece.custom_html):"") +
 			"</textarea></span>"));
 	// Add to the board
@@ -1366,6 +1403,7 @@ function open_add_edit_piece_dialog(piece){
 			"Add a face": function() {
 				var new_url = $('<br/><label>Face URL:</label> ' +
 					'<input style="width: 75%;" type="text" name="face_url[]" ' +
+					'title="The URL of an image to use as the piece\'s face" ' +
 					'class="text ui-widget-content ui-corner-all" />');
 				dialog.find("#faces_fields").append(new_url);
 			},
@@ -1373,6 +1411,8 @@ function open_add_edit_piece_dialog(piece){
 				// Get dialog values
 				var face_width = dialog.find('input[name="face_width"]').val();
 				var shield = dialog.find('input[name="shield"]').get(0).checked;
+				var css_class = dialog.find('input[name="css_class"]').val();
+				var event_callback = dialog.find('input[name="event_callback"]').val();
 				var custom_html = dialog.find('textarea[name="custom_html"]').val();
 				// Accumulate the face URLs
 				var faces = [];
@@ -1384,13 +1424,17 @@ function open_add_edit_piece_dialog(piece){
 				if (faces.length == 0){
 					alert("Please enter an image URL");
 				} else {
+					var piece_data = {
+						"faces": faces,
+						"face_width": face_width,
+						"css_class": css_class,
+						"event_callback": event_callback,
+						"custom_html": escape(custom_html)
+					};
 					if (piece){
-						world_update_piece(piece.world_piece_index,{
-							"faces": faces,
-							"face_width": face_width,
-							"custom_html": escape(custom_html)
-						});
+						world_update_piece(piece.world_piece_index, piece_data);
 						// Update shield state
+						// TODO: LOW - Why do we do this here and not in the update function?
 						if (shield != piece.shield){
 							if (shield){
 								// Turn into a shield and bring to front
@@ -1411,7 +1455,16 @@ function open_add_edit_piece_dialog(piece){
 							}
 						}
 					} else {
-						board_add_piece(faces, face_width, shield);
+						// TODO: IMMEDIATE - ADD CALLBACK CALLS
+						piece_data.x = 50;
+						piece_data.y = 50;
+						piece_data.z = g_pieces.length;
+						// If the new piece is a shield, move it up front
+						piece_data.shield = shield ? shield : 0;
+						if (shield){
+							piece_data.z = 980;
+						}
+						world_add_piece(piece_data);
 					}
 					$(this).dialog( "close" );
 					$(this).remove();
@@ -1424,6 +1477,7 @@ function open_add_edit_piece_dialog(piece){
 		}
 	});
 	// Bind enter to OK to avoid submitting the form to the script
+	/*
 	dialog.bind("keydown", function(e){
 		if (e.keyCode == 13){
 			e.preventDefault();
@@ -1432,6 +1486,7 @@ function open_add_edit_piece_dialog(piece){
 		}
 		return true;
 	});
+	*/
 	dialog.dialog('open');
 }
 
