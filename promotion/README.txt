@@ -1,5 +1,10 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+6/02/2012 (abg_v0.120602.exe and abg_v0.120602.tar.gz)
+ - Added the ability to assign custom CSS classes and a JavaScript
+   callback for when a piece is moved or rotated.  This will allow
+   users to script placement and interaction rules for games.
+
 5/02/2012 (abg_v0.120502.exe and abg_v0.120502.tar.gz)
  - Made manipulating pieces easier with a mouse by having the left
    mouse button move the piece (or start the pop-up menu if no 
