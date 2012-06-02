@@ -1455,7 +1455,6 @@ function open_add_edit_piece_dialog(piece){
 							}
 						}
 					} else {
-						// TODO: IMMEDIATE - ADD CALLBACK CALLS
 						piece_data.x = 50;
 						piece_data.y = 50;
 						piece_data.z = g_pieces.length;
