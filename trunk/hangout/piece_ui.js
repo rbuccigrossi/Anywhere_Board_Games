@@ -50,6 +50,9 @@ function on_new_piece_handler(piece_idx, piece_data){
 	if (!("face_showing" in piece_data)){
 		piece_data.face_showing = 0;
 	}
+	// Unparse the face array
+	piece_data.faces = JSON.parse(piece_data.faces_array);
+
 	// Create piece HTML in the proper location
 	var jq_piece = $('<span class="piece" id="piece_' + piece_idx + 
 		'" style="position: absolute; left: ' + piece_data.x + 'px; top: ' + piece_data.y + 'px;">' +
@@ -64,9 +67,9 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Record the piece index into the piece object
 	piece.world_piece_index = piece_idx;
 	// Record the lock state into the piece object
-	piece.lock = piece_data.lock ? piece_data.lock : 0;
+	piece.lock = Number(piece_data.lock) ? piece_data.lock : 0;
 	// Record if the piece is a shield
-	piece.shield = piece_data.shield ? piece_data.shield : 0;
+	piece.shield = Number(piece_data.shield) ? piece_data.shield : 0;
 	// Record the faces
 	piece.faces = piece_data.faces;
 	// Set the piece face's width
@@ -132,15 +135,15 @@ function on_new_piece_handler(piece_idx, piece_data){
 			}
 			// Set the shield status
 			if ("shield" in piece_data){
-				piece.shield = piece_data.shield;
+				piece.shield = Number(piece_data.shield);
 			}
 			// Set z index
 			if ("z" in piece_data){
 				set_piece_z_index(piece, piece_data.z);
 			}
 			// Update the faces
-			if ("faces" in piece_data){
-				piece.faces = piece_data.faces;
+			if ("faces_array" in piece_data){
+				piece.faces = JSON.parse(piece_data.faces_array);
 				set_piece_face_showing(piece,piece.face_showing);
 			}
 			// Update he image width
@@ -154,7 +157,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 			}
 			// Set the lock status
 			if ("lock" in piece_data) {
-				piece.lock = piece_data.lock;
+				piece.lock = Number(piece_data.lock);
 			}
 			// Set the piece CSS classes
 			if ("css_class" in piece_data) {
@@ -536,7 +539,7 @@ function on_piece_touch_start(event){
 function piece_clone(piece){
 	var offset = $(piece).offset();
 	world_add_piece({
-		"faces": piece.faces,
+		"faces_array": JSON.stringify(piece.faces),
 		"face_width": piece.face_width,
 		"x": (offset.left), 
 		"y": (offset.top),
@@ -1428,7 +1431,7 @@ function open_add_edit_piece_dialog(piece){
 					alert("Please enter an image URL");
 				} else {
 					var piece_data = {
-						"faces": faces,
+						"faces_array": JSON.stringify(faces),
 						"face_width": face_width,
 						"css_class": css_class,
 						"event_callback": event_callback,

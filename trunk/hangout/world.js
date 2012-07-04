@@ -127,6 +127,7 @@ function unflatten_recursive_structure(flat_update){
  * @param update The update to implement in the world
  */
 function world_update(update){
+	// TODO: ACCUMULATE CHANGES AND TIME THEM
 	console.log(JSON.stringify(update));
 	console.log(JSON.stringify(flatten_recursive_structure(update)));
 	gapi.hangout.data.submitDelta(flatten_recursive_structure(update));
@@ -261,6 +262,13 @@ function world_listener_start(){
 			k = eventObj.removedKeys[i].key;
 		}
 		var update = unflatten_recursive_structure(flat_update);
+		console.log(JSON.stringify(update));
+		execute_world_update(update);
+	}
+	// Get the initial state
+	var start_world = gapi.hangout.data.getState();
+	if (start_world){
+		var update = unflatten_recursive_structure(start_world);
 		console.log(JSON.stringify(update));
 		execute_world_update(update);
 	}
