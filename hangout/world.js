@@ -46,13 +46,15 @@ function world_add_piece(piece_data){
 }
 
 /*
- * flatten_world_update - This takes a structured recursive array
+ * flatten_recursive_structure - This takes a structured recursive array/object
  * and turns it into a single associative array (using "|" to separate
  * keys) suitable for use in Google Hangout state
  * 
  * @param update The update to the world
+ * @param base_key (defaults to "") used for recursion
+ * @param flat_update (defaults to {}) used for recursion
  */
-function flatten_world_update(update, base_key, flat_update){
+function flatten_recursive_structure(update, base_key, flat_update){
 	base_key = (typeof base_key !== 'undefined') ? base_key : "";
 	flat_update = (typeof flat_update !== 'undefined') ? flat_update : {};
 
@@ -60,9 +62,7 @@ function flatten_world_update(update, base_key, flat_update){
 		$.each(update, function(k, e){
 			var new_key = base_key ? (base_key + "|" + k) : k;
 			if ($.isArray(e) || $.isPlainObject(e)){
-				// Note that the key is an associative array
-				flat_update[new_key] = "_DICT_";
-				flatten_world_update(e, new_key, flat_update);
+				flatten_recursive_structure(e, new_key, flat_update);
 			} else {
 				// TODO HANDLE NULL VALUES BY REMOVING THEM FROM THE WORLD
 				if ((e == null) || (e == undefined)){
@@ -77,33 +77,45 @@ function flatten_world_update(update, base_key, flat_update){
 	return (flat_update);
 }
 
-function unflatten_world_update(flat_update){
+/*
+ * unflatten_recursive_structure - This a flattened associative array
+ * and returns it to a structured recursive array/object.
+ * 
+ * @param flat_update The flattened update
+ */
+function unflatten_recursive_structure(flat_update){
 	var update = {};
 
-	// NOTE: This is destructive to k
-	function recursive_set(u, k, v){
+	function compoundkey_set(u, k, v){
+		k = k.split("|");
 		var f = k.shift();
 		while (k.length > 0){
-			// Create the array if needed
-			if(!(u[f] instanceof Object)){
+			if (!(u[f] instanceof Object)){
+				// Create object for parent of not there
 				u[f] = {};
 			}
 			u = u[f];
 			f = k.shift();
 		}
 		if (v == "_NULL_"){
-			// TODO: HANDLE DELETES COORECTLY
+			// TODO: HANDLE DELETES
 			u[f] = null;
 		} else {
 			u[f] = v;
 		}
 	}
 
+	// TODO: DETERMINE IF WE REALLY NEED TO SORT KEYS IF WE ASSUME EVERYTHING IS AN OBJECT
+	// Grab the keys
+	var keys = [];
 	$.each(flat_update, function(k, v){
-		var compound_key = k.split("|");
-		if (v != "_DICT_"){
-			recursive_set(update, compound_key, v);
-		}
+		keys.push(k);
+	});
+	// Now sort the keys
+	keys.sort();
+	// Now loop through the keys and setting the update object (so we hit parents before children)
+	$.each(keys, function(i, k){
+		compoundkey_set(update, k, flat_update[k]);
 	});
 	return (update);
 }
@@ -116,8 +128,8 @@ function unflatten_world_update(flat_update){
  */
 function world_update(update){
 	console.log(JSON.stringify(update));
-	console.log(JSON.stringify(flatten_world_update(update)));
-	gapi.hangout.data.submitDelta(flatten_world_update(update));
+	console.log(JSON.stringify(flatten_recursive_structure(update)));
+	gapi.hangout.data.submitDelta(flatten_recursive_structure(update));
 }
 
 /*
@@ -210,7 +222,7 @@ function execute_world_update(update){
 		// Iterate pieces, looking for new, updates, or deletes
 		for (piece_index in update.pieces) {
 			if ((update.pieces[piece_index] instanceof Object) && 
-				("__new" in update.pieces[piece_index])){
+				(!(Number(piece_index) in world_on_piece_change_handlers))) {
 				if (Number(piece_index) > world_max_piece_index){
 					world_max_piece_index = Number(piece_index);
 				}
@@ -242,18 +254,13 @@ function world_listener_start(){
 			k = eventObj.addedKeys[i].key;
 			v = eventObj.addedKeys[i].value;
 			flat_update[k] = v;
-			// Handle new array
-			if ((v == "_DICT_") && !(v in world_local_state)){
-				// TODO: WE SHOULD ONLY MARK THE HIGHEST NEW PARENT AS NEW
-				flat_update[k + "|" + "__new"] = "1";
-			}
 			world_local_state[k] = v;
 		}
 		// TODO: HANDLE REMOVED KEYS
 		for (i = 0; i < eventObj.removedKeys.length; ++i){
 			k = eventObj.removedKeys[i].key;
 		}
-		var update = unflatten_world_update(flat_update);
+		var update = unflatten_recursive_structure(flat_update);
 		console.log(JSON.stringify(update));
 		execute_world_update(update);
 	}
