@@ -808,6 +808,22 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		event.preventDefault(); 
 		return(false);
 	}
+	var move_pieces = function(coord, final_send){
+		$.each(pieces, function(i, piece){ 
+			var send_update = final_send;
+		    if (i == 0){ // Visibally send an update every half second
+				var now = new Date().getTime();
+				if ((now - last_sent_update_timestamp) > 500){
+					send_update = 1;
+					last_sent_update_timestamp = now;
+				}
+			}
+			set_piece_location(piece, {
+		       left: start_offsets[i].left - start_coord.x + coord.x,
+		       top: start_offsets[i].top - start_coord.y + coord.y
+	        },send_update); // Only send movement of top piece to server every half second
+	   });
+	}
 	// Handle drag events by calculating and executing new piece orientation
 	var drag_function = function (event) {
 		var coord = util_get_event_coordinates(event);
@@ -819,20 +835,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 			}
 			// Remember the last_coordinates again
 			last_coord = util_clone(coord);
-			$.each(pieces, function(i, piece){ 
-				var send_update = 0;
-				if (i == 0){ // Visibally send an update every half second
-					var now = new Date().getTime();
-					if ((now - last_sent_update_timestamp) > 500){
-						send_update = 1;
-						last_sent_update_timestamp = now;
-					}
-				}
-			    set_piece_location(piece, {
-			  	    left: start_offsets[i].left - start_coord.x + coord.x,
-				    top: start_offsets[i].top - start_coord.y + coord.y
-			    },send_update); // Only send movement of top piece to server every half second
-			});
+			move_pieces(coord,0);
 		}
 		// We do not want regular event processing
 		event.preventDefault(); 
@@ -842,12 +845,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 	var stop_drag_function = function (event) {
 		// Send update to server
 		if (mouse_moved) {
-			$.each(pieces, function(i, piece){ 
-			    set_piece_location(piece, {
-			  	    left: start_offsets[i].left - start_coord.x + last_coord.x,
-				    top: start_offsets[i].top - start_coord.y + last_coord.y
-			    },1);
-			});
+			move_pieces(last_coord,1);
 		}
 		// Remove Highlight
 		pieces_unhighlight(pieces);
