@@ -50,6 +50,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	if (!("face_showing" in piece_data)){
 		piece_data.face_showing = 0;
 	}
+	// TODO: Handle both "faces" and "faces_array" for backwards compatibility with save files
 	// Unparse the face array
 	piece_data.faces = JSON.parse(piece_data.faces_array);
 
@@ -457,19 +458,18 @@ function move_pieces_to_back(pieces){
  * 
  * @param piece The piece DOM object
  * @param position (left, top) position for the piece
+ * @param send_update boolean - if we actually send the update
  */
-function set_piece_location(piece, position){
-	var offset = $(piece).offset();
-	// Make sure that the piece actually moved before we update the world
-	if ((offset.left != position.left) || (offset.top != position.top)){
+function set_piece_location(piece, position, send_update){
+	// Move the piece locally
+	$(piece).offset(position);
+	if (send_update){
 		// Update the world (setting the client so we can ignore return messages)
 		world_update_piece(piece.world_piece_index,{
-			"client": g_client_id,
-			"x": position.left,
-			"y": position.top
-		});
-		// Move the piece locally
-		$(piece).offset(position);
+		   "client": g_client_id,
+		   "x": position.left,
+		   "y": position.top
+	   });
 	}
 }
 
@@ -735,7 +735,7 @@ function pieces_start_rotate(pieces, event){
 				set_piece_location(piece,{
 					left: new_center_left - $(piece).width()/2,
 					top: new_center_top - $(piece).height()/2
-				});
+				},1);
 			});
 		}
 		// We do not want regular event processing
@@ -795,6 +795,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		start_offsets[i] = $(p).offset();
 	});
 	var overlay = 0;
+	var last_sent_update_timestamp = 0;
 	if (use_overlay){
 		// Add an overlay to capture a new mouse/touch down event (in case we started touch up)
 		overlay = util_create_ui_overlay();
@@ -816,20 +817,38 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 				// If we started dragging the pieces, move them to the top
 				move_pieces_to_front(pieces);
 			}
-		}
-		$.each(pieces, function(i, piece){ 
-			// TODO MEDIUM - define set_piece_location_accumulate
-			set_piece_location(piece, {
-				left: start_offsets[i].left - start_coord.x + coord.x,
-				top: start_offsets[i].top - start_coord.y + coord.y
+			// Remember the last_coordinates again
+			last_coord = util_clone(coord);
+			$.each(pieces, function(i, piece){ 
+				var send_update = 0;
+				if (i == 0){ // Visibally send an update every half second
+					var now = new Date().getTime();
+					if ((now - last_sent_update_timestamp) > 500){
+						send_update = 1;
+						last_sent_update_timestamp = now;
+					}
+				}
+			    set_piece_location(piece, {
+			  	    left: start_offsets[i].left - start_coord.x + coord.x,
+				    top: start_offsets[i].top - start_coord.y + coord.y
+			    },send_update); // Only send movement of top piece to server every half second
 			});
-		});
+		}
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
 	}
 	// Handle the end of dragging by removing events, and calling no_move_callback if needed
 	var stop_drag_function = function (event) {
+		// Send update to server
+		if (mouse_moved) {
+			$.each(pieces, function(i, piece){ 
+			    set_piece_location(piece, {
+			  	    left: start_offsets[i].left - start_coord.x + last_coord.x,
+				    top: start_offsets[i].top - start_coord.y + last_coord.y
+			    },1);
+			});
+		}
 		// Remove Highlight
 		pieces_unhighlight(pieces);
 		if (overlay){

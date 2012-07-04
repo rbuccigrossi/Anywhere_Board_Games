@@ -67,7 +67,6 @@ function flatten_recursive_structure(update, base_key, flat_update){
 				// TODO HANDLE NULL VALUES BY REMOVING THEM FROM THE WORLD
 				if ((e == null) || (e == undefined)){
 					flat_update[new_key] = "_NULL_";
-					alert("delete not working yet");
 				} else {
 					flat_update[new_key] = e.toString();
 				}
@@ -121,16 +120,57 @@ function unflatten_recursive_structure(flat_update){
 }
 
 /*
+ * find_deletions - This takes the flat updates, looks for _NULL_, and if found
+ * locates all of the keys currently in the world to remove
+ * 
+ * @param flat_update The current flat update
+ */
+function find_deletions(flat_update){
+	var deletions = [];
+	$.each(flat_update, function(k, e){
+		var child_prefix = k + "|";
+		if (e == "_NULL_"){ // We found a deletion
+			$.each(world_local_state, function(ck,ce){
+				if ((ck.indexOf(child_prefix) == 0)){ // We found a child
+					deletions.push(ck);
+				}
+			});
+		}
+	});
+	return (deletions);
+}
+
+/*
  * world_update - Sends an update array to the world.  Any subsequent calls will be 
  * combined into a single update until the previous ajax call is completed.
  * 
  * @param update The update to implement in the world
  */
 function world_update(update){
-	// TODO: ACCUMULATE CHANGES AND TIME THEM
+	var flat_updates = flatten_recursive_structure(update);
+	var flat_deletions = find_deletions(flat_updates);
+	// Special case: deleting the world
+	if (update === 0){
+		// Increment the new count
+		var new_count = 1;
+		if ("__new" in world_local_state){
+			new_count = Number(world_local_state["__new"] + 1);
+		}
+		flat_updates = {"__new": new_count.toString()};
+		// Remove all keys
+		flat_deletions = [];
+		$.each(world_local_state, function(k,e){
+			if (k != "__new"){
+				flat_deletions.push(k);
+			}
+		});
+	}
 	console.log(JSON.stringify(update));
-	console.log(JSON.stringify(flatten_recursive_structure(update)));
-	gapi.hangout.data.submitDelta(flatten_recursive_structure(update));
+	console.log(JSON.stringify(flat_updates));
+	console.log(JSON.stringify(flat_deletions));
+	// TODO: SPLIT UPDATES IF TOO BIG
+	// TODO: GROUP MOVE AND UPDATE ONLY TOP PIECE...
+	gapi.hangout.data.submitDelta(flat_updates,flat_deletions);
 }
 
 /*
@@ -153,6 +193,7 @@ function world_update_piece(piece_index, piece_update){
  * world_update_piece_accumulate_flush is called.  This is useful for easily
  * updating many pieces at once.  Changes to the same piece will
  * completely overwrite old ones.
+ * ***NOTE*** FOR HANGOUT WE CAN'T ACCUMULATE TOO MUCH, SO WE INTENTIONALLY BREAK THIS
  * 
  * @param piece_index Index of the peice to update
  * @param piece_update Object containing the attributes to update 
@@ -164,17 +205,16 @@ function world_update_piece_accumulate(piece_index, piece_update){
 		};
 	}
 	world_update_piece_accumulate.update.pieces[piece_index] = piece_update;
+	world_update(world_update_piece_accumulate.update);
+	delete world_update_piece_accumulate.update;
 }
 
 /*
  * world_update_piece_accumulate_flush - Sends any accumulated piece updates
  * gathered in world_update_piece_accumulate() to the server.
+ * ***NOTE*** FOR HANGOUT WE CAN'T ACCUMULATE TOO MUCH, SO WE INTENTIONALLY BREAK THIS
  */
 function world_update_piece_accumulate_flush(){
-	if ("update" in world_update_piece_accumulate) {
-		world_update(world_update_piece_accumulate.update);
-		delete world_update_piece_accumulate.update;
-	}
 }
 
 /*
@@ -257,18 +297,18 @@ function world_listener_start(){
 			flat_update[k] = v;
 			world_local_state[k] = v;
 		}
-		// TODO: HANDLE REMOVED KEYS
 		for (i = 0; i < eventObj.removedKeys.length; ++i){
 			k = eventObj.removedKeys[i].key;
+			delete world_local_state[k];
 		}
 		var update = unflatten_recursive_structure(flat_update);
 		console.log(JSON.stringify(update));
 		execute_world_update(update);
 	}
 	// Get the initial state
-	var start_world = gapi.hangout.data.getState();
-	if (start_world){
-		var update = unflatten_recursive_structure(start_world);
+	world_local_state = gapi.hangout.data.getState();
+	if (world_local_state){
+		var update = unflatten_recursive_structure(world_local_state);
 		console.log(JSON.stringify(update));
 		execute_world_update(update);
 	}
