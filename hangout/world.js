@@ -289,6 +289,56 @@ function world_update_piece_accumulate_flush(){
 }
 
 /*
+ * world_load_from_url - Uses Ajax to read the contents of an ABG file
+ * and either adds it or replaces the current world to it
+ * 
+ * @param url The URL for the Word
+ * @param clear_world Boolean if we should replace the current world
+ */
+function world_load_from_url(url, clear_world){
+	// Set the index for our next piece
+	var next_piece_index = (world_max_piece_index + 1);
+	var world_load_failure = function(data, textStatus, errorThrown){
+		alert("Sorry, we were unable to read the board game data")
+	}
+	var world_load_handler = function(data){
+		try {
+			data = JSON.parse(data);
+		} catch (x) {
+			alert('The provided URL does not contain valid board game data.');
+			return;
+		}
+		// Clear the world
+		if (clear_world) {
+			world_update(0);
+			next_piece_index = 0;
+		}
+		// Cycle through pieces and add them
+		if ("pieces" in data){
+			$.each(data["pieces"],function(i,p){
+				// Convert face data to JSON
+				if ("faces" in p){
+					p["faces_array"] = JSON.stringify(p["faces"]);
+					delete p["faces"];
+				}
+				// Make sure it appears
+				p["client_id"] = -1;
+				world_update_piece(next_piece_index,p);
+				next_piece_index++;
+			});
+		} else {
+			alert('Sorry, but the URL you provided did not contain any pieces');
+		}
+	}
+	$.ajax({
+		url: url,
+        success: world_load_handler,
+        error: world_load_failure,
+        dataType: "text"
+	});
+}
+
+/*
  * world_on_new_piece_handler - This is a handler function(piece_index, piece_data)
  * that is set by the code interested in listening to piece additions to the world
  * When a new piece is added, the piece_index is set to the index used by the world
