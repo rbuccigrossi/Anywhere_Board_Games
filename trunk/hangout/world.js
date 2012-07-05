@@ -219,7 +219,7 @@ function world_update(update){
 			update_keys.push(k);
 		});
 // console.log(JSON.stringify(update_keys));
-		// Pull off 10 keys of each type to update
+		// Pull off 15 keys of each type to update
 		while ((update_keys.length > 0) || (flat_deletions.length > 0)){
 			if (update_keys.length > 0){
 				k = update_keys.pop();
@@ -229,8 +229,8 @@ function world_update(update){
 			if (flat_deletions.length > 0){
 				inc_deletions.push(flat_deletions.pop());
 			}
-			// Send in packs of 10
-			if ((l > 9) || (inc_deletions.length > 9)){
+			// Send in packs of 15
+			if ((l > 14) || (inc_deletions.length > 14)){
 				world_queue_update(inc_updates,inc_deletions);
 				inc_updates = {};
 				l = 0;
