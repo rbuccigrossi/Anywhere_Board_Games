@@ -654,7 +654,7 @@ function piece_see_detail(piece){
 	var overlay = util_create_ui_overlay();
 	var img_url = $(piece).find('.piece_face').attr('src');
 	$(overlay).css("opacity",0.9);
-	$(overlay).css('background','#000 url('+escape(img_url)+') center center fixed no-repeat');
+	$(overlay).css('background','#000 url('+encodeURI(img_url)+') center center fixed no-repeat');
 	$(overlay).css('-moz-background-size','contain');
 	$(overlay).css('background-size','contain');
 }
