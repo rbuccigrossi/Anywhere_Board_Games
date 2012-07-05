@@ -84,7 +84,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	// Set the face
 	set_piece_face_showing(piece,piece_data.face_showing);
 	// Record the orientation
-	piece.orientation = piece_data.orientation ? piece_data.orientation : 0;
+	piece.orientation = piece_data.orientation ? Number(piece_data.orientation) : 0;
 	set_piece_orientation(piece,piece.orientation);
 	// Add the move handler
 	$(piece).bind({
@@ -130,7 +130,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 			// Rotate the piece (as long as we didn't rotate it initially)
 			if ("orientation" in piece_data){
 				if (piece.client != g_client_id) {
-					piece.orientation = piece_data.orientation;
+					piece.orientation = Number(piece_data.orientation);
 					set_piece_orientation(piece,piece.orientation);
 				}
 			}
@@ -671,12 +671,16 @@ function piece_see_detail(piece){
  * @param event The initiating event
  */
 function pieces_start_rotate(pieces, event){
-	var start_click = util_get_event_coordinates(event);
+	// Check if mouse is moved while dragging
+	var mouse_moved = 0;
+	var start_coord = util_get_event_coordinates(event);
+	var last_coord = util_clone(start_coord);
 	// Find the center of the group of pieces
 	var pieces_center = get_pieces_center(pieces);
 	// Get the starting orientation and centers of the pieces
 	var start_orientations = [];
 	var start_centers = [];
+	var last_sent_update_timestamp = 0;
 	$.each(pieces, function(i,piece){
 		start_orientations.push(piece.orientation);
 		start_centers.push(get_piece_center(piece));
@@ -684,27 +688,26 @@ function pieces_start_rotate(pieces, event){
 	// Remeber the move angle so we update only when the angle changes
 	var move_angle = 0;
 	var original_position_from_center = {
-		x: (start_click.x - pieces_center.left),
-		y: (start_click.y - pieces_center.top)
+		x: (start_coord.x - pieces_center.left),
+		y: (start_coord.y - pieces_center.top)
 	};
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
 	// Handle start drag events by resetting location for rotation calculations
 	var start_drag_function = function (event){
-		start_click = util_get_event_coordinates(event);
+		start_coord = util_get_event_coordinates(event);
+		last_coord = util_clone(start_coord);
 		original_position_from_center = {
-			x: (start_click.x - pieces_center.left),
-			y: (start_click.y - pieces_center.top)
+			x: (start_coord.x - pieces_center.left),
+			y: (start_coord.y - pieces_center.top)
 		};
 		event.preventDefault(); 
 		return(false);
 	}
-	// Handle drag events by calculating and executing new piece orientation
-	var drag_function = function (event) {
-		var click = util_get_event_coordinates(event);
+	var move_pieces = function(coord, final_send){
 		var new_position_from_center = {
-			x: (click.x - pieces_center.left),
-			y: (click.y - pieces_center.top)
+			x: (coord.x - pieces_center.left),
+			y: (coord.y - pieces_center.top)
 		};
 		var new_move_angle = move_angle;
 		if (new_position_from_center.x != 0 || new_position_from_center.y != 0){
@@ -713,30 +716,50 @@ function pieces_start_rotate(pieces, event){
 				- Math.atan2(original_position_from_center.x,-original_position_from_center.y))/(2*3.14159);
 			new_move_angle = ((Math.round(new_move_angle / 5) * 5) + 360) % 360;
 		}
-		if (new_move_angle != move_angle){
-			move_angle = new_move_angle;
-			var cos_a = Math.cos(move_angle * 2 * Math.PI / 360);
-			var sin_a = Math.sin(move_angle * 2 * Math.PI / 360);
-			$.each(pieces, function (i,piece){
-				// First update the orientation, then update location
-				piece.orientation = start_orientations[i] + move_angle;
-				// Update the world, setting the client so we can ignore the events
-				world_update_piece(piece.world_piece_index,{
-					"client": g_client_id,
-					"orientation": piece.orientation
-				});
-				// Update locally
-				set_piece_orientation(piece,piece.orientation);
-				// Now calculate and update location (once piece is turned to avoid location issues)
-				var new_center_left = ((start_centers[i].left - pieces_center.left) * cos_a -
-					(start_centers[i].top - pieces_center.top) * sin_a) + pieces_center.left;
-				var new_center_top = ((start_centers[i].left - pieces_center.left) * sin_a +
-					(start_centers[i].top - pieces_center.top) * cos_a) + pieces_center.top;
-				set_piece_location(piece,{
-					left: new_center_left - $(piece).width()/2,
-					top: new_center_top - $(piece).height()/2
-				},1);
-			});
+		move_angle = new_move_angle;
+		var cos_a = Math.cos(move_angle * 2 * Math.PI / 360);
+		var sin_a = Math.sin(move_angle * 2 * Math.PI / 360);
+		$.each(pieces, function (i,piece){
+			var send_update = final_send;
+			if (pieces.length == 1){ // Visibly send an update every half second
+			    var now = new Date().getTime();
+			    if ((now - last_sent_update_timestamp) > 500){
+				    send_update = 1;
+				    last_sent_update_timestamp = now;
+			    }
+		    }
+		    // First update the orientation, then update location
+		    piece.orientation = start_orientations[i] + move_angle;
+		    if (send_update){
+			    // Update the world, setting the client so we can ignore the events
+			    world_update_piece(piece.world_piece_index,{
+				    "client": g_client_id,
+				    "orientation": piece.orientation
+			    });
+		    }
+		    // Update locally
+		    set_piece_orientation(piece,piece.orientation);
+		    // Now calculate and update location (once piece is turned to avoid location issues)
+		    var new_center_left = ((start_centers[i].left - pieces_center.left) * cos_a -
+			    (start_centers[i].top - pieces_center.top) * sin_a) + pieces_center.left;
+		    var new_center_top = ((start_centers[i].left - pieces_center.left) * sin_a +
+			    (start_centers[i].top - pieces_center.top) * cos_a) + pieces_center.top;
+		    set_piece_location(piece,{
+				left: new_center_left - $(piece).width()/2,
+				top: new_center_top - $(piece).height()/2
+		    },send_update);
+		});
+	}
+	// Handle drag events by calculating and executing new piece orientation
+	var drag_function = function (event) {
+		var coord = util_get_event_coordinates(event);
+		if ((coord.x != last_coord.x) || (coord.y != last_coord.y)){
+			if (!mouse_moved){
+				mouse_moved = 1; // We moved, so this is a drag, not a click
+			}
+			// Remember the last_coordinates again
+			last_coord = util_clone(coord);
+			move_pieces(coord,0);
 		}
 		// We do not want regular event processing
 		event.preventDefault(); 
@@ -744,6 +767,10 @@ function pieces_start_rotate(pieces, event){
 	}
 	// Handle the end of dragging by removing the overlay (deleting events)
 	var stop_drag_function = function (event) {
+		// Send update to server
+		if (mouse_moved) {
+			move_pieces(last_coord,1);
+		}
 		// Unhlight pieces
 		pieces_unhighlight(pieces);
 		// Click on the overlay to destroy it (and remove listeners)
@@ -811,7 +838,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 	var move_pieces = function(coord, final_send){
 		$.each(pieces, function(i, piece){ 
 			var send_update = final_send;
-		    if (i == 0){ // Visibally send an update every half second
+		    if (pieces.length == 1){ // Visibly send an update every half second
 				var now = new Date().getTime();
 				if ((now - last_sent_update_timestamp) > 500){
 					send_update = 1;
