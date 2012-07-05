@@ -80,7 +80,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 		$(piece).find('.piece_face').attr('width',piece.face_width);
 	}
 	// Initialize the z index
-	set_piece_z_index(piece, piece_data.z);
+	set_piece_z_index(piece, Number(piece_data.z));
 	// Set the face
 	set_piece_face_showing(piece,piece_data.face_showing);
 	// Record the orientation
@@ -122,8 +122,8 @@ function on_new_piece_handler(piece_idx, piece_data){
 			if (("x" in piece_data) && ("y" in piece_data)){
 				if (piece.client != g_client_id) {
 					$(piece).offset({
-						left: piece_data.x, 
-						top: piece_data.y
+						left: Number(piece_data.x), 
+						top: Number(piece_data.y)
 					});	
 				}
 			}
@@ -140,7 +140,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 			}
 			// Set z index
 			if ("z" in piece_data){
-				set_piece_z_index(piece, piece_data.z);
+				set_piece_z_index(piece, Number(piece_data.z));
 			}
 			// Update the faces
 			if ("faces_array" in piece_data){
@@ -421,7 +421,7 @@ function pieces_shuffle(pieces){
  * @param pieces The array of pieces
  */
 function move_pieces_to_front(pieces){
-	var arr = util_clone(pieces); // Copy the array so we don't mess up the order'
+	var arr = util_clone(pieces); // Copy the array so we don't mess up the order
 	arr.sort(compare_piece_z_indices);
 	var new_z = 100000; // Start at a really high index
 	$.each(arr,function(i,p){ // Move each piece to the top and increase the z index

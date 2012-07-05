@@ -64,7 +64,6 @@ function flatten_recursive_structure(update, base_key, flat_update){
 			if ($.isArray(e) || $.isPlainObject(e)){
 				flatten_recursive_structure(e, new_key, flat_update);
 			} else {
-				// TODO HANDLE NULL VALUES BY REMOVING THEM FROM THE WORLD
 				if ((e == null) || (e == undefined)){
 					flat_update[new_key] = "_NULL_";
 				} else {
@@ -97,13 +96,16 @@ function unflatten_recursive_structure(flat_update){
 			f = k.shift();
 		}
 		if (v == "_NULL_"){
-			// TODO: HANDLE DELETES
 			u[f] = null;
 		} else {
 			u[f] = v;
 		}
 	}
 
+	// TODO: IMMEDIATE - SLOW DOWN rotate
+	// TODO: IMMEDIATE - Check Lock and other booleans for string conversion problems
+	// TODO: MEDIUM - Move Split Code and Split on pieces if possible
+	// TODO: LOW - Move Split Code really high, time, and pool updates by piece
 	// TODO: DETERMINE IF WE REALLY NEED TO SORT KEYS IF WE ASSUME EVERYTHING IS AN OBJECT
 	// Grab the keys
 	var keys = [];
@@ -140,6 +142,42 @@ function find_deletions(flat_update){
 	return (deletions);
 }
 
+/* world_queue_update - Queues an update to be sent.  If we've done an update in the 
+ * in the recent past, we delay the sending of another to avoid hitting Google Hangout's
+ * throttle
+ */
+function world_queue_update(updates,deletes){
+	if (!("queue" in world_queue_update)){
+		world_queue_update.queue = [];
+		world_queue_update.last_time = 0;
+	}
+	var next_update = {"u": updates,"d": deletes};
+	world_queue_update.queue.push(next_update);
+	if (!("loop_running" in world_queue_update)){
+		world_queue_update.loop_running = true;
+		var call_next_update = function(){
+			// Immediately call the next item and record timing
+			var n = world_queue_update.queue.shift();
+			gapi.hangout.data.submitDelta(n["u"],n["d"]);
+			world_queue_update.last_time = new Date().getTime();
+			if (world_queue_update.queue.length > 0){
+				setTimeout(call_next_update,50);
+			} else {
+				// Out of requests so stop
+				delete world_queue_update.loop_running;
+			}
+		}
+		var now = new Date().getTime();
+		if ((now - world_queue_update.last_time) < 50){
+			// If we last updated recently, wait a little
+			setTimeout(call_next_update,100 - (now - world_queue_update.last_time));
+		} else {
+			// Else start now
+			call_next_update();
+		}
+	}
+}
+
 /*
  * world_update - Sends an update array to the world.  Any subsequent calls will be 
  * combined into a single update until the previous ajax call is completed.
@@ -165,12 +203,45 @@ function world_update(update){
 			}
 		});
 	}
-	console.log(JSON.stringify(update));
-	console.log(JSON.stringify(flat_updates));
-	console.log(JSON.stringify(flat_deletions));
-	// TODO: SPLIT UPDATES IF TOO BIG
-	// TODO: GROUP MOVE AND UPDATE ONLY TOP PIECE...
-	gapi.hangout.data.submitDelta(flat_updates,flat_deletions);
+	// If our update is too big (more than 256 characters), split it up
+	if ((JSON.stringify(flat_updates).length + JSON.stringify(flat_deletions).length) < 512){
+//		console.log(JSON.stringify(update));
+//		console.log(JSON.stringify(flat_updates));
+//		console.log(JSON.stringify(flat_deletions));
+		world_queue_update(flat_updates,flat_deletions);
+	} else {
+		var update_keys = [];
+		var inc_updates = {}, inc_deletions = [];
+		var k, l = 0;
+		// TODO: Note, if we split a piece on an update, that could cause problems...
+		// Gather up all update keys
+		$.each(flat_updates,function(k,v){
+			update_keys.push(k);
+		});
+// console.log(JSON.stringify(update_keys));
+		// Pull off 10 keys of each type to update
+		while ((update_keys.length > 0) || (flat_deletions.length > 0)){
+			if (update_keys.length > 0){
+				k = update_keys.pop();
+				inc_updates[k] = flat_updates[k];
+				l++;
+			}
+			if (flat_deletions.length > 0){
+				inc_deletions.push(flat_deletions.pop());
+			}
+			// Send in packs of 10
+			if ((l > 9) || (inc_deletions.length > 9)){
+				world_queue_update(inc_updates,inc_deletions);
+				inc_updates = {};
+				l = 0;
+				inc_deletions = [];
+			}
+		}
+		// Send any left
+		if ((l > 0) || (inc_deletions.length > 0)){
+			gapi.hangout.data.submitDelta(inc_updates,inc_deletions);
+		}
+	}
 }
 
 /*
@@ -285,8 +356,6 @@ function execute_world_update(update){
  * the world server.  It calls "execute_world_update" if there is an update.
  */
 function world_listener_start(){
-	// TODO - Read initial state
-
 	// When the state is updated, this handles the update data
 	var world_update_handler = function(eventObj){
 		var flat_update = {};
@@ -302,14 +371,14 @@ function world_listener_start(){
 			delete world_local_state[k];
 		}
 		var update = unflatten_recursive_structure(flat_update);
-		console.log(JSON.stringify(update));
+//		console.log(JSON.stringify(update));
 		execute_world_update(update);
 	}
 	// Get the initial state
 	world_local_state = gapi.hangout.data.getState();
 	if (world_local_state){
 		var update = unflatten_recursive_structure(world_local_state);
-		console.log(JSON.stringify(update));
+//		console.log(JSON.stringify(update));
 		execute_world_update(update);
 	}
 	// Register our update andler
