@@ -1270,7 +1270,7 @@ function show_board_popup_menu(pieces, position){
 		menu_items.push({
 			label: "Save Board...", 
 			callback: function(){
-				window.open(world_server_url + "?action=download");
+				world_save_world();
 			}, 
 			args: null
 		});

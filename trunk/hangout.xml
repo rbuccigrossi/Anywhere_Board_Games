@@ -57,8 +57,9 @@
 							} else {
 			                    if (url) {
 			                        world_load_from_url(url, clear_world);
+			                    } else {
+									world_load_from_file($("#upload_board_file").get(0).files[0], clear_world);
 			                    }
-								$("#upload_board_form").get(0).action = world_server_url;
 								// Reset the last timestamp of the world
 								world_listener_start.world_last_ts = 0;
 								$( this ).dialog( "close" );
