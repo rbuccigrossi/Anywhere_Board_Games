@@ -1,0 +1,11 @@
+Welcome to Anywhere Board Games!
+
+Game pieces can be moved by clicking and dragging.  The middle button will flip a piece and the right button will rotate a piece.  You can do everything else through pop-up menus available by clicking on pieces or the background.  Using multi-select (clicking and dragging on the background) will bring up a menu for stacking and shuffling the selected pieces.
+
+Anywhere Board Games comes with a number of pre-made boards and pieces.  Please click on the background and select "Open Board..." to access them. To add a piece, click on the background, select "Add Piece...", and provide the URL for any image on the Internet.
+
+Anywhere Board Games was developed by Robert Buccigrossi and the source code has been released under LGPL at http://anywhereboardgames.com .  It is also available as a stand-alone Web application.
+
+Have fun!
+
+http://anywhereboardgames.com
