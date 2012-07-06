@@ -289,6 +289,40 @@ function world_update_piece_accumulate_flush(){
 }
 
 /*
+ * world_load_from_data - Loads the world from a data object (read from
+ * a file)
+ * 
+ * @param data The ABG data file
+ * @param clear_world Boolean if we should replace the current world
+ */
+function world_load_from_data(data, clear_world){
+	// Set the index for our next piece
+	var next_piece_index = (world_max_piece_index + 1);
+	// Clear the world
+	if (clear_world) {
+		world_update(0);
+		next_piece_index = 0;
+	}
+	// Cycle through pieces and add them
+	if ("pieces" in data){
+		$.each(data["pieces"],function(i,p){
+			// Convert face data to JSON
+			if ("faces" in p){
+				p["faces_array"] = JSON.stringify(p["faces"]);
+				delete p["faces"];
+			}
+			// Make sure it appears
+			p["client_id"] = -1;
+			world_update_piece(next_piece_index,p);
+			next_piece_index++;
+		});
+	} else {
+		alert('Sorry, but the URL you provided did not contain any pieces');
+	}
+	
+}
+
+/*
  * world_load_from_url - Uses Ajax to read the contents of an ABG file
  * and either adds it or replaces the current world to it
  * 
@@ -296,8 +330,6 @@ function world_update_piece_accumulate_flush(){
  * @param clear_world Boolean if we should replace the current world
  */
 function world_load_from_url(url, clear_world){
-	// Set the index for our next piece
-	var next_piece_index = (world_max_piece_index + 1);
 	var world_load_failure = function(data, textStatus, errorThrown){
 		alert("Sorry, we were unable to read the board game data")
 	}
@@ -308,27 +340,7 @@ function world_load_from_url(url, clear_world){
 			alert('The provided URL does not contain valid board game data.');
 			return;
 		}
-		// Clear the world
-		if (clear_world) {
-			world_update(0);
-			next_piece_index = 0;
-		}
-		// Cycle through pieces and add them
-		if ("pieces" in data){
-			$.each(data["pieces"],function(i,p){
-				// Convert face data to JSON
-				if ("faces" in p){
-					p["faces_array"] = JSON.stringify(p["faces"]);
-					delete p["faces"];
-				}
-				// Make sure it appears
-				p["client_id"] = -1;
-				world_update_piece(next_piece_index,p);
-				next_piece_index++;
-			});
-		} else {
-			alert('Sorry, but the URL you provided did not contain any pieces');
-		}
+		world_load_from_data(data, clear_world);
 	}
 	$.ajax({
 		url: url,
@@ -336,6 +348,63 @@ function world_load_from_url(url, clear_world){
         error: world_load_failure,
         dataType: "text"
 	});
+}
+
+/*
+ * world_load_from_file - Uses FileReader to read the contents of an ABG file
+ * and either adds it or replaces the current world to it
+ * 
+ * @param file The file object
+ * @param clear_world Boolean if we should replace the current world
+ */
+function world_load_from_file(file, clear_world){
+	if (window.FileReader === undefined){
+		alert("Sorry, but your browser does not support client-side file reading. " +
+			"Please consider getting the latest version of Chrome or Firefox");
+	}
+	var file_reader = new FileReader();
+	file_reader.onError = function(){
+		alert("Sorry, we were unable to read the file.")
+	}
+	file_reader.onload = function(evt){
+		var data;
+		try {
+			data = JSON.parse(evt.target.result);
+		} catch (x) {
+			alert('The provided file does not contain valid board game data.');
+			return;
+		}
+		world_load_from_data(data, clear_world);
+	}
+	file_reader.readAsText(file);
+}
+
+/* world_save_world - Saves the current world to a file (in a new window)
+ */
+function world_save_world(){
+	var pieces = [];
+	$.each(g_pieces,function(i,piece){ // Note g_pieces is in piece_ui.js
+		var offset = $(piece).offset();
+		pieces.push({
+			"faces": piece.faces, // Note: for download we keep the array as is (not JSON)
+			"face_width": piece.face_width,
+			"x": (offset.left), 
+			"y": (offset.top),
+			"z": piece.z,
+			"lock": piece.lock,
+			"shield": piece.shield,
+			"orientation": piece.orientation,
+			"face_showing": piece.face_showing,
+			"css_class": piece.css_class,
+			"event_callback": piece.event_callback,
+			"custom_html": escape(piece.custom_html)
+		});
+	});
+	var world = { "_new":1, "pieces": pieces};
+
+	window.open('data:text/json;filename=board.abg,' + 
+		encodeURIComponent(JSON.stringify(world)),
+		'board.abg');
 }
 
 /*
@@ -430,6 +499,10 @@ function world_listener_start(){
 		var update = unflatten_recursive_structure(world_local_state);
 //		console.log(JSON.stringify(update));
 		execute_world_update(update);
+		// See if the world is empty
+		if (!("pieces" in update)){
+			world_load_from_url('http://www.anywhereboardgames.com/hangout/intro.abg',1);
+		}
 	}
 	// Register our update andler
 	gapi.hangout.data.onStateChanged.add(world_update_handler);
