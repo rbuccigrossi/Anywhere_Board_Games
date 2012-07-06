@@ -1,5 +1,10 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+7/05/2012 (abg_v0.120705.tar.gz)
+ - Added source for Google+ Hangout version of ABG.  To use ABG on
+   a Google+ Hangout, just go to: 
+   https://plus.google.com/hangouts/_?gid=581754375986
+
 6/02/2012 (abg_v0.120602.exe and abg_v0.120602.tar.gz)
  - Added the ability to assign custom CSS classes and a JavaScript
    callback for when a piece is moved or rotated.  This is the
