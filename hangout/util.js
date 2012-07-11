@@ -2,35 +2,45 @@
 // Detection used for Chrome-specific bug fixes
 var util_is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
-// Bug fix for chrome to allow scroll bars to work on mouse down events:
-function util_is_in_chrome_scrollbar(){
-	if (util_is_chrome){ // Don't allow clicks near scroll bars
-		if ((event.clientX > ($(window).width()-17)) ||
-			(event.clientY > ($(window).height()-17))){
-			return (true);
-		}
+// Bug fix to allow scroll bars to work on mouse down events:
+function util_is_in_scrollbar(event){
+//	console.log(event.clientX + "," + event.clientY + "  " + $(window).width() + "," + $(window).height());
+	if ((event.clientX > ($(window).width()-17)) ||
+		(event.clientY > ($(window).height()-17))){
+		return (true);
 	}
 	return (false);
 }
 
 
+// TODO: IMMEDIATE FIX THIS NAME TO POS AND REVIEW CHANGES
 /*
- * util_page_to_client_coord - converts page to client coordinates based upon 
+ * util_page_to_board_coord - converts page to board coordinates based upon 
  * the current scrollbar location
  * 
  * @param page The (left, top) page coordinates
- * @return client The (left, top) client coordinates
+ * @return board The (left, top) board coordinates
  */
-function util_page_to_client_coord(page){
-	var left = page.left;
-	var top = page.top;
-    if( document.body && ( document.body.scrollLeft || document.body.scrollTop ) ) {
-      left -= document.body.scrollLeft;
-      top -= document.body.scrollTop;
-    } else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) {
-      left -= document.documentElement.scrollLeft;
-      top -= document.documentElement.scrollTop;
-	}
+function util_page_to_board_coord(coord){
+	var left = coord.left;
+	var top = coord.top;
+    left += $("#board").scrollLeft();
+	top += $("#board").scrollTop();
+	return ({left: left, top: top});
+}
+
+/*
+ * util_board_to_page_coord - converts board to page coordinates based upon 
+ * the current scrollbar location
+ * 
+ * @param page The (left, top) page coordinates
+ * @return board The (left, top) board coordinates
+ */
+function util_board_to_page_coord(coord){
+	var left = coord.left;
+	var top = coord.top;
+    left -= $("#board").scrollLeft();
+	top -= $("#board").scrollTop();
 	return ({left: left, top: top});
 }
 
@@ -95,6 +105,19 @@ function util_get_event_coordinates(event){
 }
 
 /*
+ * util_get_event_board_coordinates - Helper function to get the event coordinates for either a 
+ * mouse or touch event in relation to the top/left of the board
+ * 
+ * @param event The mouse or touch event
+ * @return coord (x, y) coordinates for the event
+ */
+function util_get_event_board_coordinates(event){
+	var coord = util_get_event_coordinates(event);
+	return ({x: (coord.x += $("#board").scrollLeft()),
+			 y: (coord.y += $("#board").scrollTop())});
+}
+
+/*
  * util_clone - Does a shallow clone of an object or array
  * 
  * @param orig Original object or array
@@ -114,6 +137,7 @@ function util_clone(orig){
  * @return ui_overlay DOM object
  */
 function util_create_ui_overlay(click_callback){
+	// Note: We append this to the body to ensure full coverage when the board resizes
 	var js_overlay = $('<div class="ui-widget-overlay"></div>').css('opacity',0).appendTo('body');
 	js_overlay.css('position','absolute');
 	js_overlay.css('z-index',1002);
@@ -154,4 +178,15 @@ function util_get_browser_width(){
     //IE 4 compatible
     return document.body.clientWidth;
   }
+}
+
+function util_set_position(piece, position){
+	$(piece).css({'left': (position.left + "px"), 'top': (position.top + "px")});
+}
+
+function util_get_position(piece) {
+	return ({
+				'left': parseInt($(piece).css("left"),10),
+				'top': parseInt($(piece).css("top"),10)
+			});
 }
