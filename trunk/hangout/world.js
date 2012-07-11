@@ -501,7 +501,13 @@ function world_listener_start(){
 		execute_world_update(update);
 		// See if the world is empty
 		if (!("pieces" in update)){
-			world_load_from_url('http://www.anywhereboardgames.com/hangout/intro.abg',1);
+			// See if data was passed in
+			var appData = gadgets.views.getParams()['appData'];
+			if (appData){
+				world_load_from_url(appData,1);
+			} else {
+				world_load_from_url('http://www.anywhereboardgames.com/hangout/intro.abg',1);
+			}
 		}
 	}
 	// Register our update andler
@@ -510,7 +516,11 @@ function world_listener_start(){
 
 // Start the world listener
 gapi.hangout.onApiReady.add(function(eventObj){
-  if (eventObj.isApiReady){
-    world_listener_start();	  
+  try {
+    if (eventObj.isApiReady){
+      world_listener_start();	  
+    }
+  } catch (x) {
+	alert("Sorry... there was a problem initializing the board.  Please reload the application (and make sure you are using an updated version of your browser). ")
   }
 });
