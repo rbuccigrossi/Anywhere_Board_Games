@@ -54,7 +54,7 @@
 							if (!file && !url && !url_select){
 								alert("Please enter or select an ABG file");
 							} else {
-								$("#upload_board_form").get(0).action = world_server_url;
+								$("#upload_board_form").attr("action", world_server_url);
 								// Reset the last timestamp of the world
 								world_listener_start.world_last_ts = 0;
 								IFrameSubmit.submit($("#upload_board_form").get(0),{onComplete: function(a){if(a){alert(a);}}});

@@ -73,7 +73,11 @@ function on_new_piece_handler(piece_idx, piece_data){
 	piece.face_width = "";
 	if ("face_width" in piece_data){
 		piece.face_width = piece_data.face_width;
-		$(piece).find('.piece_face').attr('width',piece.face_width);
+		if (Number(piece_data.face_width) > 0){
+			$(piece).find('.piece_face').attr('width',piece.face_width);
+		} else {
+			$(piece).find('.piece_face').removeAttr('width');
+		}
 	}
 	// Initialize the z index
 	set_piece_z_index(piece, piece_data.z);
@@ -107,7 +111,7 @@ function on_new_piece_handler(piece_idx, piece_data){
 	world_on_piece_change_handlers[piece_idx] = function(piece_data){
 		if (piece_data === null){
 			// Remove the piece from our global list
-			g_pieces.splice(g_pieces.indexOf(piece),1);
+			g_pieces.splice($.inArray(piece,g_pieces),1);
 			// If piece_data is null, then the piece is removed, so get rid of it
 			$(piece).remove();
 		} else {
@@ -143,7 +147,11 @@ function on_new_piece_handler(piece_idx, piece_data){
 			// Update he image width
 			if ("face_width" in piece_data){
 				piece.face_width = piece_data.face_width;
-				$(piece).find('.piece_face').attr('width',piece.face_width);
+				if (Number(piece_data.face_width) > 0){
+					$(piece).find('.piece_face').attr('width',piece.face_width);
+				} else {
+					$(piece).find('.piece_face').removeAttr('width');
+				}
 			}
 			// Set the face that's showing
 			if ("face_showing" in piece_data){
@@ -585,7 +593,7 @@ function set_piece_orientation(piece, orientation){
 	$(piece_face).css("-webkit-transform",r);
 	$(piece_face).css("-moz-transform",r);
 	$(piece_face).css("-o-transform",r);
-	$(piece_face).css("-ms-transform",r);
+	$(piece_face).css("ms-transform",r);
 }
 
 /*
