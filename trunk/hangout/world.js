@@ -23,6 +23,9 @@ var world_server_url = "../server/world.php";
 // Hold the current local state
 var world_local_state = {};
 
+// Allow cross-domain requests in Ajax
+$.support.cors = true;
+
 /*
  * world_get_new_piece_index - Gets the index of the next piece to be added
  * to the world.
@@ -331,7 +334,7 @@ function world_load_from_data(data, clear_world){
  */
 function world_load_from_url(url, clear_world){
 	var world_load_failure = function(data, textStatus, errorThrown){
-		alert("Sorry, we were unable to read the board game data")
+		alert("Sorry, we were unable to read the board game data.  (Please note that loading a board from a URL is not supported in IE9.)")
 	}
 	var world_load_handler = function(data){
 		try {
@@ -402,9 +405,13 @@ function world_save_world(){
 	});
 	var world = { "_new":1, "pieces": pieces};
 
-	window.open('data:text/json;filename=board.abg,' + 
-		encodeURIComponent(JSON.stringify(world)),
-		'board.abg');
+	try {
+		window.open('data:text/json;filename=board.abg,' + 
+					encodeURIComponent(JSON.stringify(world)),
+					'board.abg');
+	} catch (x) {
+		alert("Sorry, we are unable to save the board.  (Please note that saving board state is not supported in IE9.)");
+	}
 }
 
 /*
