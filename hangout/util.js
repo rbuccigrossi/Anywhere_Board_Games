@@ -4,7 +4,6 @@ var util_is_chrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
 // Bug fix to allow scroll bars to work on mouse down events:
 function util_is_in_scrollbar(event){
-//	console.log(event.clientX + "," + event.clientY + "  " + $(window).width() + "," + $(window).height());
 	if ((event.clientX > ($(window).width()-17)) ||
 		(event.clientY > ($(window).height()-17))){
 		return (true);
