@@ -1,5 +1,9 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+7/16/2012 (abg_v0.120716.exe and abg_v0.120716.tar.gz)
+ - Improved support for IE9 in both PHP server and Google+ Hangout
+   versions.
+
 7/05/2012 (abg_v0.120705.tar.gz)
  - Added source for Google+ Hangout version of ABG.  To use ABG on
    a Google+ Hangout, just go to: 
