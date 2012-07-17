@@ -491,8 +491,8 @@ function set_piece_location(piece, position){
  * @param event The mouse down or touch start event
  */
 function on_piece_touch_start(event){
-	// Bug fix for chrome scroll bar
-	if (util_is_in_chrome_scrollbar()) return (true);
+	// Bug fix for scroll bar
+	if (util_is_in_scrollbar(event)) return (true);
 	// For custom HTML, make sure the target does not have its own events
 	if ($(event.target).hasClass('own_events')) return (true);
 	// Is this a touch event?
@@ -1311,7 +1311,8 @@ function on_board_click(event){
  */
 function on_board_mouse_down(event){
 	if (event.target.nodeName == "HTML"){
-		if (util_is_in_chrome_scrollbar()) return (true); // Bug fix for chrome scroll bar
+		// Make sure click isn't on a scroll bar
+		if (util_is_in_scrollbar(event)) return (true);
 		// For touch devices, this will always be empty and call on_board_click
 		board_start_multi_select(event, 
 			function(event){
