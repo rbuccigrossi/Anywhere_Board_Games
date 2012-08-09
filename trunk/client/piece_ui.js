@@ -1241,6 +1241,13 @@ function show_board_popup_menu(pieces, position){
 			}, 
 			args: null
 		});
+		menu_items.push({
+			label: "Help", 
+			callback: function(){
+				window.open("http://www.anywhereboardgames.com/help/");
+			}, 
+			args: null
+		});
 	}
 	create_popup_menu(menu_items, $('#board'), position, function(event){
 		pieces_unhighlight(unlocked_pieces);
