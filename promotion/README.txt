@@ -1,5 +1,8 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+8/09/2012 (abg_v0.120809.exe and abg_v0.120809.tar.gz)
+ - Added context menu link to on-line end-user help.
+
 7/16/2012 (abg_v0.120716.exe and abg_v0.120716.tar.gz)
  - Improved support for IE9 in both PHP server and Google+ Hangout
    versions.
