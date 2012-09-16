@@ -1,5 +1,8 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+9/15/2012 (abg_v0.120915.exe and abg_v0.120915.tar.gz)
+ - Better support for PHP 5.2
+
 8/09/2012 (abg_v0.120809.exe and abg_v0.120809.tar.gz)
  - Added context menu link to on-line end-user help.
 
