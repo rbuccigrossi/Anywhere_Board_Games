@@ -38,7 +38,7 @@ if ($action === "read") {
 		exit_json_error("Must set update value");
 	}
 	$update = json_decode(stripslashes($_REQUEST["update"]), true);
-	if (json_last_error() != JSON_ERROR_NONE) {
+	if (function_exists('json_last_error') && (json_last_error() != JSON_ERROR_NONE)) {
 		exit_json_error("Error parsing update value");
 	}
 	if (!update_world($filename,$update)){
