@@ -1,5 +1,9 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+10/29/2012 (abg_v0.121029.exe and abg_v0.121029.tar.gz)
+ - Allow users to redirect the board to another URL (useful for
+   connecting Google+ Hangouts to locally running sessions).
+
 9/15/2012 (abg_v0.120915.exe and abg_v0.120915.tar.gz)
  - Better support for PHP 5.2
 
