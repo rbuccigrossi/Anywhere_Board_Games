@@ -1242,6 +1242,21 @@ function show_board_popup_menu(pieces, position){
 			args: null
 		});
 		menu_items.push({
+			label: "Redirect to URL...", 
+			callback: function(){
+				s = prompt('Enter a URL to which all players will be redirected:','');
+				if (s){
+					var piece_data = {
+						"faces": ["about:blank"],
+						"face_width": 1,
+						"custom_html": escape('<script>if(confirm(\'The board is redirecting to the URL '+s+'. Is that OK?\')) { window.location = "'+encodeURI(s)+'";}</script>')
+					};
+					world_add_piece(piece_data);
+				}
+			}, 
+			args: null
+		});
+		menu_items.push({
 			label: "Help", 
 			callback: function(){
 				window.open("http://www.anywhereboardgames.com/help/");
