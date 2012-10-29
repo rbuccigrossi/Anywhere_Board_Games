@@ -1282,9 +1282,9 @@ function show_board_popup_menu(pieces, position){
 				s = prompt('Enter a URL to which all players will be redirected:','');
 				if (s){
 					var piece_data = {
-						"faces": ["about:blank"],
+						"faces_array": JSON.stringify(["about:blank"]),
 						"face_width": 1,
-						"custom_html": escape('<script>if(confirm(\'The board is redirecting to the URL '+s+'. Is that OK?\')) { window.location = "'+encodeURI(s)+'";}</script>')
+						"custom_html": '%3Cscript%3E' + escape('if(confirm(\'The board is redirecting to the URL '+s+'. Is that OK?\')) { window.location = "'+encodeURI(s)+'";}') + '%3C/script%3E'
 					};
 					world_add_piece(piece_data);
 				}
