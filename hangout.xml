@@ -674,7 +674,7 @@ function world_load_from_file(file, clear_world){
 function world_save_world(){
 	var pieces = [];
 	$.each(g_pieces,function(i,piece){ // Note g_pieces is in piece_ui.js
-		var offset = $(piece).offset();
+		var offset = util_page_to_board_coord($(piece).offset());
 		pieces.push({
 			"faces": piece.faces, // Note: for download we keep the array as is (not JSON)
 			"face_width": piece.face_width,
