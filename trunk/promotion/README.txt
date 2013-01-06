@@ -1,5 +1,9 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+01/06/2013 (abg_v0.130106.tar.gz)
+ - Fixed an issue with saving a board in a Google Hangout with 
+   scrollbars
+
 10/29/2012 (abg_v0.121029.exe and abg_v0.121029.tar.gz)
  - Allow users to redirect the board to another URL (useful for
    connecting Google+ Hangouts to locally running sessions).
