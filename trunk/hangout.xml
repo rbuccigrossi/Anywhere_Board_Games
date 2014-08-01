@@ -493,8 +493,8 @@ function world_update(update){
 			}
 		});
 	}
-	// If our update is too big (more than 256 characters), split it up
-	if ((JSON.stringify(flat_updates).length + JSON.stringify(flat_deletions).length) < 512){
+	// If our update is too big (more than 2048 characters), split it up
+	if ((JSON.stringify(flat_updates).length + JSON.stringify(flat_deletions).length) < 2048){
 //		console.log(JSON.stringify(update));
 //		console.log(JSON.stringify(flat_updates));
 //		console.log(JSON.stringify(flat_deletions));
