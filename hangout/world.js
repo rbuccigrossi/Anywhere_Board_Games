@@ -145,6 +145,15 @@ function find_deletions(flat_update){
 	return (deletions);
 }
 
+// Given a set up submitDelta updates and deletes, this returns true if the update is too big
+// This code is updated from hangout.js (thus it is cryptic)
+function update_too_big(a,c){
+	var g=500;
+	for(b in a) g+=b.length+a[b].length+100;
+	for(e=0;e<c.length;e++)g+=c[e].length+100;
+	return(g>1E4);
+}
+
 /* world_queue_update - Queues an update to be sent.  If we've done an update in the 
  * in the recent past, we delay the sending of another to avoid hitting Google Hangout's
  * throttle
@@ -159,21 +168,43 @@ function world_queue_update(updates,deletes){
 	if (!("loop_running" in world_queue_update)){
 		world_queue_update.loop_running = true;
 		var call_next_update = function(){
-			// Immediately call the next item and record timing
+			var recurse_update = function(accumulated_update){
+				if (world_queue_update.queue.length > 0){
+				}
+			}
+			// Pull the next update
 			var n = world_queue_update.queue.shift();
-			gapi.hangout.data.submitDelta(n["u"],n["d"]);
+			// Do we have more updates pending? If so, try to concatenate them
+			while (world_queue_update.queue.length > 0) {
+				var n2 = world_queue_update.queue[0];
+				var combined = {"u": ($.extend({},n["u"],n2["u"])), 
+								"d": n["d"].concat(n2["d"])};
+				if (update_too_big(combined["u"],combined["d"])) break;
+				n = combined;
+				world_queue_update.queue.shift();
+			}
+			try {
+				// Separate deletes from adds (to avoid having a duplicate in both), doing deletes first
+				if (n["d"].length > 0){
+					gapi.hangout.data.submitDelta({},n["d"]);
+				}
+				gapi.hangout.data.submitDelta(n["u"],[]);
+			} catch (x) {
+				console.log(x);
+				alert('There was an error submitting the world information.  Please save your board and reload the application.');
+			}
 			world_queue_update.last_time = new Date().getTime();
 			if (world_queue_update.queue.length > 0){
-				setTimeout(call_next_update,50);
+				setTimeout(call_next_update,150);
 			} else {
 				// Out of requests so stop
 				delete world_queue_update.loop_running;
 			}
 		}
 		var now = new Date().getTime();
-		if ((now - world_queue_update.last_time) < 50){
+		if ((now - world_queue_update.last_time) < 150){
 			// If we last updated recently, wait a little
-			setTimeout(call_next_update,100 - (now - world_queue_update.last_time));
+			setTimeout(call_next_update,150 - (now - world_queue_update.last_time));
 		} else {
 			// Else start now
 			call_next_update();
@@ -206,22 +237,17 @@ function world_update(update){
 			}
 		});
 	}
-	// If our update is too big (more than 2048 characters), split it up
-	if ((JSON.stringify(flat_updates).length + JSON.stringify(flat_deletions).length) < 2048){
-//		console.log(JSON.stringify(update));
-//		console.log(JSON.stringify(flat_updates));
-//		console.log(JSON.stringify(flat_deletions));
+	// If our update is too big split it up
+	if (!update_too_big(flat_updates,flat_deletions)){
 		world_queue_update(flat_updates,flat_deletions);
 	} else {
 		var update_keys = [];
 		var inc_updates = {}, inc_deletions = [];
 		var k, l = 0;
-		// TODO: Note, if we split a piece on an update, that could cause problems...
 		// Gather up all update keys
 		$.each(flat_updates,function(k,v){
 			update_keys.push(k);
 		});
-// console.log(JSON.stringify(update_keys));
 		// Pull off 15 keys of each type to update
 		while ((update_keys.length > 0) || (flat_deletions.length > 0)){
 			if (update_keys.length > 0){
@@ -242,7 +268,7 @@ function world_update(update){
 		}
 		// Send any left
 		if ((l > 0) || (inc_deletions.length > 0)){
-			gapi.hangout.data.submitDelta(inc_updates,inc_deletions);
+			world_queue_update(inc_updates,inc_deletions);
 		}
 	}
 }
@@ -529,5 +555,6 @@ gapi.hangout.onApiReady.add(function(eventObj){
     }
   } catch (x) {
 	alert("Sorry... there was a problem initializing the board.  Please reload the application (and make sure you are using an updated version of your browser). ")
+	  console.log(x);
   }
 });
