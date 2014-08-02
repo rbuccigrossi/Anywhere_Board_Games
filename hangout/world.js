@@ -168,10 +168,6 @@ function world_queue_update(updates,deletes){
 	if (!("loop_running" in world_queue_update)){
 		world_queue_update.loop_running = true;
 		var call_next_update = function(){
-			var recurse_update = function(accumulated_update){
-				if (world_queue_update.queue.length > 0){
-				}
-			}
 			// Pull the next update
 			var n = world_queue_update.queue.shift();
 			// Do we have more updates pending? If so, try to concatenate them
