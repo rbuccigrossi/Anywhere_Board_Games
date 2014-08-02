@@ -43,21 +43,33 @@ var g_is_touch_device = 0;
  * @param piece_data Data about the newly added piece
  */
 function on_new_piece_handler(piece_idx, piece_data){
-	// Set some defaults if not there
+	var source = "";
+	// Set some defaults if not there (this allows pieces to be split across multiple updates)
 	if (!("z" in piece_data)){
 		piece_data.z = 0;
+	}
+	if (!("x" in piece_data)){
+		piece_data.x = 0;
+	}
+	if (!("y" in piece_data)){
+		piece_data.y = 0;
 	}
 	if (!("face_showing" in piece_data)){
 		piece_data.face_showing = 0;
 	}
+	if (!("faces_array" in piece_data)){
+		piece_data.faces = [];
+	} else {
+		piece_data.faces = JSON.parse(piece_data.faces_array);
+		source = piece_data.faces[piece_data.face_showing];
+	}
 	// TODO: Handle both "faces" and "faces_array" for backwards compatibility with save files
 	// Unparse the face array
-	piece_data.faces = JSON.parse(piece_data.faces_array);
 
 	// Create piece HTML in the proper location
 	var jq_piece = $('<span class="piece" id="piece_' + piece_idx + 
 		'" style="position: absolute; left: ' + piece_data.x + 'px; top: ' + piece_data.y + 'px;">' +
-		'<img class="piece_face" src="' + piece_data.faces[piece_data.face_showing] + '">' +
+		'<img class="piece_face" src="' + source + '">' +
 		'<div class="custom_html"></div></span>');
 	// Add to the board
 	$("#board").append(jq_piece);
@@ -225,19 +237,15 @@ function correct_piece_z_indices(){
 	$.each(g_pieces, function (i,piece){
 		if (!piece.shield){ // Don't reorder shields
 			if (piece.z != z){
-				piece_updates[piece.world_piece_index] = {
+				world_update_piece_accumulate(piece.world_piece_index, {
 					"z": z
-				};
+				});
 				set_piece_z_index(piece, z);
 			}
 			z++;
 		}
 	});
-	if (piece_updates){
-		world_update({
-			"pieces": piece_updates
-		});
-	}
+	world_update_piece_accumulate_flush();
 }
 
 /*
@@ -681,7 +689,6 @@ function pieces_start_rotate(pieces, event){
 	var mouse_moved = 0;
 	var start_coord = util_get_event_board_coordinates(event);
 	var last_coord = util_clone(start_coord);
-	var last_sent_update_timestamp = 0;
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
 	// Find the center of the group of pieces
@@ -727,12 +734,8 @@ function pieces_start_rotate(pieces, event){
 		var sin_a = Math.sin(move_angle * 2 * Math.PI / 360);
 		$.each(pieces, function (i,piece){
 			var send_update = final_send;
-			if (pieces.length == 1){ // Visibly send an update every half second
-			    var now = new Date().getTime();
-			    if ((now - last_sent_update_timestamp) > 500){
-				    send_update = 1;
-				    last_sent_update_timestamp = now;
-			    }
+			if (pieces.length == 1){ // Visibly send an update for single moves
+				send_update = 1;
 		    }
 		    // First update the orientation, then update location
 		    piece.orientation = start_orientations[i] + move_angle;
@@ -820,7 +823,6 @@ function pieces_start_move(pieces, event, no_move_callback){
 	var mouse_moved = 0;
 	var start_coord = util_get_event_board_coordinates(event);
 	var last_coord = util_clone(start_coord);
-	var last_sent_update_timestamp = 0;
 	// Add an overlay we'll use for down, move, and up events
 	var	overlay = util_create_ui_overlay();
 	// Highlight the pieces
@@ -841,12 +843,8 @@ function pieces_start_move(pieces, event, no_move_callback){
 	var move_pieces = function(coord, final_send){
 		$.each(pieces, function(i, piece){ 
 			var send_update = final_send;
-		    if (pieces.length == 1){ // Visibly send an update every half second
-				var now = new Date().getTime();
-				if ((now - last_sent_update_timestamp) > 500){
-					send_update = 1;
-					last_sent_update_timestamp = now;
-				}
+		    if (pieces.length == 1){ // Visibly send an update for single moves
+				send_update = 1;
 			}
 			set_piece_location(piece, {
 		       left: start_positions[i].left - start_coord.x + coord.x,
