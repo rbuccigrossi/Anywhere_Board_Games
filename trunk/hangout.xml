@@ -432,6 +432,15 @@ function find_deletions(flat_update){
 	return (deletions);
 }
 
+// Given a set up submitDelta updates and deletes, this returns true if the update is too big
+// This code is updated from hangout.js (thus it is cryptic)
+function update_too_big(a,c){
+	var g=500;
+	for(b in a) g+=b.length+a[b].length+100;
+	for(e=0;e<c.length;e++)g+=c[e].length+100;
+	return(g>1E4);
+}
+
 /* world_queue_update - Queues an update to be sent.  If we've done an update in the 
  * in the recent past, we delay the sending of another to avoid hitting Google Hangout's
  * throttle
@@ -446,21 +455,39 @@ function world_queue_update(updates,deletes){
 	if (!("loop_running" in world_queue_update)){
 		world_queue_update.loop_running = true;
 		var call_next_update = function(){
-			// Immediately call the next item and record timing
+			// Pull the next update
 			var n = world_queue_update.queue.shift();
-			gapi.hangout.data.submitDelta(n["u"],n["d"]);
+			// Do we have more updates pending? If so, try to concatenate them
+			while (world_queue_update.queue.length > 0) {
+				var n2 = world_queue_update.queue[0];
+				var combined = {"u": ($.extend({},n["u"],n2["u"])), 
+								"d": n["d"].concat(n2["d"])};
+				if (update_too_big(combined["u"],combined["d"])) break;
+				n = combined;
+				world_queue_update.queue.shift();
+			}
+			try {
+				// Separate deletes from adds (to avoid having a duplicate in both), doing deletes first
+				if (n["d"].length > 0){
+					gapi.hangout.data.submitDelta({},n["d"]);
+				}
+				gapi.hangout.data.submitDelta(n["u"],[]);
+			} catch (x) {
+				console.log(x);
+				alert('There was an error submitting the world information.  Please save your board and reload the application.');
+			}
 			world_queue_update.last_time = new Date().getTime();
 			if (world_queue_update.queue.length > 0){
-				setTimeout(call_next_update,50);
+				setTimeout(call_next_update,150);
 			} else {
 				// Out of requests so stop
 				delete world_queue_update.loop_running;
 			}
 		}
 		var now = new Date().getTime();
-		if ((now - world_queue_update.last_time) < 50){
+		if ((now - world_queue_update.last_time) < 150){
 			// If we last updated recently, wait a little
-			setTimeout(call_next_update,100 - (now - world_queue_update.last_time));
+			setTimeout(call_next_update,150 - (now - world_queue_update.last_time));
 		} else {
 			// Else start now
 			call_next_update();
@@ -493,22 +520,17 @@ function world_update(update){
 			}
 		});
 	}
-	// If our update is too big (more than 2048 characters), split it up
-	if ((JSON.stringify(flat_updates).length + JSON.stringify(flat_deletions).length) < 2048){
-//		console.log(JSON.stringify(update));
-//		console.log(JSON.stringify(flat_updates));
-//		console.log(JSON.stringify(flat_deletions));
+	// If our update is too big split it up
+	if (!update_too_big(flat_updates,flat_deletions)){
 		world_queue_update(flat_updates,flat_deletions);
 	} else {
 		var update_keys = [];
 		var inc_updates = {}, inc_deletions = [];
 		var k, l = 0;
-		// TODO: Note, if we split a piece on an update, that could cause problems...
 		// Gather up all update keys
 		$.each(flat_updates,function(k,v){
 			update_keys.push(k);
 		});
-// console.log(JSON.stringify(update_keys));
 		// Pull off 15 keys of each type to update
 		while ((update_keys.length > 0) || (flat_deletions.length > 0)){
 			if (update_keys.length > 0){
@@ -529,7 +551,7 @@ function world_update(update){
 		}
 		// Send any left
 		if ((l > 0) || (inc_deletions.length > 0)){
-			gapi.hangout.data.submitDelta(inc_updates,inc_deletions);
+			world_queue_update(inc_updates,inc_deletions);
 		}
 	}
 }
@@ -816,6 +838,7 @@ gapi.hangout.onApiReady.add(function(eventObj){
     }
   } catch (x) {
 	alert("Sorry... there was a problem initializing the board.  Please reload the application (and make sure you are using an updated version of your browser). ")
+	  console.log(x);
   }
 });
 /*
@@ -863,21 +886,33 @@ var g_is_touch_device = 0;
  * @param piece_data Data about the newly added piece
  */
 function on_new_piece_handler(piece_idx, piece_data){
-	// Set some defaults if not there
+	var source = "";
+	// Set some defaults if not there (this allows pieces to be split across multiple updates)
 	if (!("z" in piece_data)){
 		piece_data.z = 0;
+	}
+	if (!("x" in piece_data)){
+		piece_data.x = 0;
+	}
+	if (!("y" in piece_data)){
+		piece_data.y = 0;
 	}
 	if (!("face_showing" in piece_data)){
 		piece_data.face_showing = 0;
 	}
+	if (!("faces_array" in piece_data)){
+		piece_data.faces = [];
+	} else {
+		piece_data.faces = JSON.parse(piece_data.faces_array);
+		source = piece_data.faces[piece_data.face_showing];
+	}
 	// TODO: Handle both "faces" and "faces_array" for backwards compatibility with save files
 	// Unparse the face array
-	piece_data.faces = JSON.parse(piece_data.faces_array);
 
 	// Create piece HTML in the proper location
 	var jq_piece = $('<span class="piece" id="piece_' + piece_idx + 
 		'" style="position: absolute; left: ' + piece_data.x + 'px; top: ' + piece_data.y + 'px;">' +
-		'<img class="piece_face" src="' + piece_data.faces[piece_data.face_showing] + '">' +
+		'<img class="piece_face" src="' + source + '">' +
 		'<div class="custom_html"></div></span>');
 	// Add to the board
 	$("#board").append(jq_piece);
@@ -1045,19 +1080,15 @@ function correct_piece_z_indices(){
 	$.each(g_pieces, function (i,piece){
 		if (!piece.shield){ // Don't reorder shields
 			if (piece.z != z){
-				piece_updates[piece.world_piece_index] = {
+				world_update_piece_accumulate(piece.world_piece_index, {
 					"z": z
-				};
+				});
 				set_piece_z_index(piece, z);
 			}
 			z++;
 		}
 	});
-	if (piece_updates){
-		world_update({
-			"pieces": piece_updates
-		});
-	}
+	world_update_piece_accumulate_flush();
 }
 
 /*
@@ -1501,7 +1532,6 @@ function pieces_start_rotate(pieces, event){
 	var mouse_moved = 0;
 	var start_coord = util_get_event_board_coordinates(event);
 	var last_coord = util_clone(start_coord);
-	var last_sent_update_timestamp = 0;
 	// Add an overlay we'll use for down, move, and up events
 	var overlay = util_create_ui_overlay();
 	// Find the center of the group of pieces
@@ -1547,12 +1577,8 @@ function pieces_start_rotate(pieces, event){
 		var sin_a = Math.sin(move_angle * 2 * Math.PI / 360);
 		$.each(pieces, function (i,piece){
 			var send_update = final_send;
-			if (pieces.length == 1){ // Visibly send an update every half second
-			    var now = new Date().getTime();
-			    if ((now - last_sent_update_timestamp) > 500){
-				    send_update = 1;
-				    last_sent_update_timestamp = now;
-			    }
+			if (pieces.length == 1){ // Visibly send an update for single moves
+				send_update = 1;
 		    }
 		    // First update the orientation, then update location
 		    piece.orientation = start_orientations[i] + move_angle;
@@ -1640,7 +1666,6 @@ function pieces_start_move(pieces, event, no_move_callback){
 	var mouse_moved = 0;
 	var start_coord = util_get_event_board_coordinates(event);
 	var last_coord = util_clone(start_coord);
-	var last_sent_update_timestamp = 0;
 	// Add an overlay we'll use for down, move, and up events
 	var	overlay = util_create_ui_overlay();
 	// Highlight the pieces
@@ -1661,12 +1686,8 @@ function pieces_start_move(pieces, event, no_move_callback){
 	var move_pieces = function(coord, final_send){
 		$.each(pieces, function(i, piece){ 
 			var send_update = final_send;
-		    if (pieces.length == 1){ // Visibly send an update every half second
-				var now = new Date().getTime();
-				if ((now - last_sent_update_timestamp) > 500){
-					send_update = 1;
-					last_sent_update_timestamp = now;
-				}
+		    if (pieces.length == 1){ // Visibly send an update for single moves
+				send_update = 1;
 			}
 			set_piece_location(piece, {
 		       left: start_positions[i].left - start_coord.x + coord.x,
