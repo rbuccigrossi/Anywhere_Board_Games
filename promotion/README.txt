@@ -1,5 +1,16 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+08/02/2014 (abg_v0.140802.tar.gz)
+ - Speed up Google Hangout updates by combining queued
+   updates together
+ - Allow partial piece definitions (so that update queues
+   can be split arbitrarily without crashing
+ - Fixed an issue with z index updates getting too big
+
+07/31/2014 (abg_v0.140731.tar.gz)
+ - Fixed an issue with Google Hangout freezing with larger
+   piece collections (now allows piece data up to 2K)
+
 01/06/2013 (abg_v0.130106.tar.gz)
  - Fixed an issue with saving a board in a Google Hangout with 
    scrollbars
