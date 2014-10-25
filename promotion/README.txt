@@ -1,5 +1,8 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+10/25/2014 (abg_v0.141025.tar.gz)
+ - Due to "mixed content" issues, moved sample boards to 
+   HTTPS locations in Dropbox
 08/02/2014 (abg_v0.140802.tar.gz)
  - Speed up Google Hangout updates by combining queued
    updates together
