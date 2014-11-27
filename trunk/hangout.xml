@@ -8,9 +8,10 @@
     <![CDATA[
 <html>
     <head>
-      <script src="//talkgadget.google.com/hangouts/_/api/hangout.js?v=1.1"></script>
+	  <script src="//plus.google.com/hangouts/_/api/v1/hangout.js?v=1.1"></script>
 <!--
-        <script src="//hangoutsapi.talkgadget.google.com/hangouts/_/api/hangout.js?v=1.1"></script>
+   <script src="//talkgadget.google.com/hangouts/_/api/hangout.js?v=1.1"></script>
+   <script src="//hangoutsapi.talkgadget.google.com/hangouts/_/api/hangout.js?v=1.1"></script>
 -->
 
 	    <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
