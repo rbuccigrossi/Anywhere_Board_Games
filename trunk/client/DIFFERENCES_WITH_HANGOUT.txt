@@ -1,0 +1,21 @@
+Alas, the stand-alone code has split from the Hangout code:
+
+ - Hangouts cannot encode complex sub-objects, so the piece faces need
+   to be pushed into a single JSON string and encoded as
+   "faces_array". Meanwhile, the JSON string confuses the PHP server
+   so it must instead need to be kept as a "faces" array.
+
+ - Hangouts make the a DIV the #board, while the stand-alone labels
+   the BODY as #board.  This has direct impact on the calculation of
+   where events occur.  In a DIV we need to subtract the location of
+   the scrollbars, while that shouldn't be done with the BODY.
+   Unfortunately, if we make the stand-alone version use a DIV tag,
+   that ruins scroll ability on iOS.
+
+ - Hangouts simplified the code and uses an overlay for single piece
+   mouse events and rotations.  Unfortunately this makes touch not
+   work if you want to simply click-drag a piece.  Making the overlay
+   stops subsequent touchmove events.  This means that touch events
+   for Hangouts may be broken (something to test on Windows tablets
+   and touch Chromebooks).
+  
