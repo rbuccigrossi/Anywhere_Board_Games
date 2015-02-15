@@ -1,5 +1,12 @@
 Anywhere Board Games Release Notes
 ----------------------------------
+02/15/2015 (abg_v0.150215.exe and abg_v0.1502.15.tar.gz)
+ - New keyboard shortcuts: 
+   - Hit SHIFT with clicking to select all pieces under the cursor,
+   - Hold SHIFT to scoop up pieces as you drag,
+   - Hit CTRL while dragging to pick up another single piece, and 
+   - Hit SPACE to drop the lowest piece.
+
 11/26/2014 (abg_v0.141126.tar.gz)
  - Update for new location of Google Hangout API
 
