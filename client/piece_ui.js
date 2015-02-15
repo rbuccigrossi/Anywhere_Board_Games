@@ -502,25 +502,35 @@ function on_piece_touch_start(event){
 		return(true); // Allow event to propogate
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
-	var piece = this;
 	var start_click = util_get_event_coordinates(event);
+	var pieces = [this];
+	// If shift is held, grab all pieces
+	if (event.shiftKey){
+		pieces = find_pieces_at_coord(start_click);
+	}
 	// Handle a click (no drag movement), by showing the piece menu
 	var click_function = function () {
-		show_board_popup_menu([piece],util_page_to_client_coord({
+		show_board_popup_menu(pieces,util_page_to_client_coord({
 			left: start_click.x-10,
 			top: start_click.y-10
 		}));
 	}
+	var unlocked_pieces = [];
+	$.each(pieces, function(i,p){
+		if (!p.lock){
+			unlocked_pieces.push(p);
+		}
+	});
 	// If a piece is not locked, start a flip, rotate, move or popup depending upon
 	// the button pressed
-	if (! piece.lock){
+	if (unlocked_pieces.length > 0){
 		if (event.which && (event.which == 2)){ // Middle mouse button, flip and start move
-			pieces_flip([piece]);
-			pieces_start_move([piece], event, false, null);
+			pieces_flip(pieces);
+			pieces_start_move(pieces, event, false, null);
 		} else if (event.which && (event.which == 3)){ // Right mouse button, rotate
-			pieces_start_rotate([piece], event);
+			pieces_start_rotate(pieces, event);
 		} else { // Left mouse button or touch, move with possible pop-up menu
-			pieces_start_move([piece], event, false, click_function);
+			pieces_start_move(pieces, event, false, click_function);
 		}
 		event.preventDefault(); 
 		return(false);
@@ -801,6 +811,30 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		// Add an overlay to capture a new mouse/touch down event (in case we started touch up)
 		overlay = util_create_ui_overlay();
 	}
+	// Function to add a piece starting at a specific coordinate
+	var add_piece_starting_at_coord = function(p,coord){
+		pieces.push(p);
+		start_offsets.push({
+							   left: $(p).offset().left + start_coord.x - coord.x,
+							   top: $(p).offset().top + start_coord.y - coord.y
+						   });
+	}
+	// Function to pick up new pieces at a specific coordinate and return true if found
+	var grab_all_pieces_at_coord = function(coord){
+		var found_piece = 0;
+		// Find new pieces and scoop them into our pile
+		var newpieces = find_pieces_at_coord(coord);
+		$.each(newpieces,function(i,p){
+			if ($.inArray(p,pieces) < 0){
+				add_piece_starting_at_coord(p,coord);
+				found_piece = 1;
+			}
+		});
+		// If we find a new piece, move everything to the front
+		if (found_piece){
+			move_pieces_to_front(pieces);
+		}
+	}
 	// Handle start drag events by resetting location for rotation calculations
 	var start_drag_function = function (event){
 		start_coord = util_get_event_coordinates(event);
@@ -809,23 +843,67 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		event.preventDefault(); 
 		return(false);
 	}
+	// Avoid repeated events by recording keys that are down
+	var keydown = {};
+	var keydown_function = function (event){
+		if(keydown[event.which] == null){
+			keydown[event.which] = 1;
+			if (event.which == 16) { // Shift is pressed so add pieces underneath
+				grab_all_pieces_at_coord(last_coord);
+				event.preventDefault(); 
+			} else if (event.which == 17) { // CTRL is pressed so grab top piece
+				var newpieces = find_pieces_at_coord(last_coord);
+				var toppiece = null;
+				// Get the top piece we don't already have
+				$.each(newpieces,function(i,p){
+					if ($.inArray(p,pieces) < 0){
+						if ((toppiece == null) || (p.z > toppiece.z)){
+							toppiece = p;
+						}
+					}
+				});
+				if (toppiece != null){
+					add_piece_starting_at_coord(toppiece,last_coord);
+					move_pieces_to_front(pieces);
+				}
+				event.preventDefault(); 
+			} else if (event.which == 32) { // Space is pressed so drop bottom piece
+				if (pieces.length > 0){
+					// Remove the piece and the starting offset
+					var p = pieces.pop();
+					start_offsets.pop();
+					// Unhighlight it (in case it was)
+					pieces_unhighlight([p]);
+				}
+				event.preventDefault(); 
+			}
+		}
+	}
+	var keyup_function = function (event){
+		keydown[event.which] = null;
+	}
 	// Handle drag events by calculating and executing new piece orientation
 	var drag_function = function (event) {
 		var coord = util_get_event_coordinates(event);
 		if ((coord.x != last_coord.x) || (coord.y != last_coord.y)){
+			last_coord = util_clone(coord);
 			if (!mouse_moved){
 				mouse_moved = 1; // We moved, so this is a drag, not a click
 				// If we started dragging the pieces, move them to the top
 				move_pieces_to_front(pieces);
 			}
-		}
-		$.each(pieces, function(i, piece){ 
-			// TODO MEDIUM - define set_piece_location_accumulate
-			set_piece_location(piece, {
-				left: start_offsets[i].left - start_coord.x + coord.x,
-				top: start_offsets[i].top - start_coord.y + coord.y
+			// If the shift key is down while dragging, pick up new pieces we go over
+			if (event.shiftKey){
+				grab_all_pieces_at_coord(coord);
+			}
+			$.each(pieces, function(i, piece){ 
+				// TODO MEDIUM - define set_piece_location_accumulate
+				set_piece_location(piece, {
+					left: start_offsets[i].left - start_coord.x + coord.x,
+					top: start_offsets[i].top - start_coord.y + coord.y
+				});
 			});
-		});
+		}
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
@@ -846,6 +924,8 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 		}
 		$(document).unbind("mousemove",drag_function);
 		$(document).unbind("mouseup",stop_drag_function);
+		$(document).unbind("keydown",keydown_function);
+		$(document).unbind("keyup",keyup_function);
 		// Call our callback
 		if ((!mouse_moved) && (no_move_callback)){
 			no_move_callback();
@@ -866,6 +946,8 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 	}
 	$(document).bind("mousemove",drag_function);
 	$(document).bind("mouseup",stop_drag_function);
+	$(document).bind("keydown",keydown_function);
+	$(document).bind("keyup",keyup_function);
 }
 
 /**
@@ -988,6 +1070,32 @@ function piece_in_rect(piece, rect){
 	var center = get_piece_center(piece);
 	return ((center.left >= rect.x) && (center.left <= (rect.x + rect.width))
 		&& (center.top >= rect.y) && ((center.top <= (rect.y + rect.height))));
+}
+
+/*
+ * point_in_piece - returns true if the point is in the piece
+ * @param piece
+ * @param point (x,y)
+ */
+function point_in_piece(piece, point){
+	return ((piece.offsetLeft <= point.x) && 
+			((piece.offsetLeft + $(piece).width()) >= point.x) &&
+			(piece.offsetTop <= point.y) && 
+			((piece.offsetTop + $(piece).height()) >= point.y));
+}
+
+/*
+ * find_pieces_at_coord - returns all pieces that hit a specific point
+ * @param point (x,y)
+ */
+function find_pieces_at_coord(coord){
+	var pieces = [];
+	$.each(g_pieces,function(i,p){
+			   if (point_in_piece(p,coord)){
+				   pieces.push(p);
+			   }
+		   });
+	return pieces;
 }
 
 /*
