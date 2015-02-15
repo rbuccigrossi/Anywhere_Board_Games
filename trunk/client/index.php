@@ -88,7 +88,7 @@
 			#board img, #board div, #board span { -webkit-tap-highlight-color:rgba(0,0,0,0);
 		</style>
 	</head>
-	<body id="board" style="background-color: #001000;">
+	<body id="board" style="background-color: #001000;" tabindex="0">
 		<!-- scrolling="no" -->
 		<div id="info"></div>
 		<div id="upload_board_dialog" title="Open a Board">
