@@ -525,12 +525,12 @@ function on_piece_touch_start(event){
 	// the button pressed
 	if (unlocked_pieces.length > 0){
 		if (event.which && (event.which == 2)){ // Middle mouse button, flip and start move
-			pieces_flip(pieces);
-			pieces_start_move(pieces, event, false, null);
+			pieces_flip(unlocked_pieces);
+			pieces_start_move(unlocked_pieces, event, false, null);
 		} else if (event.which && (event.which == 3)){ // Right mouse button, rotate
-			pieces_start_rotate(pieces, event);
+			pieces_start_rotate(unlocked_pieces, event);
 		} else { // Left mouse button or touch, move with possible pop-up menu
-			pieces_start_move(pieces, event, false, click_function);
+			pieces_start_move(unlocked_pieces, event, false, click_function);
 		}
 		event.preventDefault(); 
 		return(false);
@@ -819,13 +819,13 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 							   top: $(p).offset().top + start_coord.y - coord.y
 						   });
 	}
-	// Function to pick up new pieces at a specific coordinate and return true if found
+	// Function to pick up new unlocked pieces at a specific coordinate and return true if found
 	var grab_all_pieces_at_coord = function(coord){
 		var found_piece = 0;
 		// Find new pieces and scoop them into our pile
 		var newpieces = find_pieces_at_coord(coord);
 		$.each(newpieces,function(i,p){
-			if ($.inArray(p,pieces) < 0){
+			if ((!p.lock) && ($.inArray(p,pieces) < 0)){
 				add_piece_starting_at_coord(p,coord);
 				found_piece = 1;
 			}
@@ -856,7 +856,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 				var toppiece = null;
 				// Get the top piece we don't already have
 				$.each(newpieces,function(i,p){
-					if ($.inArray(p,pieces) < 0){
+					if ((!p.lock) && ($.inArray(p,pieces) < 0)){
 						if ((toppiece == null) || (p.z > toppiece.z)){
 							toppiece = p;
 						}
@@ -874,6 +874,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 					start_offsets.pop();
 					// Unhighlight it (in case it was)
 					pieces_unhighlight([p]);
+					// TODO: Execute Callback on dropped piece
 				}
 				event.preventDefault(); 
 			}
