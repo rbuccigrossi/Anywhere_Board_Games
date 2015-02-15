@@ -1357,25 +1357,35 @@ function on_piece_touch_start(event){
 		return(true); // Allow event to propogate
 	}
 	// Record the piece we are manipulating for use in new event handlers we'll define
-	var piece = this;
 	var start_click = util_get_event_board_coordinates(event);
+	var pieces = [this];
+	// If shift is held, grab all pieces
+	if (event.shiftKey){
+		pieces = find_pieces_at_coord(start_click);
+	}
 	// Handle a click (no drag movement), by showing the piece menu
 	var click_function = function () {
-		show_board_popup_menu([piece],{
+		show_board_popup_menu(pieces,{
 			left: start_click.x-10,
 			top: start_click.y-10
 		});
 	}
+	var unlocked_pieces = [];
+	$.each(pieces, function(i,p){
+		if (!p.lock){
+			unlocked_pieces.push(p);
+		}
+	});
 	// If a piece is not locked, start a flip, rotate, move or popup depending upon
 	// the button pressed
-	if (! piece.lock){
+	if (unlocked_pieces.length > 0){
 		if (event.which && (event.which == 2)){ // Middle mouse button, flip and start move
-			pieces_flip([piece]);
-			pieces_start_move([piece], event, null);
+			pieces_flip(unlocked_pieces);
+			pieces_start_move(unlocked_pieces, event, null);
 		} else if (event.which && (event.which == 3)){ // Right mouse button, rotate
-			pieces_start_rotate([piece], event);
+			pieces_start_rotate(unlocked_pieces, event);
 		} else { // Left mouse button or touch, move with possible pop-up menu
-			pieces_start_move([piece], event, click_function);
+			pieces_start_move(unlocked_pieces, event, click_function);
 		}
 		event.preventDefault(); 
 		return(false);
@@ -1665,17 +1675,42 @@ function pieces_start_rotate(pieces, event){
 function pieces_start_move(pieces, event, no_move_callback){
 	// Check if mouse is moved while dragging
 	var mouse_moved = 0;
-	var start_coord = util_get_event_board_coordinates(event);
-	var last_coord = util_clone(start_coord);
-	// Add an overlay we'll use for down, move, and up events
-	var	overlay = util_create_ui_overlay();
 	// Highlight the pieces
 	pieces_highlight(pieces);
 	// Store where on the piece we clicked (for use with dragging)
+	var start_coord = util_get_event_board_coordinates(event);
+	var last_coord = util_clone(start_coord);
 	var start_positions = [];
 	$.each(pieces, function (i,p){
 		start_positions[i] = util_get_position(p);
 	});
+	// Add an overlay we'll use for down, move, and up events
+	var	overlay = util_create_ui_overlay();
+	// Function to add a piece starting at a specific coordinate
+	var add_piece_starting_at_coord = function(p,coord){
+		var pos = util_get_position(p);
+		pieces.push(p);
+		start_positions.push({
+							   left: pos.left + start_coord.x - coord.x,
+							   top: pos.top + start_coord.y - coord.y
+						   });
+	}
+	// Function to pick up new unlocked pieces at a specific coordinate and return true if found
+	var grab_all_pieces_at_coord = function(coord){
+		var found_piece = 0;
+		// Find new pieces and scoop them into our pile
+		var newpieces = find_pieces_at_coord(coord);
+		$.each(newpieces,function(i,p){
+			if ((!p.lock) && ($.inArray(p,pieces) < 0)){
+				add_piece_starting_at_coord(p,coord);
+				found_piece = 1;
+			}
+		});
+		// If we find a new piece, move everything to the front
+		if (found_piece){
+			move_pieces_to_front(pieces);
+		}
+	}
 	// Handle start drag events by resetting location for rotation calculations
 	var start_drag_function = function (event){
 		start_coord = util_get_event_board_coordinates(event);
@@ -1683,6 +1718,48 @@ function pieces_start_move(pieces, event, no_move_callback){
 		// We do not want regular event processing
 		event.preventDefault(); 
 		return(false);
+	}
+	// Avoid repeated events by recording keys that are down
+	var keydown = {};
+	var keydown_function = function (event){
+		if(keydown[event.which] == null){
+			keydown[event.which] = 1;
+			if (event.which == 16) { // Shift is pressed so add pieces underneath
+				grab_all_pieces_at_coord(last_coord);
+				event.preventDefault(); 
+			} else if (event.which == 17) { // CTRL is pressed so grab top piece
+				var newpieces = find_pieces_at_coord(last_coord);
+				var toppiece = null;
+				// Get the top piece we don't already have
+				$.each(newpieces,function(i,p){
+					if ((!p.lock) && ($.inArray(p,pieces) < 0)){
+						if ((toppiece == null) || (p.z > toppiece.z)){
+							toppiece = p;
+						}
+					}
+				});
+				if (toppiece != null){
+					add_piece_starting_at_coord(toppiece,last_coord);
+					move_pieces_to_front(pieces);
+				}
+				event.preventDefault(); 
+			} else if (event.which == 32) { // Space is pressed so drop bottom piece
+				// Send a piece update
+				move_pieces(last_coord,1);
+				if (pieces.length > 0){
+					// Remove the piece and the starting offset
+					var p = pieces.pop();
+					start_positions.pop();
+					// Unhighlight it (in case it was)
+					pieces_unhighlight([p]);
+					// TODO: Execute Callback on dropped piece
+				}
+				event.preventDefault(); 
+			}
+		}
+	}
+	var keyup_function = function (event){
+		keydown[event.which] = null;
 	}
 	var move_pieces = function(coord, final_send){
 		$.each(pieces, function(i, piece){ 
@@ -1707,6 +1784,10 @@ function pieces_start_move(pieces, event, no_move_callback){
 			}
 			// Remember the last_coordinates again
 			last_coord = util_clone(coord);
+			// If the shift key is down while dragging, pick up new pieces we go over
+			if (event.shiftKey){
+				grab_all_pieces_at_coord(coord);
+			}
 			move_pieces(coord,0);
 		}
 		// We do not want regular event processing
@@ -1723,6 +1804,8 @@ function pieces_start_move(pieces, event, no_move_callback){
 		pieces_unhighlight(pieces);
 		// Click on the overlay to destroy it (and remove listeners)
 		$(overlay).trigger('click');
+		$(document).unbind("keydown",keydown_function);
+		$(document).unbind("keyup",keyup_function);
 		if ((!mouse_moved) && (no_move_callback)){
 			// Call our callback if we clicked (didn't move)
 			no_move_callback();
@@ -1743,6 +1826,8 @@ function pieces_start_move(pieces, event, no_move_callback){
 	$(overlay).bind("mousedown.movedrag",util_ignore_event); // For mouse ignore down click
 	$(overlay).bind("mousemove.movedrag",drag_function);
 	$(overlay).bind("mouseup.movedrag",stop_drag_function);
+	$(document).bind("keydown",keydown_function);
+	$(document).bind("keyup",keyup_function);
 }
 
 /**
@@ -1865,6 +1950,33 @@ function piece_in_rect(piece, rect){
 	var center = get_piece_center(piece);
 	return ((center.left >= rect.x) && (center.left <= (rect.x + rect.width))
 		&& (center.top >= rect.y) && ((center.top <= (rect.y + rect.height))));
+}
+
+/*
+ * point_in_piece - returns true if the point is in the piece
+ * @param piece
+ * @param point (x,y)
+ */
+function point_in_piece(piece, point){
+	var position = util_get_position(piece);
+	return ((position.left <= point.x) && 
+			((position.left + $(piece).width()) >= point.x) &&
+			(position.top <= point.y) && 
+			((position.top + $(piece).height()) >= point.y));
+}
+
+/*
+ * find_pieces_at_coord - returns all pieces that hit a specific point
+ * @param point (x,y)
+ */
+function find_pieces_at_coord(coord){
+	var pieces = [];
+	$.each(g_pieces,function(i,p){
+			   if (point_in_piece(p,coord)){
+				   pieces.push(p);
+			   }
+		   });
+	return pieces;
 }
 
 /*
