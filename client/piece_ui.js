@@ -949,6 +949,7 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 	$(document).bind("mouseup",stop_drag_function);
 	$(document).bind("keydown",keydown_function);
 	$(document).bind("keyup",keyup_function);
+	$("#board").focus();
 }
 
 /**

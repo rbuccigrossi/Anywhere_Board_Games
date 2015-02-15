@@ -984,6 +984,7 @@ function pieces_start_move(pieces, event, no_move_callback){
 	$(overlay).bind("mouseup.movedrag",stop_drag_function);
 	$(document).bind("keydown",keydown_function);
 	$(document).bind("keyup",keyup_function);
+	$("#board").focus();
 }
 
 /**
