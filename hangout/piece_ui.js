@@ -532,6 +532,10 @@ function on_piece_touch_start(event){
 			unlocked_pieces.push(p);
 		}
 	});
+	// If shift is held, stack all the unlocked pieces
+	if (event.shiftKey){
+		pieces_stack(unlocked_pieces);
+	}
 	// If a piece is not locked, start a flip, rotate, move or popup depending upon
 	// the button pressed
 	if (unlocked_pieces.length > 0){
@@ -842,14 +846,19 @@ function pieces_start_move(pieces, event, no_move_callback){
 	});
 	// Add an overlay we'll use for down, move, and up events
 	var	overlay = util_create_ui_overlay();
-	// Function to add a piece starting at a specific coordinate
+	// Function to add a piece starting at a specific coordinate (stacking if necessary)
 	var add_piece_starting_at_coord = function(p,coord){
-		var pos = util_get_position(p);
+		// If we have more than one piece, stack the new one below the top
+		if (pieces.length > 0) {
+			start_positions.push(util_clone(start_positions[0]));
+			set_piece_orientation(p,0);
+		} else {
+			var pos = util_get_position(p);
+			start_positions.push({left: pos.left + start_coord.x - coord.x,
+								  top: pos.top + start_coord.y - coord.y});
+		}
+		// Now push the piece on our list
 		pieces.push(p);
-		start_positions.push({
-							   left: pos.left + start_coord.x - coord.x,
-							   top: pos.top + start_coord.y - coord.y
-						   });
 	}
 	// Function to pick up new unlocked pieces at a specific coordinate and return true if found
 	var grab_all_pieces_at_coord = function(coord){
