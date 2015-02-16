@@ -23,5 +23,6 @@
 			.popup .ui-dialog-titlebar {display: none; visibility: hidden;}
 			.popup .ui-button { text-align: left;}
 			.ui-dialog-content label {width: 20%; display: inline-block; text-align: right;}
+			*:focus { outline: none; }
 		</style>
 		<script type="text/javascript">
