@@ -879,12 +879,22 @@ function pieces_start_move(pieces, event, use_overlay, no_move_callback){
 				event.preventDefault(); 
 			} else if (event.which == 32) { // Space is pressed so drop bottom piece
 				if (pieces.length > 0){
+					var bottompieceidx = null;
+					var bottompiece = null;
+					$.each(pieces,
+						   function(i,p){
+							   if ((bottompiece == null) || (p.z < bottompiece.z)){
+								   bottompiece = p;
+								   bottompieceidx = i;
+							   }
+						   });
 					// Remove the piece and the starting offset
-					var p = pieces.pop();
-					start_offsets.pop();
+					pieces.splice(bottompieceidx,1);
+					start_offsets.splice(bottompieceidx,1);
 					// Unhighlight it (in case it was)
-					pieces_unhighlight([p]);
-					// TODO: Execute Callback on dropped piece
+					pieces_unhighlight([bottompiece]);
+					// Call the piece callback
+					pieces_call_event_callback([bottompiece],"move")
 				}
 				event.preventDefault(); 
 			}
