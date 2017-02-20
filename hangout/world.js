@@ -535,7 +535,7 @@ function world_listener_start(){
 			if (appData){
 				world_load_from_url(appData,1);
 			} else {
-				world_load_from_url('https://dl.dropboxusercontent.com/u/10065648/abg/intro.abg.txt',1);
+				world_load_from_url('https://res.anywhereboardgames.com/abg/intro.abg.txt',1);
 			}
 		}
 	}

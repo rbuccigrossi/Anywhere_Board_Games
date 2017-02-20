@@ -824,7 +824,7 @@ function world_listener_start(){
 			if (appData){
 				world_load_from_url(appData,1);
 			} else {
-				world_load_from_url('https://dl.dropboxusercontent.com/u/10065648/abg/intro.abg.txt',1);
+				world_load_from_url('https://res.anywhereboardgames.com/abg/intro.abg.txt',1);
 			}
 		}
 	}
@@ -2692,16 +2692,16 @@ var IFrameSubmit = {
 					<label>Select one:</label>
 					<select style="width: 75%;" name="url_select" id="upload_board_select" class="ui-widget-content ui-corner-all">
 						<option value="">-</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/checkers.abg.txt">Games: Checkers</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/chess.abg.txt">Games: Chess</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/go.abg.txt">Games: Go</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/reversi.abg.txt">Games: Reversi</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/words.abg.txt">Games: Words</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/deck.abg.txt">Pieces: Blue deck of cards</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/dice.abg.txt">Pieces: 6-sided Dice</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/quarter.abg.txt">Pieces: A flipping coin</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/intro.abg.txt">Introduction</option>
-						<option value="https://dl.dropboxusercontent.com/u/10065648/abg/agricola_express.abg.txt">Games: Agricola Express</option>
+						<option value="https://res.anywhereboardgames.com/abg/checkers.abg.txt">Games: Checkers</option>
+						<option value="https://res.anywhereboardgames.com/abg/chess.abg.txt">Games: Chess</option>
+						<option value="https://res.anywhereboardgames.com/abg/go.abg.txt">Games: Go</option>
+						<option value="https://res.anywhereboardgames.com/abg/reversi.abg.txt">Games: Reversi</option>
+						<option value="https://res.anywhereboardgames.com/abg/words.abg.txt">Games: Words</option>
+						<option value="https://res.anywhereboardgames.com/abg/deck.abg.txt">Pieces: Blue deck of cards</option>
+						<option value="https://res.anywhereboardgames.com/abg/dice.abg.txt">Pieces: 6-sided Dice</option>
+						<option value="https://res.anywhereboardgames.com/abg/quarter.abg.txt">Pieces: A flipping coin</option>
+						<option value="https://res.anywhereboardgames.com/abg/intro.abg.txt">Introduction</option>
+						<option value="https://res.anywhereboardgames.com/abg/agricola_express.abg.txt">Games: Agricola Express</option>
 					</select>
 					<P></P>
 					<span><B>Or upload your own ABG file or URL:</B></span>
